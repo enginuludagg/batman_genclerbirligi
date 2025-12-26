@@ -13,6 +13,7 @@ import MediaManager from './components/MediaManager';
 import TrainerManager from './components/TrainerManager';
 import Drills from './components/Drills';
 import Auth from './components/Auth';
+import Settings from './components/Settings';
 import { ViewType, Student, Trainer, FinanceEntry, MediaPost, TrainingSession, AppMode, Notification } from './types';
 import { Bell, X, LogOut, LayoutGrid, Users, UserCheck, Wallet, Newspaper } from 'lucide-react';
 
@@ -27,7 +28,7 @@ const App: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([
     { 
       id: '1', name: 'Arda Yılmaz', age: 11, birthYear: 2013, parentPhone: '0532 111 2233', 
-      parentEmail: 'veli@bgb.com', password: '123456', // Demo için eklendi
+      parentEmail: 'veli@bgb.com', password: '123456', 
       sport: 'Futbol', branchId: 'U11', level: 'Orta', status: 'active', attendance: 92, lastTraining: 'Bugün', 
       stats: { strength: 65, speed: 45, stamina: 70, technique: 90 }, 
       physicalStats: { speed20m: 3.8, height: 145, weight: 38, sitUps: 25, pushUps: 15, sitAndReach: 12, thighLength: 35, run1500m: '06:45' },
@@ -81,6 +82,7 @@ const App: React.FC = () => {
       case 'ai-coach': return <AICoach context={contextData} />;
       case 'trainers': return <TrainerManager trainers={[]} setTrainers={() => {}} mode={appMode} />;
       case 'drills': return <Drills />;
+      case 'settings' as ViewType: return <Settings />;
       default: return <Dashboard context={contextData} appMode={appMode} onNavigate={handleDeepNav} />;
     }
   };
@@ -107,7 +109,6 @@ const App: React.FC = () => {
       />
       
       <main className={`flex-1 flex flex-col transition-all duration-300 min-w-0 ${isSidebarOpen ? 'lg:ml-64 opacity-50 lg:opacity-100' : 'lg:ml-64'}`}>
-        {/* Desktop Header */}
         <div className="hidden lg:flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100 sticky top-0 z-[500]">
            <div className="flex items-center gap-4">
               <div className="bg-red-50 text-red-600 p-2 rounded-xl"><LayoutGrid size={20} /></div>
@@ -120,7 +121,6 @@ const App: React.FC = () => {
            </button>
         </div>
 
-        {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-slate-100 sticky top-0 z-[1000]">
            <button onClick={() => setIsLoggedIn(false)} className="bg-slate-900 text-white p-2.5 rounded-xl">
              <LogOut size={16} />
@@ -136,7 +136,6 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Mobile Bottom Nav */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 px-6 py-4 flex justify-between items-center z-[2000] shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         <button onClick={() => setActiveView('dashboard')} className={`p-2 transition-all ${activeView === 'dashboard' ? 'text-red-600 scale-110' : 'text-slate-300'}`}><LayoutGrid size={24} /></button>
         <button onClick={() => setActiveView('students')} className={`p-2 transition-all ${activeView === 'students' ? 'text-red-600 scale-110' : 'text-slate-300'}`}><Users size={24} /></button>

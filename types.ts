@@ -95,7 +95,7 @@ export interface Message {
   content: string;
 }
 
-export type ViewType = 'dashboard' | 'students' | 'trainers' | 'schedule' | 'attendance' | 'finance' | 'media' | 'league' | 'ai-coach' | 'analytics' | 'drills';
+export type ViewType = 'dashboard' | 'students' | 'trainers' | 'schedule' | 'attendance' | 'finance' | 'media' | 'league' | 'ai-coach' | 'analytics' | 'drills' | 'settings';
 export type AppMode = 'admin' | 'parent';
 
 export interface AppContextData {
