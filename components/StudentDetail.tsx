@@ -4,7 +4,7 @@ import {
   X, Phone, User, Activity, Trophy, GraduationCap, 
   Shield, ChevronRight, Save, Edit2, CheckCircle2,
   Droplets, Target, Calendar, UserPlus, School, Info,
-  Zap, Dumbbell, Timer, Brain, LayoutTemplate
+  Zap, Dumbbell, Timer, Brain, LayoutTemplate, Mail, Lock
 } from 'lucide-react';
 import { Student } from '../types';
 import { ACADEMY_GROUPS } from './StudentList';
@@ -97,7 +97,6 @@ const StudentDetail: React.FC<Props> = ({ student, onClose, onUpdate }) => {
                   </div>
                   <div>
                     <label className="text-[8px] text-zinc-500 font-black mb-1 block uppercase">GRUP / BRANŞ</label>
-                    {/* Fix: Line 101-102 - Changed sport to branchId to fix type error and match logical field for academy groups */}
                     <select 
                       value={editedData.branchId}
                       onChange={e => setEditedData({...editedData, branchId: e.target.value})}
@@ -145,7 +144,7 @@ const StudentDetail: React.FC<Props> = ({ student, onClose, onUpdate }) => {
         {activeTab === 'genel' && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
-              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2 italic"><UserPlus size={14} className="text-red-600" /> VELİ İLETİŞİM</p>
+              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2 italic"><UserPlus size={14} className="text-red-600" /> VELİ İLETİŞİM & ERİŞİM</p>
               <div className="space-y-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[9px] font-black text-gray-400 uppercase">VELİ ADI</label>
@@ -162,6 +161,26 @@ const StudentDetail: React.FC<Props> = ({ student, onClose, onUpdate }) => {
                   ) : (
                     <a href={`tel:${student.parentPhone}`} className="text-red-600 font-black text-sm italic flex items-center gap-2"><Phone size={14} /> {student.parentPhone}</a>
                   )}
+                </div>
+
+                {/* Giriş Bilgileri Bölümü */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 mt-2 border-t border-gray-50">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[9px] font-black text-gray-400 uppercase flex items-center gap-1"><Mail size={10}/> E-POSTA</label>
+                    {isEditing ? (
+                      <input type="email" value={editedData.parentEmail || ''} onChange={e => setEditedData({...editedData, parentEmail: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black outline-none focus:border-red-600" />
+                    ) : (
+                      <p className="font-black text-zinc-600 text-[11px] lowercase italic">{student.parentEmail || 'belirtilmemiş'}</p>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[9px] font-black text-gray-400 uppercase flex items-center gap-1"><Lock size={10}/> GİRİŞ ŞİFRESİ</label>
+                    {isEditing ? (
+                      <input type="text" value={editedData.password || ''} onChange={e => setEditedData({...editedData, password: e.target.value})} className="w-full px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-xs font-black outline-none focus:border-red-600" />
+                    ) : (
+                      <p className="font-black text-zinc-900 text-[11px] tracking-widest italic">{student.password || '123456'}</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
