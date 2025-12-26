@@ -47,14 +47,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
     }
 
     // 2. Mevcut Kayıtlı Üye (Veli) Kontrolü
-    // App state'indeki students listesinde bu email/şifre var mı?
     const registeredStudent = students.find(s => 
       s.parentEmail?.toLowerCase() === inputEmail || 
-      (s.id === '1' && inputEmail === 'veli@bgb.com') // Demo hesap desteği
+      (s.id === '1' && inputEmail === 'veli@bgb.com')
     );
 
     if (registeredStudent) {
-      // Demo hesap veya kayıtlı hesap şifre kontrolü
       const correctPass = registeredStudent.password || '123456';
       if (password === correctPass) {
         onLogin('parent');
@@ -62,15 +60,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
         setError('Veli şifresi hatalı!');
       }
     } else {
-      // Hiçbir eşleşme yoksa giriş reddedilir
       setError('Bu bilgilere sahip bir üye bulunamadı. Lütfen kayıt olun.');
     }
   };
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Email daha önce kullanılmış mı kontrolü
     if (students.some(s => s.parentEmail === formData.parentEmail)) {
       setError('Bu e-posta adresi zaten kullanımda!');
       return;
@@ -124,24 +119,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
               <div className="space-y-1 text-center">
                 <h2 className="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter text-slate-900 leading-none">SİSTEME <span className="text-[#E30613]">GİRİŞ</span></h2>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Resmi üye erişim paneli.</p>
-              </div>
-
-              {/* Bilgi Kutusu */}
-              <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-start gap-3">
-                <Info size={18} className="text-blue-600 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                   <p className="text-[10px] font-black text-blue-900 uppercase tracking-widest">DEMO BİLGİLERİ:</p>
-                   <div className="grid grid-cols-2 gap-4 mt-2">
-                     <div>
-                       <p className="text-[8px] font-black text-blue-400 uppercase">YÖNETİCİ</p>
-                       <p className="text-[9px] font-bold text-blue-700 italic leading-tight">enginuludagg@gmail.com<br/>Ş: Eu290202</p>
-                     </div>
-                     <div>
-                       <p className="text-[8px] font-black text-blue-400 uppercase">VELİ</p>
-                       <p className="text-[9px] font-bold text-blue-700 italic leading-tight">veli@bgb.com<br/>Ş: 123456</p>
-                     </div>
-                   </div>
-                </div>
               </div>
 
               {error && (
