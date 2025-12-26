@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   LayoutDashboard, Users, Calendar, Trophy, 
@@ -19,6 +18,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, setIsOpen, appMode, setAppMode }) => {
+  // Yönetici Menüsü - Tüm öğelerin burada olduğundan emin olunuyor
   const adminMenu = [
     { id: 'dashboard', label: 'Ana Panel', icon: LayoutDashboard },
     { id: 'students', label: 'Sporcu Rehberi', icon: Users },
@@ -33,6 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
     { id: 'ai-coach', label: 'BGB AI Asistan', icon: MessageSquare },
   ];
 
+  // Veli Menüsü - Sınırlı Erişim
   const parentMenu = [
     { id: 'dashboard', label: 'Sporcu Özeti', icon: LayoutDashboard },
     { id: 'schedule', label: 'Antrenman Takvimi', icon: Calendar },
@@ -52,6 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
 
   return (
     <>
+      {/* Mobil Menü Butonu */}
       <button 
         onClick={() => setIsOpen(!isOpen)} 
         className="lg:hidden fixed top-5 right-5 z-[2500] bg-red-600 text-white p-4 rounded-2xl shadow-2xl active:scale-90 transition-all border-2 border-white/20"
@@ -59,8 +61,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
+      {/* Sidebar Gövdesi */}
       <aside className={`fixed left-0 top-0 h-full w-64 bg-slate-900 text-white flex flex-col z-[2100] transition-all duration-300 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full shadow-none'}`}>
-        <div className="p-6 border-b border-slate-800">
+        <div className="p-6 border-b border-slate-800 flex-shrink-0">
           <div className="flex items-center gap-3">
             <Logo className="w-10 h-10" />
             <div>
@@ -71,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
           </div>
         </div>
 
-        <div className="px-6 pt-6">
+        <div className="px-6 pt-6 flex-shrink-0">
           <div className="w-full bg-slate-800/50 border border-slate-800 p-3 rounded-2xl flex items-center gap-3">
             <div className={`p-2 rounded-lg ${appMode === 'admin' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'}`}>
               {appMode === 'admin' ? <ShieldAlert size={16} /> : <UserCircle size={16} />}
@@ -85,7 +88,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
           </div>
         </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto no-scrollbar">
+        {/* Menü Listesi - Kaydırılabilir Alan */}
+        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto no-scrollbar scroll-smooth">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
@@ -104,7 +108,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-800 space-y-2">
+        <div className="p-4 border-t border-slate-800 space-y-2 flex-shrink-0">
            <button 
              onClick={() => window.location.reload()}
              className="w-full flex items-center gap-3 p-4 rounded-2xl bg-slate-800/30 hover:bg-red-600 hover:text-white transition-all text-slate-500 font-black text-[10px] uppercase tracking-widest"
@@ -114,6 +118,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
         </div>
       </aside>
       
+      {/* Mobil Arka Plan Perdesi */}
       {isOpen && (
         <div 
           onClick={() => setIsOpen(false)}

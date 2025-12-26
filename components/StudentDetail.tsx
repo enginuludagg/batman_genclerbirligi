@@ -97,9 +97,10 @@ const StudentDetail: React.FC<Props> = ({ student, onClose, onUpdate }) => {
                   </div>
                   <div>
                     <label className="text-[8px] text-zinc-500 font-black mb-1 block uppercase">GRUP / BRANŞ</label>
+                    {/* Fix: Line 101-102 - Changed sport to branchId to fix type error and match logical field for academy groups */}
                     <select 
-                      value={editedData.sport}
-                      onChange={e => setEditedData({...editedData, sport: e.target.value})}
+                      value={editedData.branchId}
+                      onChange={e => setEditedData({...editedData, branchId: e.target.value})}
                       className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-white font-bold"
                     >
                       {ACADEMY_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}

@@ -26,13 +26,17 @@ const App: React.FC = () => {
 
   const [students, setStudents] = useState<Student[]>([
     { 
-      id: '1', name: 'Arda Yılmaz', age: 11, birthYear: 2013, parentPhone: '0532 111 2233', sport: 'Futbol', branchId: 'U11', level: 'Orta', status: 'active', attendance: 92, lastTraining: 'Bugün', 
+      id: '1', name: 'Arda Yılmaz', age: 11, birthYear: 2013, parentPhone: '0532 111 2233', 
+      parentEmail: 'veli@bgb.com', password: '123456', // Demo için eklendi
+      sport: 'Futbol', branchId: 'U11', level: 'Orta', status: 'active', attendance: 92, lastTraining: 'Bugün', 
       stats: { strength: 65, speed: 45, stamina: 70, technique: 90 }, 
       physicalStats: { speed20m: 3.8, height: 145, weight: 38, sitUps: 25, pushUps: 15, sitAndReach: 12, thighLength: 35, run1500m: '06:45' },
       feeStatus: 'Paid' 
     },
     { 
-      id: '2', name: 'Zeynep Kaya', age: 12, birthYear: 2012, parentPhone: '0544 222 3344', sport: 'Voleybol', branchId: 'MİDİ KIZLAR', level: 'İleri', status: 'active', attendance: 95, lastTraining: 'Bugün', 
+      id: '2', name: 'Zeynep Kaya', age: 12, birthYear: 2012, parentPhone: '0544 222 3344', 
+      parentEmail: 'zeynep@bgb.com', password: '123456',
+      sport: 'Voleybol', branchId: 'MİDİ KIZLAR', level: 'İleri', status: 'active', attendance: 95, lastTraining: 'Bugün', 
       stats: { strength: 60, speed: 70, stamina: 85, technique: 95 }, 
       physicalStats: { speed20m: 3.5, height: 165, weight: 48, sitUps: 30, pushUps: 20, sitAndReach: 18, thighLength: 40, run1500m: '07:10' },
       feeStatus: 'Paid' 
@@ -82,7 +86,13 @@ const App: React.FC = () => {
   };
 
   if (!isLoggedIn) {
-    return <Auth onLogin={(mode) => { setIsLoggedIn(true); setAppMode(mode); }} onRegisterStudent={handleRegisterStudent} />;
+    return (
+      <Auth 
+        students={students} 
+        onLogin={(mode) => { setIsLoggedIn(true); setAppMode(mode); }} 
+        onRegisterStudent={handleRegisterStudent} 
+      />
+    );
   }
 
   return (

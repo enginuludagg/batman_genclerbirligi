@@ -7,6 +7,8 @@ export interface Student {
   birthYear?: number;
   parentPhone?: string;
   parentName?: string;
+  parentEmail?: string; // Giriş için eklendi
+  password?: string;    // Giriş için eklendi
   parentJob?: string;
   schoolName?: string;
   schoolGrade?: string;

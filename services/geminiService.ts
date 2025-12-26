@@ -3,7 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { AppContextData, Student, Drill } from "../types";
 
 /**
- * AI istemcisini her çağrıda tazeleyerek API key güncelliğini korur.
+ * AI istemcisini tazeleyerek API key güncelliğini korur.
  */
 const getAIClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -14,11 +14,12 @@ export const getAICoachResponse = async (userInput: string, context: AppContextD
   const ai = getAIClient();
   const systemInstruction = `
     Sen Batman Gençlerbirliği (BGB) Spor Kulübü'nün resmi yapay zeka asistanısın.
+    Batman/Türkiye merkezli bir futbol ve voleybol akademisisin.
     Görevlerin: 
-    1. Antrenörlere teknik ve idari konularda veri odaklı tavsiyeler vermek.
-    2. Batman ilinin ve kulübün ruhuna uygun, motive edici ve profesyonel bir dil kullanmak.
-    3. Kulüp verilerini (sporcu sayısı: ${context.students.length}, branşlar, antrenmanlar) kullanarak soruları yanıtlamak.
-    Dilin her zaman disiplinli ama samimi bir antrenör (Hoca) dili olmalı.
+    1. Antrenörlere teknik tavsiyeler vermek.
+    2. Kulüp verilerini (sporcu sayısı: ${context.students.length}) analiz etmek.
+    3. Batman'ın yerel spor kültürüne uygun, motive edici bir dille konuşmak.
+    Kısa, öz ve profesyonel bir antrenör (Hoca) gibi yanıt ver.
   `;
 
   try {
@@ -28,18 +29,17 @@ export const getAICoachResponse = async (userInput: string, context: AppContextD
       config: { 
         systemInstruction,
         temperature: 0.7,
-        thinkingConfig: { thinkingBudget: 0 } 
       }
     });
 
     const text = response.text;
-    if (!text) throw new Error("API boş yanıt döndürdü.");
+    if (!text) throw new Error("API yanıtı boş döndü.");
     
     return { text, functionCalls: [] };
   } catch (error) {
     console.error("BGB AI Error:", error);
     return { 
-      text: "Hocam şu an teknik bir kesinti yaşıyorum. Lütfen API anahtarınızı (process.env.API_KEY) kontrol edin veya birazdan tekrar deneyin.", 
+      text: "Hocam şu an bağlantıda bir sorun var. Lütfen birazdan tekrar deneyin veya internetinizi kontrol edin.", 
       functionCalls: [] 
     };
   }
@@ -50,20 +50,17 @@ export const getAICoachResponse = async (userInput: string, context: AppContextD
  */
 export const getCoachSuggestions = async (student: Student): Promise<string> => {
   const ai = getAIClient();
-  const prompt = `${student.name} isimli sporcumuz ${student.age} yaşında ve tekniği %${student.stats.technique}. Bu sporcu için kısa, motive edici bir gelişim notu yazar mısın?`;
-
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: [{ parts: [{ text: prompt }] }],
+      contents: [{ parts: [{ text: `${student.name} (${student.age} yaş) için gelişim notu yaz.` }] }],
       config: { 
         systemInstruction: "Sen profesyonel bir futbol akademisi teknik direktörüsün.",
-        thinkingConfig: { thinkingBudget: 0 }
       }
     });
-    return response.text || "Disiplinli çalışmaya devam, potansiyelin yüksek!";
+    return response.text || "Çalışmaya devam, potansiyelin yüksek!";
   } catch (error) {
-    return "Gelişimini yakından takip ediyorum, antrenmanlara devam!";
+    return "Gelişimini yakından takip ediyorum!";
   }
 };
 
@@ -75,14 +72,13 @@ export const getDrillAITips = async (drill: Drill): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: [{ parts: [{ text: `${drill.title} çalışması için kritik bir teknik ipucu ver.` }] }],
+      contents: [{ parts: [{ text: `${drill.title} antrenmanı için teknik ipucu ver.` }] }],
       config: { 
         systemInstruction: "Kısa ve öz teknik direktör tavsiyesi ver.",
-        thinkingConfig: { thinkingBudget: 0 }
       }
     });
-    return response.text || "Odaklanma ve tekrar başarının anahtarıdır.";
+    return response.text || "Hareketi doğru formda yapmaya odaklan.";
   } catch (error) {
-    return "Hareketi yavaş ve doğru formda yapmaya odaklan.";
+    return "Tekrar ve odaklanma başarının anahtarıdır.";
   }
 };
