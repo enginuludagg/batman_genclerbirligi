@@ -5,73 +5,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- PWA / Mobil Uygulama Ayarları -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BGB Akademi">
     
-    <!-- PWA Manifest - Göreceli yol kullanıldı -->
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Mobil İkonlar -->
-    <link rel="apple-touch-icon" href="https://i.ibb.co/LzhYpDCC/batman-logo.png">
+    <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="https://i.ibb.co/LzhYpDCC/batman-logo.png">
-    
-    <!-- Tema Rengi -->
     <meta name="theme-color" content="#1D2D4C">
     
     <title>Batman Gençlerbirliği | Akademi Yönetimi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,900&display=swap" rel="stylesheet">
     <style>
-        * {
-          box-sizing: border-box;
-          -webkit-tap-highlight-color: transparent;
-        }
-        html, body {
-          min-height: 100%;
-          width: 100%;
-          margin: 0;
-          padding: 0;
-          background-color: #f3f4f6;
-          -webkit-text-size-adjust: 100%;
-        }
-        body { 
-          font-family: 'Roboto', sans-serif;
-          color: #1f2937;
-          overflow-x: hidden;
-        }
-        #root {
-          min-height: 100vh;
-          width: 100%;
-        }
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        input, select, textarea {
-          font-size: 16px !important;
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Roboto', sans-serif; background-color: #f8fafc; margin: 0; }
+        #root { min-height: 100vh; }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "recharts": "https://esm.sh/recharts@^2.12.7",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
     "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "recharts": "https://esm.sh/recharts@^3.6.0",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
   }
 }
 </script>
 </head>
-<body class="antialiased selection:bg-red-600 selection:text-white">
+<body>
     <div id="root"></div>
-    <script type="module" src="index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
 </body>
 </html>
