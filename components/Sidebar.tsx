@@ -19,20 +19,20 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, setIsOpen, appMode, setAppMode }) => {
-  // Yönetici Menüsü
+  // Yönetici Menüsü - Ayarlar daha yukarı alındı
   const adminMenu = [
     { id: 'dashboard', label: 'Ana Panel', icon: LayoutDashboard },
+    { id: 'settings', label: 'Sistem Ayarları', icon: Settings, highlight: true },
     { id: 'students', label: 'Sporcu Rehberi', icon: Users },
     { id: 'trainers', label: 'Teknik Ekip', icon: GraduationCap },
-    { id: 'drills', label: 'Drill Kütüphanesi', icon: Dumbbell },
     { id: 'attendance', label: 'Yoklama', icon: UserCheck },
+    { id: 'drills', label: 'Drill Kütüphanesi', icon: Dumbbell },
     { id: 'schedule', label: 'Antrenman Takvimi', icon: Calendar },
     { id: 'finance', label: 'Finans Yönetimi', icon: Wallet },
     { id: 'media', label: 'BGB Medya', icon: Newspaper },
     { id: 'league', label: 'Lig & Fikstür', icon: Trophy },
     { id: 'analytics', label: 'Gelişim Analizi', icon: BarChart },
     { id: 'ai-coach', label: 'BGB AI Asistan', icon: MessageSquare },
-    { id: 'settings', label: 'Sistem Ayarları', icon: Settings },
   ];
 
   const parentMenu = [
@@ -91,15 +91,22 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
+            // Ayarlar için özel vurgu
+            const isHighlighted = (item as any).highlight;
+            
             return (
               <button
                 key={item.id}
                 onClick={() => handleNav(item.id as any)}
                 className={`flex items-center gap-4 w-full px-4 py-3.5 rounded-xl transition-all font-black text-xs uppercase tracking-widest ${
-                  isActive ? 'bg-red-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  isActive 
+                    ? 'bg-red-600 text-white shadow-lg scale-105' 
+                    : isHighlighted 
+                      ? 'text-red-400 hover:text-white hover:bg-red-600/10 border border-red-900/30' 
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <Icon size={18} />
+                <Icon size={18} className={isHighlighted && !isActive ? 'text-red-500' : ''} />
                 <span>{item.label}</span>
               </button>
             );

@@ -72,6 +72,7 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (activeView) {
       case 'dashboard': return <Dashboard context={contextData} appMode={appMode} onNavigate={handleDeepNav} />;
+      case 'settings': return <Settings />;
       case 'students': return <StudentList students={students} setStudents={setStudents} mode={appMode} />;
       case 'schedule': return <Schedule sessions={sessions} setSessions={setSessions} mode={appMode} />;
       case 'attendance': return <Attendance students={students.filter(s => s.status === 'active')} sessions={sessions} mode={appMode} />;
@@ -82,7 +83,6 @@ const App: React.FC = () => {
       case 'ai-coach': return <AICoach context={contextData} />;
       case 'trainers': return <TrainerManager trainers={[]} setTrainers={() => {}} mode={appMode} />;
       case 'drills': return <Drills />;
-      case 'settings' as ViewType: return <Settings />;
       default: return <Dashboard context={contextData} appMode={appMode} onNavigate={handleDeepNav} />;
     }
   };
