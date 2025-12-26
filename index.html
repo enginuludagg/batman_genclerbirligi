@@ -18,10 +18,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,900&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Roboto', sans-serif; background-color: #f8fafc; margin: 0; }
+        body { font-family: 'Roboto', sans-serif; background-color: #f8fafc; margin: 0; overflow-x: hidden; }
         #root { min-height: 100vh; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Ekran geçiş animasyonları */
+        .page-enter { opacity: 0; transform: translateY(10px); }
+        .page-enter-active { opacity: 1; transform: translateY(0); transition: all 0.5s ease; }
     </style>
 <script type="importmap">
 {

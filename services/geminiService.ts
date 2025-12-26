@@ -3,86 +3,86 @@ import { GoogleGenAI } from "@google/genai";
 import { AppContextData, Student, Drill } from "../types";
 
 /**
- * Creates a fresh AI instance to prevent stale API key issues.
+ * AI istemcisini her çağrıda tazeleyerek API key güncelliğini korur.
  */
-const getAIInstance = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAIClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
- * Generates development feedback for a student.
+ * BGB AI Asistanı için ana fonksiyon.
  */
-export const getCoachSuggestions = async (student: Student): Promise<string> => {
-  const ai = getAIInstance();
-  const s = student.stats;
-  
-  const systemPrompt = `
-    Sen Batman Gençlerbirliği Spor Kulübü'nün Baş Antrenörüsün.
-    Sporcu Analizi ve Karne Notu Hazırlayacaksın.
-    
-    Sporcu Verileri:
-    - İsim: ${student.name}
-    - Yaş: ${student.age}
-    - Teknik: %${s.technique}, Güç: %${s.strength}, Dayanıklılık: %${s.stamina}
-    
-    Talimat:
-    - Sporcunun zayıf yönlerine odaklanarak samimi bir antrenör diliyle tek cümlelik gelişim notu yaz.
+export const getAICoachResponse = async (userInput: string, context: AppContextData) => {
+  const ai = getAIClient();
+  const systemInstruction = `
+    Sen Batman Gençlerbirliği (BGB) Spor Kulübü'nün resmi yapay zeka asistanısın.
+    Görevlerin: 
+    1. Antrenörlere teknik ve idari konularda veri odaklı tavsiyeler vermek.
+    2. Batman ilinin ve kulübün ruhuna uygun, motive edici ve profesyonel bir dil kullanmak.
+    3. Kulüp verilerini (sporcu sayısı: ${context.students.length}, branşlar, antrenmanlar) kullanarak soruları yanıtlamak.
+    Dilin her zaman disiplinli ama samimi bir antrenör (Hoca) dili olmalı.
   `;
 
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: "Sporcuya kısa bir karne notu yaz.",
+      contents: [{ parts: [{ text: userInput }] }],
       config: { 
-        systemInstruction: systemPrompt,
+        systemInstruction,
+        temperature: 0.7,
         thinkingConfig: { thinkingBudget: 0 } 
       }
     });
-    return response.text || "Antrenmanlara düzenli katılarak gelişmeye devam etmelisin.";
+
+    const text = response.text;
+    if (!text) throw new Error("API boş yanıt döndürdü.");
+    
+    return { text, functionCalls: [] };
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    return "Gelişimini yakından takip ediyorum, disiplinli çalışmaya devam et.";
+    console.error("BGB AI Error:", error);
+    return { 
+      text: "Hocam şu an teknik bir kesinti yaşıyorum. Lütfen API anahtarınızı (process.env.API_KEY) kontrol edin veya birazdan tekrar deneyin.", 
+      functionCalls: [] 
+    };
   }
 };
 
 /**
- * Generates AI tips for a specific training drill.
+ * Sporcu için karne notu üretir.
+ */
+export const getCoachSuggestions = async (student: Student): Promise<string> => {
+  const ai = getAIClient();
+  const prompt = `${student.name} isimli sporcumuz ${student.age} yaşında ve tekniği %${student.stats.technique}. Bu sporcu için kısa, motive edici bir gelişim notu yazar mısın?`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: [{ parts: [{ text: prompt }] }],
+      config: { 
+        systemInstruction: "Sen profesyonel bir futbol akademisi teknik direktörüsün.",
+        thinkingConfig: { thinkingBudget: 0 }
+      }
+    });
+    return response.text || "Disiplinli çalışmaya devam, potansiyelin yüksek!";
+  } catch (error) {
+    return "Gelişimini yakından takip ediyorum, antrenmanlara devam!";
+  }
+};
+
+/**
+ * Antrenman drilleri için teknik ipucu üretir.
  */
 export const getDrillAITips = async (drill: Drill): Promise<string> => {
-  const ai = getAIInstance();
-  
-  const systemPrompt = `
-    Sen profesyonel bir elit akademi antrenörüsün.
-    Antrenman çalışması: ${drill.title}
-    Talimat: Bu çalışma için 1 adet çok spesifik teknik ipucu ver.
-  `;
-
+  const ai = getAIClient();
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: "Kısa teknik ipucu ver.",
-      config: { systemInstruction: systemPrompt }
+      contents: [{ parts: [{ text: `${drill.title} çalışması için kritik bir teknik ipucu ver.` }] }],
+      config: { 
+        systemInstruction: "Kısa ve öz teknik direktör tavsiyesi ver.",
+        thinkingConfig: { thinkingBudget: 0 }
+      }
     });
-    return response.text || "Hareketi yavaş ve kontrollü yaparak tekniği oturtmaya çalışın.";
+    return response.text || "Odaklanma ve tekrar başarının anahtarıdır.";
   } catch (error) {
-    return "Odaklanma ve tekrar sayısı başarının anahtarıdır.";
-  }
-};
-
-/**
- * Handles AI chat interactions for the Batman GB AI Assistant.
- */
-export const getAICoachResponse = async (userInput: string, context: AppContextData) => {
-  const ai = getAIInstance();
-  const systemPrompt = `Sen Batman GB AI Asistanısın. Kulüp yönetiminde yardımcı ol. Batman Gençlerbirliği Spor Kulübü verilerine erişimin var.`;
-  
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: userInput,
-      config: { systemInstruction: systemPrompt }
-    });
-    return { text: response.text || "Üzgünüm, şu an cevap veremiyorum.", functionCalls: [] };
-  } catch (error) { 
-    console.error("Gemini API Error:", error);
-    return { text: "Teknik bir hata oluştu. Lütfen sağ üstten API anahtarınızı kontrol edin.", functionCalls: [] }; 
+    return "Hareketi yavaş ve doğru formda yapmaya odaklan.";
   }
 };
