@@ -5,15 +5,16 @@ export interface Student {
   photoUrl?: string;
   age: number;
   birthYear?: number;
+  gender: 'Erkek' | 'Kız';
   parentPhone?: string;
   parentName?: string;
-  parentEmail?: string; // Giriş için eklendi
-  password?: string;    // Giriş için eklendi
+  parentEmail?: string; 
+  password?: string;    
   parentJob?: string;
   schoolName?: string;
   schoolGrade?: string;
   bloodType?: string;
-  sport: 'Futbol' | 'Voleybol'; 
+  sport: 'Futbol' | 'Voleybol' | 'Cimnastik';
   branchId: string;
   level: 'Başlangıç' | 'Orta' | 'İleri';
   status: 'active' | 'passive';
@@ -31,6 +32,17 @@ export interface Student {
     run1500m: string;
   };
   feeStatus: 'Paid' | 'Pending' | 'Overdue';
+}
+
+export interface TrainerNote {
+  id: string;
+  trainerName: string;
+  content: string;
+  date: string;
+  status: 'new' | 'read';
+  priority: 'low' | 'medium' | 'high';
+  category: 'Saha Dışı' | 'Malzeme' | 'Disiplin' | 'Gelişim';
+  targetScope: string; // Notun hangi branş/grup ile ilgili olduğu (Örn: 'Genel', 'U11', 'Voleybol')
 }
 
 export interface FinanceEntry {
@@ -95,7 +107,7 @@ export interface Message {
   content: string;
 }
 
-export type ViewType = 'dashboard' | 'students' | 'trainers' | 'schedule' | 'attendance' | 'finance' | 'media' | 'league' | 'ai-coach' | 'analytics' | 'drills' | 'settings';
+export type ViewType = 'dashboard' | 'students' | 'trainers' | 'schedule' | 'attendance' | 'finance' | 'media' | 'league' | 'ai-coach' | 'analytics' | 'drills' | 'settings' | 'notes';
 export type AppMode = 'admin' | 'parent';
 
 export interface AppContextData {
@@ -108,6 +120,7 @@ export interface AppContextData {
   drills: Drill[];
   attendance: any[];
   notifications: any[];
+  trainerNotes: TrainerNote[];
 }
 
 export interface LeagueTeam {

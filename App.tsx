@@ -12,9 +12,10 @@ import Attendance from './components/Attendance';
 import MediaManager from './components/MediaManager';
 import TrainerManager from './components/TrainerManager';
 import Drills from './components/Drills';
+import TrainerNotebook from './components/TrainerNotebook';
 import Auth from './components/Auth';
 import Settings from './components/Settings';
-import { ViewType, Student, Trainer, FinanceEntry, MediaPost, TrainingSession, AppMode, Notification } from './types';
+import { ViewType, Student, Trainer, FinanceEntry, MediaPost, TrainingSession, AppMode, Notification, Drill, TrainerNote } from './types';
 import { Bell, X, LogOut, LayoutGrid, Users, UserCheck, Wallet, Newspaper } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -27,7 +28,7 @@ const App: React.FC = () => {
 
   const [students, setStudents] = useState<Student[]>([
     { 
-      id: '1', name: 'Arda Yılmaz', age: 11, birthYear: 2013, parentPhone: '0532 111 2233', 
+      id: '1', name: 'Arda Yılmaz', age: 11, birthYear: 2013, gender: 'Erkek', parentPhone: '0532 111 2233', 
       parentEmail: 'veli@bgb.com', password: '123456', 
       sport: 'Futbol', branchId: 'U11', level: 'Orta', status: 'active', attendance: 92, lastTraining: 'Bugün', 
       stats: { strength: 65, speed: 45, stamina: 70, technique: 90 }, 
@@ -35,13 +36,31 @@ const App: React.FC = () => {
       feeStatus: 'Paid' 
     },
     { 
-      id: '2', name: 'Zeynep Kaya', age: 12, birthYear: 2012, parentPhone: '0544 222 3344', 
+      id: '2', name: 'Zeynep Kaya', age: 12, birthYear: 2012, gender: 'Kız', parentPhone: '0544 222 3344', 
       parentEmail: 'zeynep@bgb.com', password: '123456',
       sport: 'Voleybol', branchId: 'MİDİ KIZLAR', level: 'İleri', status: 'active', attendance: 95, lastTraining: 'Bugün', 
       stats: { strength: 60, speed: 70, stamina: 85, technique: 95 }, 
       physicalStats: { speed20m: 3.5, height: 165, weight: 48, sitUps: 30, pushUps: 20, sitAndReach: 18, thighLength: 40, run1500m: '07:10' },
       feeStatus: 'Paid' 
+    },
+    { 
+      id: '3', name: 'Can Özkan', age: 9, birthYear: 2015, gender: 'Erkek', parentPhone: '0555 333 4455', 
+      parentEmail: 'can@bgb.com', password: '123456',
+      sport: 'Cimnastik', branchId: 'MİNİKLER', level: 'Başlangıç', status: 'active', attendance: 88, lastTraining: 'Dün', 
+      stats: { strength: 40, speed: 50, stamina: 40, technique: 80 }, 
+      feeStatus: 'Paid' 
     }
+  ]);
+
+  const [trainerNotes, setTrainerNotes] = useState<TrainerNote[]>([
+    // Added missing 'targetScope' property to satisfy the TrainerNote interface
+    { id: 'n1', trainerName: 'Engin Hoca', content: 'U11 takımı için 5 adet yeni antrenman yeleği gerekiyor.', date: '22.05.2024', status: 'new', priority: 'medium', category: 'Malzeme', targetScope: 'U11' },
+    { id: 'n2', trainerName: 'Murat Hoca', content: 'Saha aydınlatmalarında 2 panel çalışmıyor, akşam antrenmanı için riskli.', date: '21.05.2024', status: 'read', priority: 'high', category: 'Saha Dışı', targetScope: 'Genel' }
+  ]);
+
+  const [drills, setDrills] = useState<Drill[]>([
+    { id: 'd1', title: 'Zikzak Dribbling', category: 'Teknik', difficulty: 2, duration: '15 Dakika', equipment: ['Huniler', 'Top'], description: 'Huni aralarından seri top sürme ve yön değiştirme çalışması.' },
+    { id: 'd2', title: 'Patlayıcı Kuvvet Sprint', category: 'Kondisyon', difficulty: 4, duration: '10 Dakika', equipment: ['Engeller'], description: 'Engeller üzerinden atlayıp 10 metre tam saha depar.' }
   ]);
 
   const [finance, setFinance] = useState<FinanceEntry[]>([
@@ -67,7 +86,7 @@ const App: React.FC = () => {
     setToast({ title: 'BAŞVURU ALINDI', message: 'Kaydınız teknik ekibe iletildi, sizinle iletişime geçeceğiz.' });
   };
 
-  const contextData = { students, trainers: [], finance, media, drills: [], sessions, attendance: [], branches: [], notifications: [] };
+  const contextData = { students, trainers: [], finance, media, drills, sessions, attendance: [], branches: [], notifications: [], trainerNotes };
 
   const renderView = () => {
     switch (activeView) {
@@ -82,7 +101,8 @@ const App: React.FC = () => {
       case 'analytics': return <Analytics students={students.filter(s => s.status === 'active')} setStudents={setStudents} mode={appMode} />;
       case 'ai-coach': return <AICoach context={contextData} />;
       case 'trainers': return <TrainerManager trainers={[]} setTrainers={() => {}} mode={appMode} />;
-      case 'drills': return <Drills />;
+      case 'drills': return <Drills drills={drills} setDrills={setDrills} mode={appMode} />;
+      case 'notes': return <TrainerNotebook notes={trainerNotes} setNotes={setTrainerNotes} mode={appMode} />;
       default: return <Dashboard context={contextData} appMode={appMode} onNavigate={handleDeepNav} />;
     }
   };
@@ -139,7 +159,7 @@ const App: React.FC = () => {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 px-6 py-4 flex justify-between items-center z-[2000] shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         <button onClick={() => setActiveView('dashboard')} className={`p-2 transition-all ${activeView === 'dashboard' ? 'text-red-600 scale-110' : 'text-slate-300'}`}><LayoutGrid size={24} /></button>
         <button onClick={() => setActiveView('students')} className={`p-2 transition-all ${activeView === 'students' ? 'text-red-600 scale-110' : 'text-slate-300'}`}><Users size={24} /></button>
-        <button onClick={() => setActiveView('attendance')} className={`p-2 transition-all ${activeView === 'attendance' ? 'text-red-600 scale-110' : 'text-slate-300'}`}><UserCheck size={24} /></button>
+        <button onClick={() => setActiveView('notes')} className={`p-2 transition-all ${activeView === 'notes' ? 'text-red-600 scale-110' : 'text-slate-300'}`}><Newspaper size={24} /></button>
         <button onClick={() => setActiveView('finance')} className={`p-2 transition-all ${activeView === 'finance' ? 'text-red-600 scale-110' : 'text-slate-300'}`}><Wallet size={24} /></button>
         <button onClick={() => setActiveView('media')} className={`p-2 transition-all ${activeView === 'media' ? 'text-red-600 scale-110' : 'text-slate-300'}`}><Newspaper size={24} /></button>
       </div>

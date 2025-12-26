@@ -16,7 +16,7 @@ const Settings: React.FC = () => {
       reader.onloadend = () => {
         const base64 = reader.result as string;
         setLogo(base64);
-        setLogoUrlInput(''); // Dosya yüklenirse URL'yi temizle
+        setLogoUrlInput('');
       };
       reader.readAsDataURL(file);
     }
@@ -38,7 +38,6 @@ const Settings: React.FC = () => {
         localStorage.removeItem('bgb_custom_logo');
       }
       
-      // Tüm sisteme değişikliği duyur
       window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(new Event('logoUpdated'));
       
@@ -74,13 +73,10 @@ const Settings: React.FC = () => {
           </div>
 
           <div className="flex flex-col items-center gap-6 py-2">
-            <div className="w-40 h-40 bg-gray-50 rounded-[2.5rem] border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden relative group">
-              {logo ? (
-                <img src={logo.includes('drive.google.com') ? logo.replace('file/d/', 'uc?export=view&id=').split('/view')[0] : logo} alt="Önizleme" className="w-full h-full object-contain p-2" />
-              ) : (
-                <Logo className="w-24 h-24" />
-              )}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            {/* Önizleme Alanı - Padding 0 yapıldı ve Logo bileşeni kullanıldı */}
+            <div className="w-44 h-44 bg-gray-50 rounded-[2.5rem] border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden relative group p-0">
+               <Logo className="w-full h-full" overrideUrl={logo} />
+               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                 <p className="text-[10px] text-white font-black uppercase tracking-widest">Logo Önizleme</p>
               </div>
             </div>
@@ -90,7 +86,7 @@ const Settings: React.FC = () => {
                 <input 
                   type="text" 
                   placeholder="Google Drive veya Resim Linki Yapıştır..." 
-                  className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold outline-none focus:border-red-600 transition-all"
+                  className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold outline-none focus:border-red-600 transition-all shadow-inner"
                   value={logoUrlInput}
                   onChange={(e) => setLogoUrlInput(e.target.value)}
                 />
@@ -134,10 +130,10 @@ const Settings: React.FC = () => {
             <h4 className="text-2xl font-black uppercase italic tracking-tighter mb-4 leading-none">PROFESYONEL <br/><span className="text-red-600">GÖRÜNÜM</span></h4>
             <ul className="space-y-4 mb-8">
               {[
-                "Logonuz otomatik olarak doğrudan resim linkine dönüştürülür.",
-                "Google Drive linklerini olduğu gibi yapıştırabilirsiniz.",
-                "Değişiklikler kaydedildiği an tüm veli ve sporcu panellerinde güncellenir.",
-                "Resmi oyuncu kartları yeni logonuzla oluşturulur."
+                "Logo alanı tüm dosya formatlarını (PNG, JPG, SVG) destekler.",
+                "Şeffaf (transparent) PNG kullanmanız arka planla uyum için önerilir.",
+                "Yüklediğiniz resim anında önizleme karesine tam olarak yerleşir.",
+                "Özel günlerde (bayramlar, şampiyonluklar) buradan hızlıca güncelleme yapabilirsiniz."
               ].map((text, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <div className="mt-1"><CheckCircle2 size={14} className="text-red-600" /></div>

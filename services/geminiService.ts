@@ -1,11 +1,57 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { AppContextData, Student, Drill } from "../types";
 
-/**
- * AI istemcisini tazeleyerek API key güncelliğini korur.
- */
 const getAIClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+/**
+ * AI tarafından yeni bir antrenman drilli üretir.
+ * Kulüp ismi konusunda kesin kısıtlamalar içerir.
+ */
+export const generateNewDrillFromAI = async (sport: string = 'Futbol'): Promise<Drill> => {
+  const ai = getAIClient();
+  const prompt = `Batman Gençlerbirliği (BGB) için ${sport} branşında, yaratıcı bir antrenman drilli üret.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: [{ parts: [{ text: prompt }] }],
+      config: {
+        systemInstruction: `Sen Batman Gençlerbirliği (BGB) kulübünün baş antrenörüsün. 
+        KESİNLİKLE Batman Petrolspor, Batman Kartalları veya başka bir kulüp ismini kullanma. 
+        Sadece "Batman Gençlerbirliği" veya "BGB" markasını temsil ediyorsun.
+        
+        Yanıtını SADECE aşağıdaki JSON formatında ver:
+        {
+          "title": "Drill Başlığı (Örn: BGB Teknik Pas Çalışması)",
+          "category": "Teknik" | "Kondisyon" | "Taktik" | "Eğlenceli Oyun",
+          "difficulty": 1-5 arası sayı,
+          "duration": "Örn: 20 Dakika",
+          "equipment": ["Ekipman 1", "Ekipman 2"],
+          "description": "Detaylı uygulama açıklaması (Kulüp isminden bahsedilecekse sadece BGB de)"
+        }`,
+        responseMimeType: "application/json",
+      }
+    });
+
+    const drillData = JSON.parse(response.text);
+    return {
+      ...drillData,
+      id: `ai-${Date.now()}`
+    };
+  } catch (error) {
+    console.error("Drill Generation Error:", error);
+    return {
+      id: `fallback-${Date.now()}`,
+      title: `BGB ${sport} Gelişim Çalışması`,
+      category: 'Teknik',
+      difficulty: 3,
+      duration: '15 Dakika',
+      equipment: ['Top', 'Huniler'],
+      description: 'Batman Gençlerbirliği standartlarına uygun teknik çalışma.'
+    };
+  }
+};
 
 /**
  * BGB AI Asistanı için ana fonksiyon.
@@ -13,13 +59,14 @@ const getAIClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 export const getAICoachResponse = async (userInput: string, context: AppContextData) => {
   const ai = getAIClient();
   const systemInstruction = `
-    Sen Batman Gençlerbirliği (BGB) Spor Kulübü'nün resmi yapay zeka asistanısın.
-    Batman/Türkiye merkezli bir futbol ve voleybol akademisisin.
+    Sen Batman Gençlerbirliği (BGB) Spor Kulübü'nün resmi ve tek yapay zeka asistanısın.
+    KİMLİK KURALI: Başka kulüp isimlerini (Petrolspor, Dinamo, Kartal vb.) asla anma, bunlarla karıştırılmaya çalışılırsa "Ben sadece Batman Gençlerbirliği'ne hizmet veriyorum" de.
+    Batman/Türkiye merkezli bir futbol, voleybol ve cimnastik akademisisin.
     Görevlerin: 
     1. Antrenörlere teknik tavsiyeler vermek.
-    2. Kulüp verilerini (sporcu sayısı: ${context.students.length}) analiz etmek.
+    2. Kulüp verilerini analiz etmek.
     3. Batman'ın yerel spor kültürüne uygun, motive edici bir dille konuşmak.
-    Kısa, öz ve profesyonel bir antrenör (Hoca) gibi yanıt ver.
+    Kısa, öz ve profesyonel bir BGB hocası gibi yanıt ver.
   `;
 
   try {
@@ -32,53 +79,36 @@ export const getAICoachResponse = async (userInput: string, context: AppContextD
       }
     });
 
-    const text = response.text;
-    if (!text) throw new Error("API yanıtı boş döndü.");
-    
-    return { text, functionCalls: [] };
+    return { text: response.text, functionCalls: [] };
   } catch (error) {
-    console.error("BGB AI Error:", error);
-    return { 
-      text: "Hocam şu an bağlantıda bir sorun var. Lütfen birazdan tekrar deneyin veya internetinizi kontrol edin.", 
-      functionCalls: [] 
-    };
+    return { text: "Hocam şu an bağlantıda bir sorun var, BGB teknik ekibi üzerinde çalışıyor.", functionCalls: [] };
   }
 };
 
-/**
- * Sporcu için karne notu üretir.
- */
 export const getCoachSuggestions = async (student: Student): Promise<string> => {
   const ai = getAIClient();
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: [{ parts: [{ text: `${student.name} (${student.age} yaş) için gelişim notu yaz.` }] }],
-      config: { 
-        systemInstruction: "Sen profesyonel bir futbol akademisi teknik direktörüsün.",
-      }
+      contents: [{ parts: [{ text: `${student.name} için gelişim notu yaz.` }] }],
+      config: { systemInstruction: "Batman Gençlerbirliği akademi direktörü gibi davran." }
     });
-    return response.text || "Çalışmaya devam, potansiyelin yüksek!";
+    return response.text || "BGB forması altında başarılar!";
   } catch (error) {
-    return "Gelişimini yakından takip ediyorum!";
+    return "Gelişimini BGB teknik ekibi olarak yakından takip ediyoruz!";
   }
 };
 
-/**
- * Antrenman drilleri için teknik ipucu üretir.
- */
 export const getDrillAITips = async (drill: Drill): Promise<string> => {
   const ai = getAIClient();
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: [{ parts: [{ text: `${drill.title} antrenmanı için teknik ipucu ver.` }] }],
-      config: { 
-        systemInstruction: "Kısa ve öz teknik direktör tavsiyesi ver.",
-      }
+      config: { systemInstruction: "BGB teknik direktörü olarak kısa ve öz tavsiye ver." }
     });
-    return response.text || "Hareketi doğru formda yapmaya odaklan.";
+    return response.text || "Hareketi BGB disipliniyle yapmaya odaklan.";
   } catch (error) {
-    return "Tekrar ve odaklanma başarının anahtarıdır.";
+    return "Tekrar ve BGB ruhu başarının anahtarıdır.";
   }
 };

@@ -87,22 +87,26 @@ const StudentDetail: React.FC<Props> = ({ student, onClose, onUpdate }) => {
                 />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
                   <div>
-                    <label className="text-[8px] text-zinc-500 font-black mb-1 block uppercase">DOĞUM YILI</label>
-                    <input 
-                      type="number"
-                      value={editedData.birthYear}
-                      onChange={e => handleBirthYearChange(parseInt(e.target.value))}
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-white font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[8px] text-zinc-500 font-black mb-1 block uppercase">GRUP / BRANŞ</label>
+                    <label className="text-[8px] text-zinc-500 font-black mb-1 block uppercase">CİNSİYET</label>
                     <select 
-                      value={editedData.branchId}
-                      onChange={e => setEditedData({...editedData, branchId: e.target.value})}
+                      value={editedData.gender}
+                      onChange={e => setEditedData({...editedData, gender: e.target.value as any})}
                       className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-white font-bold"
                     >
-                      {ACADEMY_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+                      <option value="Erkek">ERKEK</option>
+                      <option value="Kız">KIZ</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[8px] text-zinc-500 font-black mb-1 block uppercase">BRANŞ</label>
+                    <select 
+                      value={editedData.sport}
+                      onChange={e => setEditedData({...editedData, sport: e.target.value as any})}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-white font-bold"
+                    >
+                      <option value="Futbol">FUTBOL</option>
+                      <option value="Voleybol">VOLEYBOL</option>
+                      <option value="Cimnastik">CİMNASTİK</option>
                     </select>
                   </div>
                 </div>
@@ -111,8 +115,11 @@ const StudentDetail: React.FC<Props> = ({ student, onClose, onUpdate }) => {
               <>
                 <h2 className="text-xl sm:text-4xl font-black italic uppercase tracking-tighter leading-none">{student.name}</h2>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-4 text-zinc-500 font-black uppercase text-[10px] sm:text-xs tracking-widest">
+                  <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${student.gender === 'Kız' ? 'bg-pink-900/40 text-pink-500' : 'bg-blue-900/40 text-blue-500'}`}>
+                    {student.gender === 'Kız' ? '♀ KIZ' : '♂ ERKEK'}
+                  </span>
                   <span className="flex items-center gap-1.5 bg-zinc-900 px-3 py-1.5 rounded-full"><Shield size={14} className="text-red-600" /> {student.sport}</span>
-                  <span className="flex items-center gap-1.5 bg-zinc-900 px-3 py-1.5 rounded-full"><Calendar size={14} className="text-red-600" /> {student.age} YAŞ ({student.birthYear})</span>
+                  <span className="flex items-center gap-1.5 bg-zinc-900 px-3 py-1.5 rounded-full"><Calendar size={14} className="text-red-600" /> {student.age} YAŞ</span>
                 </div>
               </>
             )}
@@ -163,7 +170,6 @@ const StudentDetail: React.FC<Props> = ({ student, onClose, onUpdate }) => {
                   )}
                 </div>
 
-                {/* Giriş Bilgileri Bölümü */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 mt-2 border-t border-gray-50">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[9px] font-black text-gray-400 uppercase flex items-center gap-1"><Mail size={10}/> E-POSTA</label>
@@ -268,12 +274,12 @@ const StudentDetail: React.FC<Props> = ({ student, onClose, onUpdate }) => {
           <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
              <div className="bg-zinc-950 p-8 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] flex items-center justify-around text-white shadow-xl">
                 <div className="text-center">
-                  <p className="text-[10px] font-black text-zinc-500 mb-2 tracking-widest uppercase italic">GOL</p>
+                  <p className="text-[10px] font-black text-zinc-500 mb-2 tracking-widest uppercase italic">GOL / PUAN</p>
                   <p className="text-4xl sm:text-5xl font-black italic text-red-600">12</p>
                 </div>
                 <div className="w-px h-12 bg-zinc-800"></div>
                 <div className="text-center">
-                  <p className="text-[10px] font-black text-zinc-500 mb-2 tracking-widest uppercase italic">ASİST</p>
+                  <p className="text-[10px] font-black text-zinc-500 mb-2 tracking-widest uppercase italic">ASİST / DERECE</p>
                   <p className="text-4xl sm:text-5xl font-black italic text-white">8</p>
                 </div>
               </div>

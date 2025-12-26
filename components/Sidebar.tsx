@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Calendar, Trophy, 
   Wallet, UserCheck, Newspaper, GraduationCap, 
   BarChart, MessageSquare, Menu, X, ShieldAlert,
-  UserCircle, Settings, LogOut, Dumbbell
+  UserCircle, Settings, LogOut, Dumbbell, ClipboardList
 } from 'lucide-react';
 import { ViewType, AppMode } from '../types';
 import Logo from './Logo';
@@ -24,6 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
     { id: 'dashboard', label: 'Ana Panel', icon: LayoutDashboard },
     { id: 'settings', label: 'Sistem Ayarları', icon: Settings, highlight: true },
     { id: 'students', label: 'Sporcu Rehberi', icon: Users },
+    { id: 'notes', label: 'Antrenör Notları', icon: ClipboardList }, // Yeni eklendi
     { id: 'trainers', label: 'Teknik Ekip', icon: GraduationCap },
     { id: 'attendance', label: 'Yoklama', icon: UserCheck },
     { id: 'drills', label: 'Drill Kütüphanesi', icon: Dumbbell },

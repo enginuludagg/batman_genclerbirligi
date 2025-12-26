@@ -3,32 +3,38 @@ import React, { useEffect, useState } from 'react';
 
 /**
  * Google Drive linklerini doğrudan ve kararlı bir resim URL'sine dönüştürür.
- * lh3.googleusercontent.com formatı tarayıcılar tarafından daha iyi desteklenir.
  */
 const getDirectUrl = (url: string): string => {
   if (!url) return url;
-  
   if (url.startsWith('data:') || url.startsWith('blob:')) return url;
 
   if (url.includes('drive.google.com')) {
     const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
     if (idMatch && idMatch[1]) {
-      // Daha kararlı olan Google Content sunucusunu kullanıyoruz
       return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
     }
   }
   return url;
 };
 
-// Sizin gönderdiğiniz logonun ID'si
 const DEFAULT_ID = "1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup";
 const GLOBAL_LOGO_URL = `https://lh3.googleusercontent.com/d/${DEFAULT_ID}`; 
 
-const Logo: React.FC<{ className?: string }> = ({ className = "w-12 h-12" }) => {
+interface LogoProps {
+  className?: string;
+  overrideUrl?: string | null; // Ayarlar panelinde anlık önizleme için
+}
+
+const Logo: React.FC<LogoProps> = ({ className = "w-12 h-12", overrideUrl }) => {
   const [currentLogo, setCurrentLogo] = useState<string>(GLOBAL_LOGO_URL);
   const [hasError, setHasError] = useState(false);
 
   const updateLogo = () => {
+    if (overrideUrl) {
+      setCurrentLogo(getDirectUrl(overrideUrl));
+      setHasError(false);
+      return;
+    }
     const savedLogo = localStorage.getItem('bgb_custom_logo');
     if (savedLogo && savedLogo !== "") {
       setCurrentLogo(getDirectUrl(savedLogo));
@@ -40,14 +46,16 @@ const Logo: React.FC<{ className?: string }> = ({ className = "w-12 h-12" }) => 
 
   useEffect(() => {
     updateLogo();
-    window.addEventListener('storage', updateLogo);
-    window.addEventListener('logoUpdated', updateLogo);
+    if (!overrideUrl) {
+      window.addEventListener('storage', updateLogo);
+      window.addEventListener('logoUpdated', updateLogo);
+    }
     
     return () => {
       window.removeEventListener('storage', updateLogo);
       window.removeEventListener('logoUpdated', updateLogo);
     };
-  }, []);
+  }, [overrideUrl]);
 
   if (hasError || !currentLogo) {
     return (
@@ -66,11 +74,11 @@ const Logo: React.FC<{ className?: string }> = ({ className = "w-12 h-12" }) => 
       <img 
         src={currentLogo} 
         alt="BGB Logo" 
-        className="w-full h-full object-contain"
+        // image-rendering: pixelated veya high-quality logolarda daha net sonuç verebilir
+        className="w-full h-full object-contain block align-middle"
+        style={{ imageRendering: 'auto' }}
         crossOrigin="anonymous"
         onError={() => {
-          console.warn("Logo yüklenemedi, ID formatı değiştiriliyor...");
-          // Hata durumunda uc?id formatını tekrar dene
           if (!currentLogo.includes('uc?')) {
             const id = DEFAULT_ID;
             setCurrentLogo(`https://drive.google.com/uc?export=view&id=${id}`);
