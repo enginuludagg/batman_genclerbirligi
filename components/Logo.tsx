@@ -2,29 +2,27 @@
 import React, { useEffect, useState } from 'react';
 
 /**
- * Google Drive linklerini doğrudan resim URL'sine dönüştürür.
+ * Google Drive linklerini doğrudan ve kararlı bir resim URL'sine dönüştürür.
+ * lh3.googleusercontent.com formatı tarayıcılar tarafından daha iyi desteklenir.
  */
 const getDirectUrl = (url: string): string => {
   if (!url) return url;
   
-  // Eğer zaten bir base64 veya doğrudan resimse dokunma
   if (url.startsWith('data:') || url.startsWith('blob:')) return url;
 
   if (url.includes('drive.google.com')) {
-    // ID'yi yakalamak için daha güçlü bir regex
     const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
     if (idMatch && idMatch[1]) {
-      // uc?export=view bazen çalışmayabilir, o yüzden daha garantili olan thumbnail/preview linkini de deneyebiliriz
-      // Ancak çoğu durumda uc?id= en iyisidir
-      return `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+      // Daha kararlı olan Google Content sunucusunu kullanıyoruz
+      return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
     }
   }
   return url;
 };
 
-// Sizin gönderdiğiniz linkten çıkan kesin ID
-const DEFAULT_LOGO_ID = "1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup";
-const GLOBAL_LOGO_URL = `https://drive.google.com/uc?export=view&id=${DEFAULT_LOGO_ID}`; 
+// Sizin gönderdiğiniz logonun ID'si
+const DEFAULT_ID = "1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup";
+const GLOBAL_LOGO_URL = `https://lh3.googleusercontent.com/d/${DEFAULT_ID}`; 
 
 const Logo: React.FC<{ className?: string }> = ({ className = "w-12 h-12" }) => {
   const [currentLogo, setCurrentLogo] = useState<string>(GLOBAL_LOGO_URL);
@@ -51,7 +49,6 @@ const Logo: React.FC<{ className?: string }> = ({ className = "w-12 h-12" }) => 
     };
   }, []);
 
-  // Resim yüklenemezse (Drive izni vb.) yedek SVG döner
   if (hasError || !currentLogo) {
     return (
       <div className={`relative flex items-center justify-center select-none ${className}`}>
@@ -70,7 +67,17 @@ const Logo: React.FC<{ className?: string }> = ({ className = "w-12 h-12" }) => 
         src={currentLogo} 
         alt="BGB Logo" 
         className="w-full h-full object-contain"
-        onError={() => setHasError(true)}
+        crossOrigin="anonymous"
+        onError={() => {
+          console.warn("Logo yüklenemedi, ID formatı değiştiriliyor...");
+          // Hata durumunda uc?id formatını tekrar dene
+          if (!currentLogo.includes('uc?')) {
+            const id = DEFAULT_ID;
+            setCurrentLogo(`https://drive.google.com/uc?export=view&id=${id}`);
+          } else {
+            setHasError(true);
+          }
+        }}
       />
     </div>
   );

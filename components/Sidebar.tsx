@@ -19,7 +19,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, setIsOpen, appMode, setAppMode }) => {
-  // Yönetici Menüsü - Ayarlar daha yukarı alındı
+  // Yönetici Menüsü
   const adminMenu = [
     { id: 'dashboard', label: 'Ana Panel', icon: LayoutDashboard },
     { id: 'settings', label: 'Sistem Ayarları', icon: Settings, highlight: true },
@@ -91,7 +91,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
-            // Ayarlar için özel vurgu
             const isHighlighted = (item as any).highlight;
             
             return (
@@ -102,11 +101,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
                   isActive 
                     ? 'bg-red-600 text-white shadow-lg scale-105' 
                     : isHighlighted 
-                      ? 'text-red-400 hover:text-white hover:bg-red-600/10 border border-red-900/30' 
+                      ? 'bg-red-600/10 text-red-500 border border-red-600/30 shadow-[0_0_15px_rgba(227,6,19,0.1)]' 
                       : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <Icon size={18} className={isHighlighted && !isActive ? 'text-red-500' : ''} />
+                <Icon size={18} className={isHighlighted && !isActive ? 'text-red-500 animate-pulse' : ''} />
                 <span>{item.label}</span>
               </button>
             );

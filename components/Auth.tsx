@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Mail, Lock, UserPlus, ArrowRight, AlertCircle, Sparkles, CheckCircle2, Info, User } from 'lucide-react';
+import { Mail, Lock, UserPlus, ArrowRight, AlertCircle, Sparkles, CheckCircle2, Info, User, ShieldCheck } from 'lucide-react';
 import { AppMode, Student } from '../types';
 import Logo from './Logo';
 
@@ -156,10 +156,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
                 OTURUM AÇ <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
               </button>
 
-              <div className="pt-6 border-t border-gray-100 flex flex-col items-center gap-4">
-                 <p className="text-[11px] font-black text-slate-900 uppercase tracking-widest text-center italic">
-                   YENİ SPORCU KAYDI MI YAPACAKSINIZ?
-                 </p>
+              <div className="pt-4 flex flex-col items-center gap-4">
+                 <div className="flex items-center gap-2 text-[9px] font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-full uppercase tracking-widest border border-slate-100">
+                   <ShieldCheck size={14} className="text-red-600" /> Ayarlar için Admin Girişi Gerekir
+                 </div>
                  <button type="button" onClick={() => setView('register')} className="text-[10px] font-black text-[#E30613] uppercase tracking-[0.2em] flex items-center gap-2 hover:scale-105 transition-transform bg-red-50 px-8 py-4 rounded-full border border-red-100">
                     <UserPlus size={18} /> HEMEN KAYIT OL
                  </button>
