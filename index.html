@@ -21,7 +21,7 @@
     
     <title>BGB Akademi | V.1.2</title>
     
-    <!-- Tailwind CSS (Crossorigin eklendi) -->
+    <!-- Tailwind CSS (CORS hatasını önlemek için crossorigin eklendi) -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio" crossorigin="anonymous"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,900&display=swap" rel="stylesheet">
@@ -35,13 +35,26 @@
             background-color: #f8fafc; 
             margin: 0; 
             overflow-x: hidden;
+            overscroll-behavior-y: contain;
         }
         #root { min-height: 100vh; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Mobil Kaydırma İyileştirmeleri */
+        .mobile-snap {
+            scroll-snap-type: x mandatory;
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .mobile-snap-item {
+            scroll-snap-align: start;
+            flex-shrink: 0;
+        }
     </style>
     <script>
-      // Browser polyfills
+      // Global process polyfill
       window.process = { env: { API_KEY: "" } };
     </script>
 <script type="importmap">
@@ -63,16 +76,16 @@
 <body>
     <div id="root"></div>
     
-    <!-- Vite için doğru giriş noktası -->
+    <!-- Vite Giriş Noktası (Root'tan başlamalıdır) -->
     <script type="module" src="/index.tsx"></script>
     
     <script>
-        // Service Worker Kaydı (Daha güvenli yöntem)
-        if ('serviceWorker' in navigator) {
+        // Service Worker'ı sadece production ortamında ve hata vermeyecek şekilde yükle
+        if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                    .then(reg => console.log('BGB PWA Aktif'))
-                    .catch(err => console.error('PWA Kayıt Hatası:', err));
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.log('SW Kayıt Atlandı');
+                });
             });
         }
     </script>

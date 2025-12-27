@@ -1,26 +1,24 @@
 
-const CACHE_NAME = 'bgb-v1.2-cache';
+const CACHE_NAME = 'bgb-akademi-v1.2-cache';
 
-// Service worker kurulumu
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Aktivasyon ve eski cache temizliği
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      );
+    caches.keys().then((keys) => {
+      return Promise.all(keys.map((key) => caches.delete(key)));
     })
   );
   return self.clients.claim();
 });
 
-// Network-first stratejisi (Daha güvenli)
+// Dinamik fetch yönetimi (Hata vermemesi için basitleştirildi)
 self.addEventListener('fetch', (event) => {
+  // Sadece GET isteklerini izle
+  if (event.request.method !== 'GET') return;
+  
   event.respondWith(
     fetch(event.request).catch(() => {
       return caches.match(event.request);
