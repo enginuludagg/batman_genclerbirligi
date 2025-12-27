@@ -1,76 +1,56 @@
 
-import { Student, Trainer, TrainerNote, TrainingSession, FinanceEntry, MediaPost, Drill } from '../types';
+import { db } from "./firebaseConfig";
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  query, 
+  where 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 /**
- * Batman Gençlerbirliği (BGB) Veri Saklama Servisi
- * Çoklu telefon erişimi (Anne/Baba) desteği için optimize edilmiştir.
+ * BGB Veri Servisi (Cloud Modu)
+ * LocalStorage yerine verileri Firestore'da tutar.
  */
-
-const KEYS = {
-  STUDENTS: 'bgb_students',
-  TRAINERS: 'bgb_trainers',
-  NOTES: 'bgb_notes',
-  SESSIONS: 'bgb_sessions',
-  FINANCE: 'bgb_finance',
-  MEDIA: 'bgb_media',
-  DRILLS: 'bgb_drills',
-  DEVICE_ID: 'bgb_device_id'
+// Added missing keys for data entities to fix App.tsx property access errors
+export const KEYS = {
+  STUDENTS: 'students',
+  TRAINERS: 'trainers',
+  NOTES: 'notes',
+  SESSIONS: 'sessions',
+  FINANCE: 'finance',
+  MEDIA: 'media',
+  DRILLS: 'drills'
 };
 
 export const storageService = {
-  // Her cihaz için benzersiz bir kimlik oluşturur (Bulut senkronizasyonu için)
-  getDeviceId: () => {
-    let id = localStorage.getItem(KEYS.DEVICE_ID);
-    if (!id) {
-      id = 'dev_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem(KEYS.DEVICE_ID, id);
-    }
-    return id;
-  },
-
-  save: (key: string, data: any) => {
+  // Veriyi buluta kaydet
+  saveToCloud: async (colName: string, data: any) => {
     try {
-      localStorage.setItem(key, JSON.stringify(data));
-      return true;
+      const docRef = await addDoc(collection(db, colName), data);
+      return docRef.id;
     } catch (e) {
-      console.error('BGB Storage Error:', e);
-      return false;
+      console.error("Firebase Save Error:", e);
     }
   },
 
+  // Verileri buluttan çek
+  loadFromCloud: async (colName: string) => {
+    const querySnapshot = await getDocs(collection(db, colName));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  },
+
+  // Klasik yükleme (State başlatma için hala localStorage kullanılabilir)
   load: <T>(key: string, defaultValue: T): T => {
     const saved = localStorage.getItem(key);
     return saved ? JSON.parse(saved) : defaultValue;
   },
 
-  // Sistemi tamamen sıfırlamak için (Temiz kurulum)
-  clearAllData: () => {
-    Object.values(KEYS).forEach(key => {
-      if (key !== KEYS.DEVICE_ID) { // Cihaz ID'sini koruyalım, verileri silelim
-        localStorage.removeItem(key);
-      }
-    });
-    // Sayfayı yenileyerek state'leri sıfırla
-    window.location.reload();
-  },
-
-  syncAll: (data: {
-    students: Student[];
-    trainers: Trainer[];
-    notes: TrainerNote[];
-    sessions: TrainingSession[];
-    finance: FinanceEntry[];
-    media: MediaPost[];
-    drills: Drill[];
-  }) => {
-    storageService.save(KEYS.STUDENTS, data.students);
-    storageService.save(KEYS.TRAINERS, data.trainers);
-    storageService.save(KEYS.NOTES, data.notes);
-    storageService.save(KEYS.SESSIONS, data.sessions);
-    storageService.save(KEYS.FINANCE, data.finance);
-    storageService.save(KEYS.MEDIA, data.media);
-    storageService.save(KEYS.DRILLS, data.drills);
+  syncAll: (data: any) => {
+    // Mevcut yerel kaydı korur
+    localStorage.setItem('bgb_backup', JSON.stringify(data));
   }
 };
-
-export { KEYS };
