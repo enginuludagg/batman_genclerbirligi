@@ -5,58 +5,84 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- Mobil Uygulama Modu (PWA) -->
+    <!-- Mobil PWA Ayarları -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BGB Akademi">
     
     <link rel="manifest" href="/manifest.json">
-    
-    <!-- İkonlar -->
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup">
     <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup">
     
     <meta name="theme-color" content="#1D2D4C">
+    <title>BGB Akademi | Yönetim Paneli</title>
     
-    <title>BGB Akademi | V.1.2</title>
-    
-    <!-- Tailwind CSS (CORS hatasını önlemek için crossorigin eklendi) -->
+    <!-- Tailwind CSS (CORS Hatası İçin Crossorigin Eklendi) -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio" crossorigin="anonymous"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,900&display=swap" rel="stylesheet">
-    <style>
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
+    <script>
+      // Tailwind Konfigürasyonu (Tasarımı sabitlemek için)
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#E30613', // BGB Kırmızısı
+              secondary: '#1D2D4C', // BGB Laciverti
+              accent: '#f8fafc'
+            },
+            borderRadius: {
+              'bgb': '2rem',
+            }
+          }
         }
+      }
+    </script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS Fallback - Tailwind yüklenmezse bile temel yapı bozulmasın */
+        :root {
+            --bgb-red: #E30613;
+            --bgb-dark: #1D2D4C;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { 
             font-family: 'Roboto', sans-serif; 
             background-color: #f8fafc; 
             margin: 0; 
+            color: #1a1a1a;
             overflow-x: hidden;
             overscroll-behavior-y: contain;
         }
-        #root { min-height: 100vh; }
+        #root { min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Kaydırma çubuğu gizleme */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Mobil Kaydırma İyileştirmeleri */
-        .mobile-snap {
-            scroll-snap-type: x mandatory;
+
+        /* Yükleme Ekranı Animasyonu */
+        .loader-container {
+            position: fixed;
+            inset: 0;
+            background: var(--bgb-dark);
             display: flex;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
         }
-        .mobile-snap-item {
-            scroll-snap-align: start;
-            flex-shrink: 0;
+        .loader-logo {
+            width: 80px;
+            height: 80px;
+            animation: pulse 2s infinite ease-in-out;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
         }
     </style>
-    <script>
-      // Global process polyfill
-      window.process = { env: { API_KEY: "" } };
-    </script>
 <script type="importmap">
 {
   "imports": {
@@ -74,18 +100,35 @@
 </script>
 </head>
 <body>
-    <div id="root"></div>
-    
-    <!-- Vite Giriş Noktası (Root'tan başlamalıdır) -->
-    <script type="module" src="/index.tsx"></script>
+    <div id="root">
+        <!-- React yüklenene kadar görünecek splash screen -->
+        <div class="loader-container" id="splash-loader">
+            <img src="https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup" class="loader-logo" alt="BGB">
+        </div>
+    </div>
     
     <script>
-        // Service Worker'ı sadece production ortamında ve hata vermeyecek şekilde yükle
+      // Global process polyfill
+      window.process = { env: { API_KEY: "" } };
+      
+      // Splash ekranını React yüklendiğinde kaldır
+      window.addEventListener('load', () => {
+          setTimeout(() => {
+              const loader = document.getElementById('splash-loader');
+              if (loader) loader.style.opacity = '0';
+              setTimeout(() => loader?.remove(), 500);
+          }, 1000);
+      });
+    </script>
+
+    <!-- Vite Giriş Noktası -->
+    <script type="module" src="/index.tsx"></script>
+
+    <script>
         if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(err => {
-                    console.log('SW Kayıt Atlandı');
-                });
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .catch(err => console.log('SW Atlandı'));
             });
         }
     </script>

@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'bgb-akademi-v1.2-cache';
+const CACHE_NAME = 'bgb-akademi-static-v1';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -14,11 +14,11 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim();
 });
 
-// Dinamik fetch yönetimi (Hata vermemesi için basitleştirildi)
+// Sadece temel statik dosyaları izle, hatalı fetch'leri engelle
 self.addEventListener('fetch', (event) => {
-  // Sadece GET isteklerini izle
   if (event.request.method !== 'GET') return;
-  
+  if (!event.request.url.startsWith('http')) return;
+
   event.respondWith(
     fetch(event.request).catch(() => {
       return caches.match(event.request);

@@ -2,11 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getAnalytics } from "firebase/analytics";
 
-/**
- * BGB AKADEMİ - FIREBASE YAPILANDIRMASI
- */
 const firebaseConfig = {
   apiKey: "AIzaSyCELptObWbgYOALoNZaqJOPVssqJqDHVUs",
   authDomain: "batmangenclerbirligi.firebaseapp.com",
@@ -17,10 +13,9 @@ const firebaseConfig = {
   measurementId: "G-4D3MQ55VJD"
 };
 
-// Yapılandırma kontrolü
-export const isConfigured = firebaseConfig.apiKey !== "BURAYA_API_KEY_GELECEK";
+// Basit kontrol: API anahtarı varsayılan değilse yapılandırıldı say
+export const isConfigured = firebaseConfig.apiKey !== "BURAYA_API_KEY_GELECEK" && firebaseConfig.apiKey !== "";
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const analytics = getAnalytics(app);
