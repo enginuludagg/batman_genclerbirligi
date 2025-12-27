@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { ClipboardList, Plus, Search, CheckCircle2, AlertCircle, Clock, Trash2, X, Send, Sparkles, BrainCircuit, Filter, Layers } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ClipboardList, Plus, Search, CheckCircle2, AlertCircle, Clock, Trash2, X, Send, Sparkles, BrainCircuit, Filter, Layers, Save } from 'lucide-react';
 import { TrainerNote, AppMode } from '../types';
 
 interface Props {
@@ -18,6 +18,13 @@ const TrainerNotebook: React.FC<Props> = ({ notes, setNotes, mode }) => {
   const [newNote, setNewNote] = useState<Partial<TrainerNote>>({
     trainerName: '', content: '', priority: 'medium', category: 'Saha Dışı', targetScope: 'Genel'
   });
+  const firstInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isModalOpen && firstInputRef.current) {
+      setTimeout(() => firstInputRef.current?.focus(), 100);
+    }
+  }, [isModalOpen]);
 
   const handleSave = () => {
     if (!newNote.content) return;
@@ -153,33 +160,67 @@ const TrainerNotebook: React.FC<Props> = ({ notes, setNotes, mode }) => {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-           <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl relative animate-in zoom-in-95">
-              <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-black"><X size={24} /></button>
-              <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-6">YÖNETİME <span className="text-red-600">RAPOR YAZ</span></h3>
-              <div className="space-y-4">
+        <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md overflow-y-auto">
+           <div className="bg-white w-full max-w-lg rounded-[3rem] p-8 sm:p-10 shadow-2xl relative animate-in zoom-in-95 my-auto">
+              <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-black transition-colors"><X size={28} /></button>
+              <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-8 text-center">YÖNETİME <span className="text-red-600">RAPOR YAZ</span></h3>
+              
+              <div className="space-y-6">
                  <div className="grid grid-cols-2 gap-4">
-                    <input type="text" placeholder="İsminiz" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600" value={newNote.trainerName} onChange={e => setNewNote({...newNote, trainerName: e.target.value})} />
-                    <select className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none" value={newNote.targetScope} onChange={e => setNewNote({...newNote, targetScope: e.target.value})}>
-                      {SCOPES.map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
-                    </select>
+                    <div>
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">ANTRENÖR ADI</label>
+                      <input 
+                        ref={firstInputRef}
+                        type="text" 
+                        placeholder="Ad Soyad" 
+                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600 focus:bg-white transition-all shadow-sm" 
+                        value={newNote.trainerName} 
+                        onChange={e => setNewNote({...newNote, trainerName: e.target.value})} 
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">KAPSAM / GRUP</label>
+                      <select className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-red-600" value={newNote.targetScope} onChange={e => setNewNote({...newNote, targetScope: e.target.value})}>
+                        {SCOPES.map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
+                      </select>
+                    </div>
                  </div>
+
                  <div className="grid grid-cols-2 gap-4">
-                    <select className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none" value={newNote.category} onChange={e => setNewNote({...newNote, category: e.target.value as any})}>
-                      <option value="Saha Dışı">SAHA DIŞI</option>
-                      <option value="Malzeme">MALZEME</option>
-                      <option value="Disiplin">DİSİPLİN</option>
-                      <option value="Gelişim">GELİŞİM</option>
-                    </select>
-                    <select className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none" value={newNote.priority} onChange={e => setNewNote({...newNote, priority: e.target.value as any})}>
-                      <option value="low">DÜŞÜK</option>
-                      <option value="medium">ORTA</option>
-                      <option value="high">YÜKSEK (ACİL)</option>
-                    </select>
+                    <div>
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">KATEGORİ</label>
+                      <select className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-red-600" value={newNote.category} onChange={e => setNewNote({...newNote, category: e.target.value as any})}>
+                        <option value="Saha Dışı">SAHA DIŞI</option>
+                        <option value="Malzeme">MALZEME</option>
+                        <option value="Disiplin">DİSİPLİN</option>
+                        <option value="Gelişim">GELİŞİM</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">ÖNCELİK DURUMU</label>
+                      <select className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-red-600" value={newNote.priority} onChange={e => setNewNote({...newNote, priority: e.target.value as any})}>
+                        <option value="low">DÜŞÜK</option>
+                        <option value="medium">ORTA</option>
+                        <option value="high">YÜKSEK (ACİL)</option>
+                      </select>
+                    </div>
                  </div>
-                 <textarea placeholder="Rapor içeriği..." className="w-full p-5 bg-gray-50 border border-gray-100 rounded-[2rem] text-xs font-bold outline-none h-40 resize-none focus:border-red-600 shadow-inner" value={newNote.content} onChange={e => setNewNote({...newNote, content: e.target.value})} />
-                 <button onClick={handleSave} className="w-full py-5 bg-zinc-900 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-3">
-                   GÖNDER <Send size={18} />
+
+                 <div>
+                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">RAPOR İÇERİĞİ</label>
+                   <textarea 
+                    placeholder="Rapor detayı..." 
+                    className="w-full p-5 bg-gray-50 border border-gray-100 rounded-[2rem] text-xs font-bold outline-none h-40 resize-none focus:border-red-600 shadow-inner transition-all" 
+                    value={newNote.content} 
+                    onChange={e => setNewNote({...newNote, content: e.target.value})} 
+                   />
+                 </div>
+
+                 <button 
+                  onClick={handleSave} 
+                  className="w-full py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-3 mt-4"
+                 >
+                   RAPORU GÖNDER <Send size={18} />
                  </button>
               </div>
            </div>

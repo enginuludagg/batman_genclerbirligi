@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Mail, Lock, UserPlus, ArrowRight, AlertCircle, Sparkles, CheckCircle2, Info, User, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, UserPlus, ArrowRight, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { AppMode, Student } from '../types';
 import Logo from './Logo';
 
@@ -36,6 +36,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
     const adminEmails = ['enginuludagg@gmail.com', 'elitgelisimakademi@gmail.com'];
     const adminPassword = 'Eu290202';
 
+    // Admin Giriş Kontrolü
     if (adminEmails.includes(inputEmail)) {
       if (password === adminPassword) {
         onLogin('admin');
@@ -46,9 +47,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
       }
     }
 
+    // Veli Giriş Kontrolü - Sadece sistemdeki gerçek sporculara göre
     const registeredStudent = students.find(s => 
-      s.parentEmail?.toLowerCase() === inputEmail || 
-      (s.id === '1' && inputEmail === 'veli@bgb.com')
+      s.parentEmail?.toLowerCase() === inputEmail
     );
 
     if (registeredStudent) {
@@ -102,7 +103,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
           <div className="absolute top-0 right-0 w-80 h-80 bg-red-600/10 blur-[100px] rounded-full translate-x-1/3 -translate-y-1/3"></div>
           
           <div className="relative z-10 mb-6 sm:mb-8 flex justify-center">
-            {/* Konteynır eski boyutuna getirildi (w-32/sm:w-44), içindeki logo scale ile büyütüldü */}
             <div className="p-0 bg-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.4)] border-4 border-[#E30613] overflow-hidden flex items-center justify-center w-32 h-32 sm:w-44 sm:h-44 transition-transform duration-700 hover:scale-105">
               <Logo className="w-full h-full scale-[1.15] transform-gpu" />
             </div>

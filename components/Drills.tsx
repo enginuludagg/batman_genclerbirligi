@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Zap, Clock, Dumbbell, BrainCircuit, 
   ChevronRight, Sparkles, Filter, Star,
   Info, Loader2, PlayCircle, Plus, Trash2, X,
-  CalendarCheck, RefreshCw
+  CalendarCheck, RefreshCw, Save
 } from 'lucide-react';
 import { Drill, AppMode } from '../types';
 import { getDrillAITips, generateNewDrillFromAI } from '../services/geminiService';
@@ -21,23 +21,17 @@ const Drills: React.FC<Props> = ({ drills, setDrills, mode }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiTip, setAiTip] = useState<{ id: string, text: string } | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const firstInputRef = useRef<HTMLInputElement>(null);
   
   const [newDrill, setNewDrill] = useState<Partial<Drill>>({
     title: '', category: 'Teknik', difficulty: 3, duration: '20 Dakika', equipment: [], description: ''
   });
 
-  // Haftalık Otomatik Güncelleme Kontrolü
   useEffect(() => {
-    const lastUpdate = localStorage.getItem('bgb_drills_last_update');
-    const now = Date.now();
-    const oneWeek = 7 * 24 * 60 * 60 * 1000;
-
-    if (!lastUpdate || (now - parseInt(lastUpdate)) > oneWeek) {
-      console.log("Yeni haftalık driller isteniyor...");
-      // İsteğe bağlı olarak burada otomatik tetikleme yapılabilir 
-      // veya kullanıcıya bir bildirim gösterilebilir.
+    if (isAddModalOpen && firstInputRef.current) {
+      setTimeout(() => firstInputRef.current?.focus(), 100);
     }
-  }, []);
+  }, [isAddModalOpen]);
 
   const handleAIDrillGeneration = async (sport: string = 'Futbol') => {
     setIsGenerating(true);
@@ -90,7 +84,7 @@ const Drills: React.FC<Props> = ({ drills, setDrills, mode }) => {
           {mode === 'admin' && (
             <button 
               onClick={() => setIsAddModalOpen(true)}
-              className="bg-white border-2 border-zinc-900 text-zinc-900 px-5 py-2.5 rounded-xl flex items-center gap-2 font-black text-[10px] uppercase shadow-sm hover:bg-zinc-900 hover:text-white transition-all"
+              className="bg-zinc-950 text-white px-8 py-3.5 rounded-2xl flex items-center gap-2 font-black text-[10px] uppercase shadow-xl hover:bg-red-600 transition-all active:scale-95"
             >
               <Plus size={16} /> MANUEL EKLE
             </button>
@@ -184,19 +178,20 @@ const Drills: React.FC<Props> = ({ drills, setDrills, mode }) => {
       </div>
 
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-           <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl relative overflow-y-auto max-h-[90vh]">
-              <button onClick={() => setIsAddModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-black">
-                <X size={24} />
+        <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md overflow-y-auto">
+           <div className="bg-white w-full max-w-lg rounded-[3rem] p-8 sm:p-10 shadow-2xl relative animate-in zoom-in-95 my-auto">
+              <button onClick={() => setIsAddModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-black transition-colors">
+                <X size={28} />
               </button>
-              <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-6">YENİ <span className="text-red-600">DRİLL</span></h3>
+              <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-10 text-center">YENİ <span className="text-red-600">DRİLL EKLE</span></h3>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                  <div>
-                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">DRİLL ADI</label>
+                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">DRİLL BAŞLIĞI</label>
                    <input 
+                    ref={firstInputRef}
                     type="text" placeholder="Örn: 1v1 Hücum Varyasyonu" 
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600"
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600 focus:bg-white transition-all shadow-sm"
                     value={newDrill.title}
                     onChange={e => setNewDrill({...newDrill, title: e.target.value})}
                    />
@@ -204,9 +199,9 @@ const Drills: React.FC<Props> = ({ drills, setDrills, mode }) => {
 
                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">KATEGORİ</label>
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">KATEGORİ</label>
                       <select 
-                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none"
+                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-red-600"
                         value={newDrill.category}
                         onChange={e => setNewDrill({...newDrill, category: e.target.value as any})}
                       >
@@ -217,10 +212,10 @@ const Drills: React.FC<Props> = ({ drills, setDrills, mode }) => {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">ZORLUK (1-5)</label>
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">ZORLUK (1-5)</label>
                       <input 
                         type="number" min="1" max="5" 
-                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none"
+                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600"
                         value={newDrill.difficulty}
                         onChange={e => setNewDrill({...newDrill, difficulty: parseInt(e.target.value) as any})}
                       />
@@ -228,20 +223,21 @@ const Drills: React.FC<Props> = ({ drills, setDrills, mode }) => {
                  </div>
 
                  <div>
-                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">AÇIKLAMA</label>
+                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">DRİLL AÇIKLAMASI</label>
                    <textarea 
                     placeholder="Drill nasıl uygulanır? Detayları buraya yazın..." 
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none h-24 resize-none"
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none h-28 resize-none focus:border-red-600 transition-all shadow-inner"
                     value={newDrill.description}
                     onChange={e => setNewDrill({...newDrill, description: e.target.value})}
+                    onKeyDown={(e) => e.key === 'Enter' && e.ctrlKey && handleAddDrill()}
                    />
                  </div>
 
                  <button 
                   onClick={handleAddDrill}
-                  className="w-full py-5 bg-black text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-red-600 transition-all active:scale-95"
+                  className="w-full py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-3 mt-4"
                  >
-                   KÜTÜPHANEYE KAYDET
+                   <Save size={18} /> KÜTÜPHANEYE KAYDET
                  </button>
               </div>
            </div>

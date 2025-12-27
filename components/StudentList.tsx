@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, UserPlus, ChevronLeft, Save, Plus, ChevronRight, Trash2, CheckCircle2, AlertCircle, X, Upload
 } from 'lucide-react';
@@ -26,6 +26,7 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
   const [activeCategory, setActiveCategory] = useState('TÜM GRUPLAR');
   const [activeSport, setActiveSport] = useState<'Hepsi' | 'Futbol' | 'Voleybol' | 'Cimnastik'>('Hepsi');
   const [showPassive, setShowPassive] = useState(false);
+  const firstInputRef = useRef<HTMLInputElement>(null);
   
   const [newStudent, setNewStudent] = useState<Partial<Student>>({
     name: '', sport: 'Futbol', branchId: 'U12', gender: 'Erkek', level: 'Başlangıç', status: 'active', attendance: 100, photoUrl: '',
@@ -34,6 +35,9 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
 
   useEffect(() => {
     if (onModalStateChange) onModalStateChange(viewState !== 'list');
+    if (viewState === 'add' && firstInputRef.current) {
+      setTimeout(() => firstInputRef.current?.focus(), 100);
+    }
   }, [viewState, onModalStateChange]);
 
   const toggleStudentStatus = (e: React.MouseEvent, id: string) => {
@@ -166,28 +170,58 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
       </div>
 
       {viewState === 'add' && (
-        <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-y-auto">
-          <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl relative animate-in zoom-in-95">
-            <button onClick={() => setViewState('list')} className="absolute top-6 right-6 text-gray-400 hover:text-black"><X size={24} /></button>
-            <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-6">YENİ <span className="text-red-600">SPORCU EKLE</span></h3>
-            <div className="space-y-4">
-              <div className="flex flex-col items-center mb-6">
-                 <div onClick={() => document.getElementById('new-photo-up')?.click()} className="w-24 h-24 bg-gray-50 rounded-[1.5rem] border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer overflow-hidden relative group">
-                    {newStudent.photoUrl ? <img src={newStudent.photoUrl} className="w-full h-full object-cover" /> : <Upload size={24} className="text-gray-300" />}
+        <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md overflow-y-auto">
+          <div className="bg-white w-full max-w-lg rounded-[3rem] p-8 sm:p-12 shadow-2xl relative animate-in zoom-in-95 my-auto">
+            <button onClick={() => setViewState('list')} className="absolute top-6 right-6 text-gray-400 hover:text-black"><X size={28} /></button>
+            <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-8">YENİ <span className="text-red-600">SPORCU EKLE</span></h3>
+            
+            <div className="space-y-6">
+              <div className="flex flex-col items-center">
+                 <div onClick={() => document.getElementById('new-photo-up')?.click()} className="w-28 h-28 bg-gray-50 rounded-[2.5rem] border-4 border-dashed border-gray-100 flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-red-600 transition-all">
+                    {newStudent.photoUrl ? <img src={newStudent.photoUrl} className="w-full h-full object-cover" /> : <Upload size={32} className="text-gray-300" />}
                  </div>
                  <input type="file" id="new-photo-up" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
-                 <p className="text-[9px] font-black text-gray-400 uppercase mt-2">Profil Fotoğrafı</p>
+                 <p className="text-[9px] font-black text-gray-400 uppercase mt-3">Profil Fotoğrafı</p>
               </div>
-              <input type="text" placeholder="Sporcu Ad Soyad" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600" value={newStudent.name} onChange={e => setNewStudent({...newStudent, name: e.target.value})} />
-              <div className="grid grid-cols-2 gap-4">
-                <select className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none" value={newStudent.sport} onChange={e => setNewStudent({...newStudent, sport: e.target.value as any})}>
-                  <option value="Futbol">FUTBOL</option><option value="Voleybol">VOLEYBOL</option><option value="Cimnastik">CİMNASTİK</option>
-                </select>
-                <select className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none" value={newStudent.branchId} onChange={e => setNewStudent({...newStudent, branchId: e.target.value})}>
-                  {ACADEMY_GROUPS.filter(g => g !== 'TÜM GRUPLAR').map(g => <option key={g} value={g}>{g}</option>)}
-                </select>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">SPORCU AD SOYAD</label>
+                  <input 
+                    ref={firstInputRef}
+                    type="text" 
+                    placeholder="Ad Soyad giriniz..." 
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600 focus:bg-white transition-all shadow-sm" 
+                    value={newStudent.name} 
+                    onChange={e => setNewStudent({...newStudent, name: e.target.value})} 
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddStudent()}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">BRANŞ</label>
+                    <select className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-red-600" value={newStudent.sport} onChange={e => setNewStudent({...newStudent, sport: e.target.value as any})}>
+                      <option value="Futbol">FUTBOL</option>
+                      <option value="Voleybol">VOLEYBOL</option>
+                      <option value="Cimnastik">CİMNASTİK</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">GRUP</label>
+                    <select className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-red-600" value={newStudent.branchId} onChange={e => setNewStudent({...newStudent, branchId: e.target.value})}>
+                      {ACADEMY_GROUPS.filter(g => g !== 'TÜM GRUPLAR').map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </div>
+                </div>
               </div>
-              <button onClick={handleAddStudent} className="w-full py-5 bg-black text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-red-600 active:scale-95 transition-all mt-4">KAYDI TAMAMLA</button>
+
+              <button 
+                onClick={handleAddStudent} 
+                className="w-full py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-red-600 active:scale-95 transition-all mt-4 flex items-center justify-center gap-3"
+              >
+                <Save size={18} /> KAYDI TAMAMLA
+              </button>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Clock, MapPin, Users as GroupIcon, Calendar, Plus, Trash2, Edit3, X, ChevronDown } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Clock, MapPin, Users as GroupIcon, Calendar, Plus, Trash2, Edit3, X, ChevronDown, Save } from 'lucide-react';
 import { TrainingSession, AppMode } from '../types';
 
 interface Props {
@@ -15,9 +15,17 @@ const availableGroups = ['U10', 'U11', 'U12', 'U13', 'U14', 'U15', 'U16', 'U17',
 const Schedule: React.FC<Props> = ({ sessions, setSessions, mode }) => {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<TrainingSession | null>(null);
+  const firstInputRef = useRef<HTMLInputElement>(null);
+  
   const [newSession, setNewSession] = useState<Partial<TrainingSession>>({
     day: 'Pazartesi', title: '', group: 'U14', time: '18:00 - 19:30', location: ''
   });
+
+  useEffect(() => {
+    if ((isAddOpen || editingSession) && firstInputRef.current) {
+      setTimeout(() => firstInputRef.current?.focus(), 100);
+    }
+  }, [isAddOpen, editingSession]);
 
   const handleAdd = () => {
     if (!newSession.title || !newSession.group) return;
@@ -106,49 +114,75 @@ const Schedule: React.FC<Props> = ({ sessions, setSessions, mode }) => {
       </div>
 
       {(isAddOpen || editingSession) && (
-        <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-          <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
-            <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-6">ANTRENMAN <span className="text-red-600">{editingSession ? 'DÜZENLE' : 'PLANLA'}</span></h3>
+        <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md overflow-y-auto">
+          <div className="bg-white w-full max-w-lg rounded-[3rem] p-8 sm:p-10 shadow-2xl animate-in zoom-in-95 my-auto">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-2xl font-black italic uppercase tracking-tighter leading-none">ANTRENMAN <span className="text-red-600">{editingSession ? 'DÜZENLE' : 'PLANLA'}</span></h3>
+              <button onClick={() => { setIsAddOpen(false); setEditingSession(null); }} className="text-gray-400 hover:text-black transition-colors"><X size={28} /></button>
+            </div>
             
             <div className="space-y-5">
-              <input 
-                type="text" placeholder="Antrenman Adı" 
-                className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold outline-none focus:border-red-600 transition-colors"
-                value={editingSession ? editingSession.title : newSession.title}
-                onChange={e => editingSession ? setEditingSession({...editingSession, title: e.target.value}) : setNewSession({...newSession, title: e.target.value})}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <select 
-                  className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold outline-none focus:border-red-600"
-                  value={editingSession ? editingSession.day : newSession.day}
-                  onChange={e => editingSession ? setEditingSession({...editingSession, day: e.target.value}) : setNewSession({...newSession, day: e.target.value})}
-                >
-                  {days.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-                <select 
-                  className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold outline-none focus:border-red-600"
-                  value={editingSession ? editingSession.group : newSession.group}
-                  onChange={e => editingSession ? setEditingSession({...editingSession, group: e.target.value}) : setNewSession({...newSession, group: e.target.value})}
-                >
-                  {availableGroups.map(g => <option key={g} value={g}>{g}</option>)}
-                </select>
+              <div>
+                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">ANTRENMAN ADI</label>
+                <input 
+                  ref={firstInputRef}
+                  type="text" placeholder="Örn: Teknik Antrenman" 
+                  className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold outline-none focus:border-red-600 transition-colors"
+                  value={editingSession ? editingSession.title : newSession.title}
+                  onChange={e => editingSession ? setEditingSession({...editingSession, title: e.target.value}) : setNewSession({...newSession, title: e.target.value})}
+                />
               </div>
-              <input 
-                type="text" placeholder="Saat (Örn: 17:00 - 18:30)" 
-                className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold outline-none focus:border-red-600"
-                value={editingSession ? editingSession.time : newSession.time}
-                onChange={e => editingSession ? setEditingSession({...editingSession, time: e.target.value}) : setNewSession({...newSession, time: e.target.value})}
-              />
-              <input 
-                type="text" placeholder="Saha/Konum" 
-                className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold outline-none focus:border-red-600"
-                value={editingSession ? editingSession.location : newSession.location}
-                onChange={e => editingSession ? setEditingSession({...editingSession, location: e.target.value}) : setNewSession({...newSession, location: e.target.value})}
-              />
-              <button onClick={editingSession ? handleUpdate : handleAdd} className="w-full py-5 bg-black text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all mt-4">
-                {editingSession ? 'KAYDET' : 'PROGRAMA EKLE'}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">GÜN</label>
+                  <select 
+                    className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-red-600"
+                    value={editingSession ? editingSession.day : newSession.day}
+                    onChange={e => editingSession ? setEditingSession({...editingSession, day: e.target.value}) : setNewSession({...newSession, day: e.target.value})}
+                  >
+                    {days.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">YAŞ GRUBU</label>
+                  <select 
+                    className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-red-600"
+                    value={editingSession ? editingSession.group : newSession.group}
+                    onChange={e => editingSession ? setEditingSession({...editingSession, group: e.target.value}) : setNewSession({...newSession, group: e.target.value})}
+                  >
+                    {availableGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">SAAT ARALIĞI</label>
+                  <input 
+                    type="text" placeholder="18:00 - 19:30" 
+                    className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold outline-none focus:border-red-600"
+                    value={editingSession ? editingSession.time : newSession.time}
+                    onChange={e => editingSession ? setEditingSession({...editingSession, time: e.target.value}) : setNewSession({...newSession, time: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">SAHA / KONUM</label>
+                  <input 
+                    type="text" placeholder="BGB Tesisleri" 
+                    className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold outline-none focus:border-red-600"
+                    value={editingSession ? editingSession.location : newSession.location}
+                    onChange={e => editingSession ? setEditingSession({...editingSession, location: e.target.value}) : setNewSession({...newSession, location: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <button 
+                onClick={editingSession ? handleUpdate : handleAdd} 
+                className="w-full py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-red-600 active:scale-95 transition-all mt-4 flex items-center justify-center gap-3"
+              >
+                <Save size={18} /> {editingSession ? 'PROGRAMI GÜNCELLE' : 'PROGRAMA EKLE'}
               </button>
-              <button onClick={() => {setIsAddOpen(false); setEditingSession(null)}} className="w-full text-[10px] font-black text-gray-400 uppercase tracking-widest">KAPAT</button>
             </div>
           </div>
         </div>
