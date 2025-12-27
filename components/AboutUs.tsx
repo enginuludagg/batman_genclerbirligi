@@ -1,6 +1,6 @@
 
-import React, { useRef, useState } from 'react';
-import { Shield, Star, Award, Target, Quote, Medal, Trophy, Activity, Zap, Crown, CheckCircle2, Phone, School, Heart, Milestone, Camera, Plus, History, GraduationCap } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Shield, Star, Award, Quote, Medal, Trophy, Activity, Zap, Phone, School, History, GraduationCap, Camera, Milestone, CheckCircle2 } from 'lucide-react';
 import { Trainer, AppMode } from '../types';
 import Logo from './Logo';
 
@@ -13,6 +13,7 @@ interface Props {
 const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Teknik Direktör (Engin Uludağ) verisini filtrele veya varsayılan oluştur
   const founder = trainers.find(t => t.name.toLowerCase().includes('engin')) || {
     id: 'founder-default',
     name: 'Engin Uludağ',
@@ -41,7 +42,7 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/10 blur-[150px] -translate-y-1/2 translate-x-1/2"></div>
         
         <div className="relative z-10 p-10 sm:p-24 flex flex-col items-center text-center space-y-12">
-          {/* Logo Eğikliği Kaldırıldı - Tam Düz ve Kurumsal */}
+          {/* Kurumsal Logo - Düz ve Net */}
           <div className="w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-[3rem] p-3 shadow-2xl border-4 border-red-600 animate-in zoom-in duration-1000">
              <Logo className="w-full h-full" />
           </div>
@@ -62,10 +63,10 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
         </div>
       </section>
 
-      {/* 2. TEKNİK DİREKTÖR ÖZEL PROFİL (MESLEKİ ODAKLI) */}
+      {/* 2. TEKNİK DİREKTÖR ÖZEL PROFİL */}
       <section className="space-y-12">
         <div className="flex flex-col items-center text-center space-y-4">
-           <span className="bg-zinc-100 text-zinc-500 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border border-zinc-200">AKADEMİK LİDERLİK</span>
+           <span className="bg-zinc-100 text-zinc-500 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border border-zinc-200">TEKNİK YÖNETİM</span>
            <h2 className="text-4xl sm:text-6xl font-black italic uppercase tracking-tighter text-zinc-900 leading-none">
              TEKNİK DİREKTÖR <span className="text-red-600">VE ANTRENÖR</span>
            </h2>
@@ -113,7 +114,7 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
                  </div>
                  <h3 className="text-4xl sm:text-7xl font-black italic uppercase tracking-tighter text-zinc-950 leading-none">{founder.name}</h3>
                  
-                 {/* Uzmanlık Lisansları (Ana Odak) */}
+                 {/* Uzmanlık Lisansları (Yeterlilik Odaklı) */}
                  <div className="flex flex-wrap gap-3">
                     <div className="flex items-center gap-3 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl"><Trophy size={16} className="text-red-500" /> <span className="text-[11px] font-black uppercase tracking-widest">TFF Futbol C</span></div>
                     <div className="flex items-center gap-3 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl"><Activity size={16} className="text-red-500" /> <span className="text-[11px] font-black uppercase tracking-widest">TVF Voleybol 2.K</span></div>
@@ -193,7 +194,7 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
         </div>
       </section>
 
-      {/* 4. FOOTER - GELİŞİM VİZYONU (MÜTEVAZI VE GÜÇLÜ) */}
+      {/* 4. FOOTER - GELİŞİM VİZYONU (GÜNCEL) */}
       <section className="text-center space-y-10 py-24 bg-zinc-950 rounded-[4rem] text-white relative overflow-hidden">
          <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
          <div className="flex justify-center gap-6 relative z-10">
