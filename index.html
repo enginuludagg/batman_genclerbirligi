@@ -1,35 +1,30 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>BGB Akademi</title>
     
-    <!-- Mobil PWA Ayarları -->
+    <!-- PWA Ayarları -->
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="BGB Akademi">
+    <meta name="theme-color" content="#1D2D4C">
     
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup">
-    <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,900&display=swap" rel="stylesheet">
     
-    <meta name="theme-color" content="#1D2D4C">
-    <title>BGB Akademi | Yönetim Paneli</title>
-    
-    <!-- Tailwind CSS (CORS Hatası İçin Crossorigin Eklendi) -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio" crossorigin="anonymous"></script>
-    
+    <!-- Tailwind CSS (Standart CDN) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
     <script>
-      // Tailwind Konfigürasyonu (Tasarımı sabitlemek için)
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              primary: '#E30613', // BGB Kırmızısı
-              secondary: '#1D2D4C', // BGB Laciverti
-              accent: '#f8fafc'
+              primary: '#E30613',
+              secondary: '#1D2D4C',
             },
             borderRadius: {
               'bgb': '2rem',
@@ -38,62 +33,34 @@
         }
       }
     </script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,900&display=swap" rel="stylesheet">
-    
+
     <style>
-        /* CSS Fallback - Tailwind yüklenmezse bile temel yapı bozulmasın */
-        :root {
-            --bgb-red: #E30613;
-            --bgb-dark: #1D2D4C;
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { 
             font-family: 'Roboto', sans-serif; 
-            background-color: #f8fafc; 
-            margin: 0; 
-            color: #1a1a1a;
-            overflow-x: hidden;
+            background-color: #f8fafc;
+            margin: 0;
             overscroll-behavior-y: contain;
         }
-        #root { min-height: 100vh; display: flex; flex-direction: column; }
-        
-        /* Kaydırma çubuğu gizleme */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Yükleme Ekranı Animasyonu */
-        .loader-container {
-            position: fixed;
-            inset: 0;
-            background: var(--bgb-dark);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease-out;
-        }
-        .loader-logo {
-            width: 80px;
-            height: 80px;
-            animation: pulse 2s infinite ease-in-out;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 1; }
+        
+        #splash-loader {
+            position: fixed; inset: 0; background: #1D2D4C;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; transition: opacity 0.5s;
         }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
     "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
     "recharts": "https://esm.sh/recharts@^3.6.0",
-    "vite": "https://esm.sh/vite@^7.3.0",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "vite": "https://esm.sh/vite@^7.3.0",
     "firebase/": "https://esm.sh/firebase@^12.7.0/"
   }
 }
@@ -101,36 +68,24 @@
 </head>
 <body>
     <div id="root">
-        <!-- React yüklenene kadar görünecek splash screen -->
-        <div class="loader-container" id="splash-loader">
-            <img src="https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup" class="loader-logo" alt="BGB">
+        <div id="splash-loader">
+            <img src="https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup" width="80" height="80" alt="BGB">
         </div>
     </div>
     
     <script>
-      // Global process polyfill
+      // Process polyfill (Hataları önlemek için)
       window.process = { env: { API_KEY: "" } };
       
-      // Splash ekranını React yüklendiğinde kaldır
-      window.addEventListener('load', () => {
-          setTimeout(() => {
-              const loader = document.getElementById('splash-loader');
-              if (loader) loader.style.opacity = '0';
-              setTimeout(() => loader?.remove(), 500);
-          }, 1000);
-      });
+      // Yükleme ekranı yönetimi
+      window.onload = () => {
+        setTimeout(() => {
+           const l = document.getElementById('splash-loader');
+           if(l) { l.style.opacity = '0'; setTimeout(() => l.remove(), 500); }
+        }, 1000);
+      };
     </script>
-
-    <!-- Vite Giriş Noktası -->
+    
     <script type="module" src="/index.tsx"></script>
-
-    <script>
-        if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                    .catch(err => console.log('SW Atlandı'));
-            });
-        }
-    </script>
 </body>
 </html>

@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -9,24 +8,9 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    assetsDir: 'assets',
-    sourcemap: false,
-    emptyOutDir: true,
-    target: 'esnext',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'vendor-core': ['react', 'react-dom'],
-          'vendor-utils': ['lucide-react', 'recharts']
-        }
-      }
-    }
+    sourcemap: false
   },
   server: {
-    port: 3000,
-    strictPort: true,
-    headers: {
-      'Content-Type': 'application/javascript'
-    }
+    port: 3000
   }
 });

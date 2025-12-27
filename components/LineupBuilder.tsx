@@ -87,7 +87,7 @@ const LineupBuilder: React.FC<Props> = ({ students, onClose, onPostToMedia }) =>
   }, [mode]);
 
   const selectPlayer = (student: Student) => {
-    const inLineup = Object.values(lineup).some(s => s?.id === student.id);
+    const inLineup = (Object.values(lineup) as (Student | null)[]).some(s => s?.id === student.id);
     const inSubs = subs.some(s => s.id === student.id);
     if (inLineup || inSubs) return;
 
@@ -120,13 +120,16 @@ const LineupBuilder: React.FC<Props> = ({ students, onClose, onPostToMedia }) =>
         sport,
         mode,
         players: Object.entries(lineup)
-          .filter(([_, s]) => s)
-          .map(([id, s]) => ({ 
-            pos: id, 
-            name: s!.name, 
-            photo: s!.photoUrl,
-            number: s!.jerseyNumber 
-          })),
+          .filter(([_, s]) => s !== null)
+          .map(([id, s]) => {
+            const player = s as Student;
+            return { 
+              pos: id, 
+              name: player.name, 
+              photo: player.photoUrl,
+              number: player.jerseyNumber 
+            };
+          }),
         subs: subs.map(s => ({ 
           name: s.name, 
           photo: s.photoUrl,
@@ -301,7 +304,7 @@ const LineupBuilder: React.FC<Props> = ({ students, onClose, onPostToMedia }) =>
         {/* SPORCU LİSTESİ */}
         <div className="flex-1 overflow-y-auto p-6 space-y-2 no-scrollbar bg-white">
            {students.filter(s => s.sport === sport).map(s => {
-             const isSelected = Object.values(lineup).some(p => p?.id === s.id) || subs.some(sub => sub.id === s.id);
+             const isSelected = (Object.values(lineup) as (Student | null)[]).some(p => p?.id === s.id) || subs.some(sub => sub.id === s.id);
              return (
                <button 
                 key={s.id} 
