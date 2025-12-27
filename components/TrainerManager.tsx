@@ -17,7 +17,8 @@ const TrainerManager: React.FC<Props> = ({ trainers, setTrainers, mode }) => {
     specialty: 'Futbol Antrenörü', 
     phone: '', 
     groups: ['U11'], 
-    photoUrl: '' 
+    photoUrl: '',
+    biography: ''
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
@@ -45,19 +46,13 @@ const TrainerManager: React.FC<Props> = ({ trainers, setTrainers, mode }) => {
     if (!newTrainer.name) return;
     setTrainers([...trainers, { ...newTrainer as Trainer, id: Date.now().toString() }]);
     setIsAddOpen(false);
-    setNewTrainer({ name: '', specialty: 'Futbol Antrenörü', phone: '', groups: ['U11'], photoUrl: '' });
+    setNewTrainer({ name: '', specialty: 'Futbol Antrenörü', phone: '', groups: ['U11'], photoUrl: '', biography: '' });
   };
 
   const handleUpdate = () => {
     if (!editingTrainer || !editingTrainer.name) return;
     setTrainers(prev => prev.map(t => t.id === editingTrainer.id ? editingTrainer : t));
     setEditingTrainer(null);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      editingTrainer ? handleUpdate() : handleAdd();
-    }
   };
 
   return (
@@ -98,6 +93,7 @@ const TrainerManager: React.FC<Props> = ({ trainers, setTrainers, mode }) => {
               <p className="text-[10px] text-red-600 font-black uppercase tracking-[0.2em] mb-6 italic">{trainer.specialty}</p>
               
               <div className="space-y-4 pt-6 border-t border-gray-50">
+                <p className="text-[9px] font-bold text-gray-500 italic line-clamp-3">{trainer.biography || "Özgeçmiş bilgisi girilmemiş."}</p>
                 <div className="flex items-center justify-between font-black text-[9px] text-gray-400 uppercase">
                   <span>SORUMLU GRUPLAR</span>
                   <div className="flex flex-wrap gap-1 justify-end max-w-[150px]">
@@ -105,12 +101,6 @@ const TrainerManager: React.FC<Props> = ({ trainers, setTrainers, mode }) => {
                       <span key={g} className="bg-zinc-100 text-zinc-600 px-2 py-1 rounded text-[8px] whitespace-nowrap">{g}</span>
                     ))}
                   </div>
-                </div>
-                <div className="flex items-center justify-between font-black text-[9px] text-gray-400 uppercase">
-                  <span>İLETİŞİM</span>
-                  <a href={`tel:${trainer.phone}`} className="text-zinc-900 hover:text-red-600 flex items-center gap-1">
-                    <Phone size={14} /> {trainer.phone || 'Girilmedi'}
-                  </a>
                 </div>
               </div>
             </div>
@@ -168,7 +158,6 @@ const TrainerManager: React.FC<Props> = ({ trainers, setTrainers, mode }) => {
                     className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600 focus:bg-white transition-all shadow-sm" 
                     value={editingTrainer ? editingTrainer.name : newTrainer.name} 
                     onChange={e => editingTrainer ? setEditingTrainer({...editingTrainer, name: e.target.value}) : setNewTrainer({...newTrainer, name: e.target.value})} 
-                    onKeyDown={handleKeyDown}
                   />
                 </div>
 
@@ -181,34 +170,26 @@ const TrainerManager: React.FC<Props> = ({ trainers, setTrainers, mode }) => {
                       className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600 focus:bg-white transition-all shadow-sm" 
                       value={editingTrainer ? editingTrainer.specialty : newTrainer.specialty} 
                       onChange={e => editingTrainer ? setEditingTrainer({...editingTrainer, specialty: e.target.value}) : setNewTrainer({...newTrainer, specialty: e.target.value})} 
-                      onKeyDown={handleKeyDown}
                     />
                   </div>
                   <div>
-                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">TELEFON NUMARASI</label>
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">TELEFON</label>
                     <input 
                       type="tel" 
-                      placeholder="05xx ..." 
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600 focus:bg-white transition-all shadow-sm" 
+                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600" 
                       value={editingTrainer ? editingTrainer.phone : newTrainer.phone} 
                       onChange={e => editingTrainer ? setEditingTrainer({...editingTrainer, phone: e.target.value}) : setNewTrainer({...newTrainer, phone: e.target.value})} 
-                      onKeyDown={handleKeyDown}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">SORUMLU OLDUĞU GRUPLAR</label>
-                  <input 
-                    type="text" 
-                    placeholder="Örn: U11, U12, U14 (Virgülle ayırın)" 
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600 focus:bg-white transition-all shadow-sm" 
-                    value={editingTrainer ? editingTrainer.groups.join(', ') : newTrainer.groups?.join(', ')} 
-                    onChange={e => {
-                      const groups = e.target.value.split(',').map(g => g.trim()).filter(g => g !== '');
-                      editingTrainer ? setEditingTrainer({...editingTrainer, groups}) : setNewTrainer({...newTrainer, groups});
-                    }} 
-                    onKeyDown={handleKeyDown}
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">KISA ÖZGEÇMİŞ</label>
+                  <textarea 
+                    placeholder="Eğitim, kariyer ve başarı notları..." 
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold outline-none h-24 resize-none focus:border-red-600 shadow-inner"
+                    value={editingTrainer ? editingTrainer.biography : newTrainer.biography}
+                    onChange={e => editingTrainer ? setEditingTrainer({...editingTrainer, biography: e.target.value}) : setNewTrainer({...newTrainer, biography: e.target.value})}
                   />
                 </div>
               </div>

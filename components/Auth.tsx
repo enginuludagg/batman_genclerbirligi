@@ -31,9 +31,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
     const inputEmail = email.toLowerCase().trim();
-    // Admin listesi (Gelecekte veritabanından gelecek)
     const adminEmails = ['enginuludagg@gmail.com', 'elitgelisimakademi@gmail.com', 'admin@bgb.com'];
     const adminPassword = 'Eu290202';
 
@@ -47,18 +45,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
       }
     }
 
-    // Veli Girişi - Aynı e-posta ile birden fazla telefon giriş yapabilir
-    const registeredStudent = students.find(s => 
-      s.parentEmail?.toLowerCase() === inputEmail
-    );
-
+    const registeredStudent = students.find(s => s.parentEmail?.toLowerCase() === inputEmail);
     if (registeredStudent) {
       const correctPass = registeredStudent.password || '123456';
-      if (password === correctPass) {
-        onLogin('parent');
-      } else {
-        setError('Veli şifresi hatalı! Lütfen kontrol ediniz.');
-      }
+      if (password === correctPass) onLogin('parent');
+      else setError('Veli şifresi hatalı! Lütfen kontrol ediniz.');
     } else {
       setError('Bu e-posta ile kayıtlı sporcu bulunamadı. Lütfen yeni kayıt oluşturun.');
     }
@@ -82,6 +73,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
       parentEmail: formData.parentEmail,
       password: formData.parentPassword,
       sport: formData.studentSport as 'Futbol' | 'Voleybol' | 'Cimnastik',
+      activeSports: [formData.studentSport as 'Futbol' | 'Voleybol' | 'Cimnastik'],
       branchId: formData.studentGroup,
       level: 'Başlangıç',
       status: 'passive',
@@ -103,16 +95,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
         
         <div className="bg-[#1D2D4C] p-8 sm:p-10 text-center relative overflow-hidden flex-shrink-0">
           <div className="absolute top-0 right-0 w-80 h-80 bg-red-600/10 blur-[100px] rounded-full translate-x-1/3 -translate-y-1/3"></div>
-          
           <div className="relative z-10 mb-4 sm:mb-6 flex justify-center">
             <div className="p-0 bg-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.4)] border-4 border-[#E30613] overflow-hidden flex items-center justify-center w-28 h-28 sm:w-36 sm:h-36 transition-transform duration-700 hover:scale-105">
               <Logo className="w-full h-full scale-[1.15] transform-gpu" />
             </div>
           </div>
-
-          <h1 className="text-white text-xl sm:text-3xl font-black italic uppercase tracking-tighter relative z-10 leading-none">
-            BATMAN <span className="text-[#E30613]">GENÇLERBİRLİĞİ</span>
-          </h1>
+          <h1 className="text-white text-xl sm:text-3xl font-black italic uppercase tracking-tighter relative z-10 leading-none">BATMAN <span className="text-[#E30613]">GENÇLERBİRLİĞİ<sup>®</sup></span></h1>
           <p className="text-slate-400 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.4em] mt-2 italic relative z-10 opacity-70">AKADEMİ PORTALI</p>
         </div>
 
@@ -121,60 +109,19 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
             <form onSubmit={handleLogin} className="space-y-6 sm:space-y-8 h-full flex flex-col justify-center">
               <div className="space-y-1 text-center">
                 <h2 className="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter text-slate-900 leading-none">SİSTEME <span className="text-[#E30613]">GİRİŞ</span></h2>
-                <div className="flex items-center justify-center gap-2 mt-1">
-                   <Users size={14} className="text-gray-400" />
-                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Aile içi ortak erişim desteklenir.</p>
-                </div>
+                <div className="flex items-center justify-center gap-2 mt-1"><Users size={14} className="text-gray-400" /><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Aile içi ortak erişim desteklenir.</p></div>
               </div>
-
-              {error && (
-                <div className="p-4 bg-red-50 text-[#E30613] text-[11px] font-black uppercase rounded-2xl border border-red-100 flex items-center gap-3 animate-shake">
-                  <AlertCircle size={20} className="flex-shrink-0" /> {error}
-                </div>
-              )}
-
+              {error && (<div className="p-4 bg-red-50 text-[#E30613] text-[11px] font-black uppercase rounded-2xl border border-red-100 flex items-center gap-3 animate-shake"><AlertCircle size={20} className="flex-shrink-0" /> {error}</div>)}
               <div className="space-y-3 sm:space-y-4">
-                <div className="relative group">
-                  <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#E30613] transition-colors" size={20} />
-                  <input 
-                    type="email" 
-                    placeholder="Kayıtlı Veli E-postası" 
-                    className="w-full pl-16 pr-8 py-5 bg-gray-50 border border-gray-100 rounded-[2rem] text-sm font-black outline-none focus:border-[#E30613] focus:bg-white transition-all shadow-inner" 
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="relative group">
-                  <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#E30613] transition-colors" size={20} />
-                  <input 
-                    type="password" 
-                    placeholder="Şifreniz" 
-                    className="w-full pl-16 pr-8 py-5 bg-gray-50 border border-gray-100 rounded-[2rem] text-sm font-black outline-none focus:border-[#E30613] focus:bg-white transition-all shadow-inner" 
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
+                <div className="relative group"><Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#E30613] transition-colors" size={20} /><input type="email" placeholder="Kayıtlı Veli E-postası" className="w-full pl-16 pr-8 py-5 bg-gray-50 border border-gray-100 rounded-[2rem] text-sm font-black outline-none focus:border-[#E30613] focus:bg-white transition-all shadow-inner" value={email} onChange={e => setEmail(e.target.value)} required /></div>
+                <div className="relative group"><Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#E30613] transition-colors" size={20} /><input type="password" placeholder="Şifreniz" className="w-full pl-16 pr-8 py-5 bg-gray-50 border border-gray-100 rounded-[2rem] text-sm font-black outline-none focus:border-[#E30613] focus:bg-white transition-all shadow-inner" value={password} onChange={e => setPassword(e.target.value)} required /></div>
               </div>
-
-              <button type="submit" className="w-full py-5 sm:py-6 bg-[#1D2D4C] text-white rounded-[2rem] font-black text-sm uppercase tracking-[0.25em] shadow-2xl flex items-center justify-center gap-3 hover:bg-[#E30613] transition-all active:scale-[0.97] group">
-                PANELİ AÇ <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
-              </button>
-
-              <div className="pt-4 flex flex-col items-center gap-4">
-                 <button type="button" onClick={() => setView('register')} className="text-[10px] font-black text-[#E30613] uppercase tracking-[0.2em] flex items-center gap-2 hover:scale-105 transition-transform bg-red-50 px-8 py-4 rounded-full border border-red-100">
-                    <UserPlus size={18} /> YENİ SPORCU KAYDI
-                 </button>
-              </div>
+              <button type="submit" className="w-full py-5 sm:py-6 bg-[#1D2D4C] text-white rounded-[2rem] font-black text-sm uppercase tracking-[0.25em] shadow-2xl flex items-center justify-center gap-3 hover:bg-[#E30613] transition-all active:scale-[0.97] group">PANELİ AÇ <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" /></button>
+              <div className="pt-4 flex flex-col items-center gap-4"><button type="button" onClick={() => setView('register')} className="text-[10px] font-black text-[#E30613] uppercase tracking-0.2em flex items-center gap-2 hover:scale-105 transition-transform bg-red-50 px-8 py-4 rounded-full border border-red-100"><UserPlus size={18} /> YENİ SPORCU KAYDI</button></div>
             </form>
           ) : (
             <form onSubmit={handleRegister} className="space-y-6 sm:space-y-8">
-              <div className="space-y-1">
-                <h2 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900 leading-none">YENİ <span className="text-[#E30613]">KAYIT</span></h2>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Akademi ailesine katılın.</p>
-              </div>
-
+              <div className="space-y-1"><h2 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900 leading-none">YENİ <span className="text-[#E30613]">KAYIT</span></h2><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Akademi ailesine katılın.</p></div>
               <div className="space-y-4 max-h-[350px] overflow-y-auto no-scrollbar pr-2">
                 <div className="bg-slate-50 p-6 rounded-[2.5rem] space-y-3 border border-slate-100">
                   <p className="text-[9px] font-black text-slate-400 uppercase italic">AİLE & GİRİŞ BİLGİLERİ</p>
@@ -183,37 +130,27 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
                   <input type="password" placeholder="Giriş Şifresi Belirleyin" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.parentPassword} onChange={e => setFormData({...formData, parentPassword: e.target.value})} />
                   <input type="tel" placeholder="İletişim Numarası" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.parentPhone} onChange={e => setFormData({...formData, parentPhone: e.target.value})} />
                 </div>
-
                 <div className="bg-slate-50 p-6 rounded-[2.5rem] space-y-3 border border-slate-100">
                   <p className="text-[9px] font-black text-slate-400 uppercase italic">SPORCU BİLGİLERİ</p>
                   <input type="text" placeholder="Sporcu Ad Soyad" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.studentName} onChange={e => setFormData({...formData, studentName: e.target.value})} />
-                  <div className="grid grid-cols-2 gap-3">
-                    <select className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-[#E30613]" value={formData.studentGender} onChange={e => setFormData({...formData, studentGender: e.target.value})}>
-                      <option value="Erkek">♂ ERKEK</option>
-                      <option value="Kız">♀ KIZ</option>
-                    </select>
-                    <input type="number" placeholder="Doğum Yılı" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.studentBirthYear} onChange={e => setFormData({...formData, studentBirthYear: e.target.value})} />
-                  </div>
+                  <div className="grid grid-cols-2 gap-3"><select className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-[#E30613]" value={formData.studentGender} onChange={e => setFormData({...formData, studentGender: e.target.value})}><option value="Erkek">♂ ERKEK</option><option value="Kız">♀ KIZ</option></select><input type="number" placeholder="Doğum Yılı" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.studentBirthYear} onChange={e => setFormData({...formData, studentBirthYear: e.target.value})} /></div>
                 </div>
               </div>
-
-              <div className="space-y-3">
-                <button type="submit" className="w-full py-5 bg-[#E30613] text-white rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl flex items-center justify-center gap-3 hover:bg-[#1D2D4C] transition-all active:scale-[0.97]">
-                  KAYIT OL VE GİRİŞ YAP <CheckCircle2 size={20} />
-                </button>
-                <button type="button" onClick={() => setView('login')} className="w-full text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] text-center">ZATEN ÜYEYİM</button>
-              </div>
+              <div className="space-y-3"><button type="submit" className="w-full py-5 bg-[#E30613] text-white rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl flex items-center justify-center gap-3 hover:bg-[#1D2D4C] transition-all active:scale-[0.97]">KAYIT OL VE GİRİŞ YAP <CheckCircle2 size={20} /></button><button type="button" onClick={() => setView('login')} className="w-full text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] text-center">ZATEN ÜYEYİM</button></div>
             </form>
           )}
 
-          <div className="mt-10 sm:mt-12 pt-6 border-t border-gray-50 flex flex-col items-center justify-center gap-3">
-             <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full border border-slate-100">
+          <div className="mt-10 sm:mt-12 pt-6 border-t border-gray-50 flex flex-col items-center justify-center text-center">
+             <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full border border-slate-100 mb-4">
                 <ShieldCheck size={14} className="text-[#1D2D4C]" />
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Çoklu Cihaz Desteği Aktif</span>
              </div>
-             <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] italic">
-                BGB Akademi <span className="text-zinc-800">Yazılım Altyapısı</span>
-             </p>
+             <div className="space-y-1">
+                <p className="text-[7px] font-black text-slate-300 uppercase tracking-widest">BGB AKADEMİ YAZILIM ALTYAPISI</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] italic">
+                   powered by <span className="text-zinc-800">Engin Uludağ</span>
+                </p>
+             </div>
           </div>
         </div>
       </div>

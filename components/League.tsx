@@ -1,23 +1,20 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Trophy, X, MapPin, Plus, Trash2, LayoutTemplate, Calendar, Clock as ClockIcon, Save } from 'lucide-react';
-import { LeagueTeam, MatchResult, Student, AppMode } from '../types';
+import { LeagueTeam, MatchResult, Student, AppMode, MediaPost } from '../types';
 import LineupBuilder from './LineupBuilder';
 
 interface Props {
   students: Student[];
   mode?: AppMode;
+  onPostLineup?: (post: Partial<MediaPost>) => void;
 }
 
 const initialStandings: Record<string, LeagueTeam[]> = {
-  'U11': [],
-  'U12': [],
-  'U14': [],
-  'U16': [],
-  'U19': []
+  'U11': [], 'U12': [], 'U14': [], 'U16': [], 'U19': []
 };
 
-const League: React.FC<Props> = ({ students, mode }) => {
+const League: React.FC<Props> = ({ students, mode, onPostLineup }) => {
   const [activeTab, setActiveTab] = useState<'standings' | 'fixtures' | 'lineup'>('standings');
   const [activeCategory, setActiveCategory] = useState('U14');
   const [showLineupBuilder, setShowLineupBuilder] = useState(false);
@@ -85,12 +82,7 @@ const League: React.FC<Props> = ({ students, mode }) => {
       {activeTab === 'fixtures' && (
         <div className="space-y-4 px-2 animate-in fade-in">
           {mode === 'admin' && (
-            <button 
-              onClick={() => setShowFixtureModal(true)} 
-              className="w-full py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-xl hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-3"
-            >
-              <Plus size={18} /> YENİ MAÇ EKLE
-            </button>
+            <button onClick={() => setShowFixtureModal(true)} className="w-full py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-xl hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-3"><Plus size={18} /> YENİ MAÇ EKLE</button>
           )}
           {fixtures.filter(f => f.category === activeCategory).length > 0 ? fixtures.filter(f => f.category === activeCategory).map(match => (
             <div key={match.id} className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6 group hover:border-red-600 transition-all">
@@ -98,21 +90,13 @@ const League: React.FC<Props> = ({ students, mode }) => {
                <div className="bg-red-600 text-white px-5 py-1.5 rounded-xl text-[10px] font-black uppercase italic shadow-lg shadow-red-600/20">VS</div>
                <div className="flex-1 text-center md:text-left font-black uppercase italic text-zinc-900">{match.awayTeam}</div>
                <div className="flex items-center gap-4 bg-gray-50 px-4 py-2 rounded-xl">
-                 <div className="flex items-center gap-2">
-                   <Calendar size={12} className="text-red-600" />
-                   <p className="text-[9px] font-black uppercase text-zinc-500">{match.date}</p>
-                 </div>
-                 {mode === 'admin' && (
-                  <button onClick={() => deleteFixture(match.id)} className="p-2 text-gray-300 hover:text-red-600 transition-colors">
-                    <Trash2 size={16} />
-                  </button>
-                 )}
+                 <div className="flex items-center gap-2"><Calendar size={12} className="text-red-600" /><p className="text-[9px] font-black uppercase text-zinc-500">{match.date}</p></div>
+                 {mode === 'admin' && <button onClick={() => deleteFixture(match.id)} className="p-2 text-gray-300 hover:text-red-600 transition-colors"><Trash2 size={16} /></button>}
                </div>
             </div>
           )) : (
             <div className="bg-white p-16 rounded-[2.5rem] text-center border-2 border-dashed border-gray-100 flex flex-col items-center">
-               <Trophy size={48} className="text-gray-100 mb-4" />
-               <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest italic">BU KATEGORİDE HENÜZ FİKSTÜR KAYDI YOK.</p>
+               <Trophy size={48} className="text-gray-100 mb-4" /><p className="text-[10px] font-black text-gray-300 uppercase tracking-widest italic">BU KATEGORİDE HENÜZ FİKSTÜR KAYDI YOK.</p>
             </div>
           )}
         </div>
@@ -129,67 +113,21 @@ const League: React.FC<Props> = ({ students, mode }) => {
         </div>
       )}
 
-      {showLineupBuilder && <LineupBuilder students={students.filter(s => s.branchId === activeCategory || activeCategory === 'TÜM GRUPLAR')} onClose={() => setShowLineupBuilder(false)} />}
+      {showLineupBuilder && <LineupBuilder students={students.filter(s => s.branchId === activeCategory || activeCategory === 'TÜM GRUPLAR')} onClose={() => setShowLineupBuilder(false)} onPostToMedia={onPostLineup} />}
       
       {showFixtureModal && (
         <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md overflow-y-auto">
            <div className="bg-white w-full max-w-md rounded-[3rem] p-8 sm:p-10 shadow-2xl relative animate-in zoom-in-95 my-auto">
               <button onClick={() => setShowFixtureModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-black transition-colors"><X size={28} /></button>
               <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-8">YENİ <span className="text-red-600">MAÇ EKLE</span></h3>
-              
               <div className="space-y-5">
-                 <div>
-                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">RAKİP TAKIM ADI</label>
-                    <input 
-                      ref={firstInputRef}
-                      type="text" 
-                      placeholder="Örn: Batman Petrolspor" 
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600 focus:bg-white transition-all shadow-sm" 
-                      value={newFixture.awayTeam} 
-                      onChange={e => setNewFixture({...newFixture, awayTeam: e.target.value})} 
-                    />
-                 </div>
-
+                 <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">RAKİP TAKIM ADI</label><input ref={firstInputRef} type="text" placeholder="Örn: Batman Petrolspor" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600 focus:bg-white transition-all shadow-sm" value={newFixture.awayTeam} onChange={e => setNewFixture({...newFixture, awayTeam: e.target.value})} /></div>
                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">MAÇ TARİHİ</label>
-                      <input 
-                        type="text" 
-                        placeholder="GG.AA.YYYY" 
-                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600" 
-                        value={newFixture.date} 
-                        onChange={e => setNewFixture({...newFixture, date: e.target.value})} 
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">SAAT</label>
-                      <input 
-                        type="text" 
-                        placeholder="14:00" 
-                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600" 
-                        value={newFixture.time} 
-                        onChange={e => setNewFixture({...newFixture, time: e.target.value})} 
-                      />
-                    </div>
+                    <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">MAÇ TARİHİ</label><input type="text" placeholder="GG.AA.YYYY" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600" value={newFixture.date} onChange={e => setNewFixture({...newFixture, date: e.target.value})} /></div>
+                    <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">SAAT</label><input type="text" placeholder="14:00" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600" value={newFixture.time} onChange={e => setNewFixture({...newFixture, time: e.target.value})} /></div>
                  </div>
-
-                 <div>
-                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">SAHA / KONUM</label>
-                    <input 
-                      type="text" 
-                      placeholder="Örn: BGB Akademi Tesisleri" 
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600" 
-                      value={newFixture.location} 
-                      onChange={e => setNewFixture({...newFixture, location: e.target.value})} 
-                    />
-                 </div>
-
-                 <button 
-                  onClick={handleAddFixture} 
-                  className="w-full py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-red-600 transition-all active:scale-95 mt-4 flex items-center justify-center gap-3"
-                 >
-                   <Save size={18} /> FİKSTÜRE KAYDET
-                 </button>
+                 <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">SAHA / KONUM</label><input type="text" placeholder="Örn: BGB Akademi Tesisleri" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600" value={newFixture.location} onChange={e => setNewFixture({...newFixture, location: e.target.value})} /></div>
+                 <button onClick={handleAddFixture} className="w-full py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-red-600 transition-all active:scale-95 mt-4 flex items-center justify-center gap-3"><Save size={18} /> FİKSTÜRE KAYDET</button>
               </div>
            </div>
         </div>

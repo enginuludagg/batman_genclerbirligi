@@ -33,7 +33,7 @@ const Dashboard: React.FC<DashboardProps> = ({ context, appMode, onNavigate }) =
   return (
     <div className="space-y-8 w-full animate-in fade-in duration-700 pb-20">
       
-      {/* Borç Uyarı Bandı (Sadece Veliler İçin) - Buton İsmi Güncellendi */}
+      {/* Borç Uyarı Bandı (Sadece Veliler İçin) */}
       {appMode === 'parent' && currentStudent?.feeStatus !== 'Paid' && (
         <div className="bg-[#E30613] text-white p-5 rounded-[2rem] shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-pulse border-2 border-white/20">
           <div className="flex items-center gap-4 text-center sm:text-left">
@@ -57,13 +57,13 @@ const Dashboard: React.FC<DashboardProps> = ({ context, appMode, onNavigate }) =
           </div>
           <div>
             <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
-              BATMAN <span className="text-[#E30613]">GENÇLERBİRLİĞİ</span>
+              BATMAN <span className="text-[#E30613]">GENÇLERBİRLİĞİ<sup>®</sup></span>
             </h2>
             <p className="text-[8px] sm:text-[9px] text-slate-400 font-bold uppercase tracking-[0.3em] mt-1 italic tracking-[0.4em]">AKADEMİ YÖNETİM MERKEZİ</p>
           </div>
         </div>
         
-        {/* Veli Dashboard Butonları - 'Hocaya Yaz' ismi 'İLETİŞİM & DESTEK' yapıldı */}
+        {/* Veli Dashboard Butonları */}
         {appMode === 'parent' && (
           <div className="flex gap-2 w-full sm:w-auto">
             <button 
@@ -225,7 +225,7 @@ const Dashboard: React.FC<DashboardProps> = ({ context, appMode, onNavigate }) =
                 </div>
                 
                 <div className="bg-gray-50 p-4 text-center">
-                   <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.3em]">BATMAN GENÇLERBİRLİĞİ SK</p>
+                   <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.3em]">BATMAN GENÇLERBİRLİĞİ SK<sup>®</sup></p>
                 </div>
              </div>
            </div>

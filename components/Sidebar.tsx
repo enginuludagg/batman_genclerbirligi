@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Calendar, Trophy, 
   Wallet, UserCheck, Newspaper, GraduationCap, 
   BarChart, MessageSquare, Menu, X, ShieldAlert,
-  UserCircle, Settings, LogOut, Dumbbell, ClipboardList
+  UserCircle, Settings, LogOut, Dumbbell, ClipboardList, Info
 } from 'lucide-react';
 import { ViewType, AppMode } from '../types';
 import Logo from './Logo';
@@ -22,9 +22,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
   // Yönetici Menüsü
   const adminMenu = [
     { id: 'dashboard', label: 'Ana Panel', icon: LayoutDashboard },
+    { id: 'about', label: 'Hakkımızda', icon: Info }, // Yeni eklendi
     { id: 'settings', label: 'Sistem Ayarları', icon: Settings, highlight: true },
     { id: 'students', label: 'Sporcu Rehberi', icon: Users },
-    { id: 'notes', label: 'Antrenör Notları', icon: ClipboardList }, // Yeni eklendi
+    { id: 'notes', label: 'Antrenör Notları', icon: ClipboardList },
     { id: 'trainers', label: 'Teknik Ekip', icon: GraduationCap },
     { id: 'attendance', label: 'Yoklama', icon: UserCheck },
     { id: 'drills', label: 'Drill Kütüphanesi', icon: Dumbbell },
@@ -38,6 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
 
   const parentMenu = [
     { id: 'dashboard', label: 'Sporcu Özeti', icon: LayoutDashboard },
+    { id: 'about', label: 'Hakkımızda', icon: Info }, // Yeni eklendi
     { id: 'schedule', label: 'Antrenman Takvimi', icon: Calendar },
     { id: 'drills', label: 'Ev Çalışmaları', icon: Dumbbell },
     { id: 'media', label: 'Haber & Duyuru', icon: Newspaper },
@@ -68,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
             <Logo className="w-10 h-10" />
             <div>
               <h1 className="text-[10px] font-black tracking-tighter leading-none uppercase">
-                BATMAN <br/><span className="text-red-600 text-xs">GENÇLERBİRLİĞİ</span>
+                BATMAN <br/><span className="text-red-600 text-xs">GENÇLERBİRLİĞİ<sup>®</sup></span>
               </h1>
             </div>
           </div>

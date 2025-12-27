@@ -37,16 +37,18 @@ const Drills: React.FC<Props> = ({ drills, setDrills, mode }) => {
     setIsGenerating(true);
     try {
       const drill = await generateNewDrillFromAI(sport);
-      setDrills(prev => [drill, ...prev]);
-      localStorage.setItem('bgb_drills_last_update', Date.now().toString());
+      if (drill) {
+        setDrills(prev => [drill, ...prev]);
+        localStorage.setItem('bgb_drills_last_update', Date.now().toString());
+      }
     } catch (error) {
-      alert("Hocam AI şu an taktik tahtasında meşgul, lütfen tekrar deneyin.");
+      console.error("Drill generation error UI:", error);
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const filtered = drills.filter(d => activeCategory === 'Tümü' || d.category === activeCategory);
+  const filtered = Array.isArray(drills) ? drills.filter(d => activeCategory === 'Tümü' || d.category === activeCategory) : [];
 
   const fetchTips = async (drill: Drill) => {
     setLoadingTips(drill.id);
@@ -59,7 +61,8 @@ const Drills: React.FC<Props> = ({ drills, setDrills, mode }) => {
     if (!newDrill.title) return;
     const drill: Drill = {
       ...newDrill as Drill,
-      id: Date.now().toString()
+      id: Date.now().toString(),
+      equipment: Array.isArray(newDrill.equipment) ? newDrill.equipment : []
     };
     setDrills(prev => [...prev, drill]);
     setIsAddModalOpen(false);
@@ -129,22 +132,22 @@ const Drills: React.FC<Props> = ({ drills, setDrills, mode }) => {
               </div>
               <div className="flex gap-0.5 mr-8">
                  {Array.from({length: 5}).map((_, i) => (
-                   <Star key={i} size={10} fill={i < drill.difficulty ? 'currentColor' : 'none'} className={i < drill.difficulty ? 'text-yellow-500' : 'text-gray-200'} />
+                   <Star key={i} size={10} fill={i < (drill.difficulty || 3) ? 'currentColor' : 'none'} className={i < (drill.difficulty || 3) ? 'text-yellow-500' : 'text-gray-200'} />
                  ))}
               </div>
             </div>
 
-            <h3 className="text-lg font-black text-zinc-900 uppercase italic tracking-tighter mb-2 leading-tight">{drill.title}</h3>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4 italic line-clamp-2">{drill.description}</p>
+            <h3 className="text-lg font-black text-zinc-900 uppercase italic tracking-tighter mb-2 leading-tight">{drill.title || "İsimsiz Drill"}</h3>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4 italic line-clamp-2">{drill.description || "Açıklama bulunmuyor."}</p>
 
             <div className="space-y-3 mb-6">
                <div className="flex items-center gap-2 text-zinc-500">
                   <Clock size={14} />
-                  <span className="text-[9px] font-black uppercase tracking-widest">{drill.duration}</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest">{drill.duration || "Belli değil"}</span>
                </div>
                <div className="flex flex-wrap gap-1.5">
                   <span className="bg-red-50 text-red-600 px-2.5 py-1 rounded-lg text-[8px] font-black uppercase">{drill.category}</span>
-                  {drill.equipment.map(e => (
+                  {Array.isArray(drill.equipment) && drill.equipment.map(e => (
                     <span key={e} className="bg-zinc-100 text-zinc-500 px-2.5 py-1 rounded-lg text-[8px] font-black uppercase">{e}</span>
                   ))}
                </div>
@@ -229,7 +232,6 @@ const Drills: React.FC<Props> = ({ drills, setDrills, mode }) => {
                     className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none h-28 resize-none focus:border-red-600 transition-all shadow-inner"
                     value={newDrill.description}
                     onChange={e => setNewDrill({...newDrill, description: e.target.value})}
-                    onKeyDown={(e) => e.key === 'Enter' && e.ctrlKey && handleAddDrill()}
                    />
                  </div>
 

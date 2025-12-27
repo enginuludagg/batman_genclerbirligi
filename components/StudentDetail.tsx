@@ -5,7 +5,7 @@ import {
   Shield, ChevronRight, Save, Edit2, CheckCircle2,
   Droplets, Target, Calendar, UserPlus, School, Info,
   Zap, Dumbbell, Timer, Brain, LayoutTemplate, Mail, Lock, Upload,
-  Medal, Star, Eye, History, Trash2, Plus
+  Medal, Star, Eye, History, Trash2, Plus, Check
 } from 'lucide-react';
 import { Student, Badge, ScoutingNote, AppMode } from '../types';
 import { ACADEMY_GROUPS } from './StudentList';
@@ -31,6 +31,7 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState<Student>({ 
     ...student, 
+    activeSports: student.activeSports || [student.sport],
     badges: student.badges || [],
     scoutingNotes: student.scoutingNotes || []
   });
@@ -40,8 +41,23 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
-    if (onUpdate) onUpdate(editedData);
+    // Branş değişikliği yapıldıysa ilk branşı 'sport' (ana branş) olarak ata
+    const finalData = {
+      ...editedData,
+      sport: editedData.activeSports[0] || 'Futbol'
+    };
+    if (onUpdate) onUpdate(finalData);
     setIsEditing(false);
+  };
+
+  const toggleSport = (sp: 'Futbol' | 'Voleybol' | 'Cimnastik') => {
+    const current = editedData.activeSports || [editedData.sport];
+    if (current.includes(sp)) {
+      if (current.length === 1) return; // En az bir branş kalmalı
+      setEditedData({ ...editedData, activeSports: current.filter(s => s !== sp) });
+    } else {
+      setEditedData({ ...editedData, activeSports: [...current, sp] });
+    }
   };
 
   const addBadge = (badge: typeof AVAILABLE_BADGES[0]) => {
@@ -73,7 +89,6 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
     setNewScoutNote('');
   };
 
-  // KRİTİK GİZLİLİK: Sekmeler admin olup olmama durumuna göre filtrelenir
   const tabs = [
     { id: 'genel', label: 'BİLGİLER', icon: User },
     { id: 'performans', label: 'ANALİZ', icon: Activity },
@@ -114,13 +129,12 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
               ))}
             </div>
             <h2 className="text-3xl sm:text-5xl font-black italic uppercase tracking-tighter leading-none">{editedData.name}</h2>
-            <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4 text-zinc-500 font-black uppercase text-[10px] tracking-widest">
-               <span className="bg-zinc-900 px-4 py-2 rounded-full border border-white/5 flex items-center gap-2">
-                 <Shield size={14} className="text-[#E30613]" /> {editedData.sport}
-               </span>
-               <span className="bg-zinc-900 px-4 py-2 rounded-full border border-white/5 flex items-center gap-2">
-                 <Calendar size={14} className="text-[#E30613]" /> {editedData.age} YAŞ
-               </span>
+            <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
+               {(editedData.activeSports || [editedData.sport]).map(sp => (
+                 <span key={sp} className="bg-red-600 text-white px-4 py-2 rounded-full font-black text-[9px] uppercase tracking-widest flex items-center gap-2 border border-white/10 shadow-lg">
+                   <Shield size={12} /> {sp}
+                 </span>
+               ))}
             </div>
           </div>
         </div>
@@ -137,20 +151,46 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
       <div className="min-h-[400px]">
         {activeTab === 'genel' && (
           <div className="space-y-4 animate-in fade-in">
-            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <p className="text-[10px] font-black text-[#E30613] uppercase tracking-widest mb-4 italic">KİŞİSEL VERİLER</p>
-                <div><label className="text-[9px] font-black text-gray-400 uppercase">VELİ ADI</label><p className="font-black text-zinc-900 text-sm italic">{editedData.parentName}</p></div>
-                <div><label className="text-[9px] font-black text-gray-400 uppercase">İLETİŞİM</label><p className="font-black text-zinc-900 text-sm italic">{editedData.parentPhone}</p></div>
-                <div><label className="text-[9px] font-black text-gray-400 uppercase">OKUL</label><p className="font-black text-zinc-900 text-sm italic">{editedData.schoolName || 'BATMAN MERKEZ OKULLARI'}</p></div>
-              </div>
-              <div className="space-y-4">
-                <p className="text-[10px] font-black text-[#E30613] uppercase tracking-widest mb-4 italic">AKADEMİ DURUMU</p>
-                <div className={`p-4 rounded-2xl flex items-center justify-between ${editedData.feeStatus === 'Paid' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-[#E30613] animate-pulse'}`}>
-                  <span className="text-[10px] font-black uppercase">AİDAT DURUMU</span>
-                  <span className="text-xs font-black italic">{editedData.feeStatus === 'Paid' ? 'ÖDENDİ' : 'ÖDEME BEKLİYOR'}</span>
+            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
+              
+              {/* BRANŞ YÖNETİMİ - ÇOKLU BRANŞ DESTEĞİ */}
+              {mode === 'admin' && (
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black text-[#E30613] uppercase tracking-widest italic">BRANŞ YÖNETİMİ (ÇOKLU SEÇİM)</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {['Futbol', 'Voleybol', 'Cimnastik'].map(sp => {
+                      const isActive = (editedData.activeSports || []).includes(sp as any);
+                      return (
+                        <button 
+                          key={sp} 
+                          onClick={() => toggleSport(sp as any)}
+                          className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${isActive ? 'bg-zinc-900 border-zinc-900 text-white shadow-xl' : 'bg-gray-50 border-gray-100 text-gray-400'}`}
+                        >
+                          {isActive ? <CheckCircle2 size={18} /> : <div className="w-[18px] h-[18px] rounded-full border border-gray-300" />}
+                          <span className="text-[10px] font-black uppercase tracking-widest">{sp}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[8px] font-bold text-gray-400 uppercase italic">* Seçtiğiniz tüm branşların listesinde bu sporcu görünür.</p>
                 </div>
-                <div><label className="text-[9px] font-black text-gray-400 uppercase">GRUP</label><p className="font-black text-zinc-900 text-sm italic">{editedData.branchId}</p></div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-gray-50">
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest italic">KİŞİSEL VERİLER</p>
+                  <div><label className="text-[9px] font-black text-gray-400 uppercase">VELİ ADI</label><p className="font-black text-zinc-900 text-sm italic">{editedData.parentName}</p></div>
+                  <div><label className="text-[9px] font-black text-gray-400 uppercase">İLETİŞİM</label><p className="font-black text-zinc-900 text-sm italic">{editedData.parentPhone}</p></div>
+                  <div><label className="text-[9px] font-black text-gray-400 uppercase">OKUL</label><p className="font-black text-zinc-900 text-sm italic">{editedData.schoolName || 'BATMAN MERKEZ OKULLARI'}</p></div>
+                </div>
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest italic">AKADEMİ DURUMU</p>
+                  <div className={`p-4 rounded-2xl flex items-center justify-between ${editedData.feeStatus === 'Paid' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-[#E30613] animate-pulse'}`}>
+                    <span className="text-[10px] font-black uppercase">AİDAT DURUMU</span>
+                    <span className="text-xs font-black italic">{editedData.feeStatus === 'Paid' ? 'ÖDENDİ' : 'ÖDEME BEKLİYOR'}</span>
+                  </div>
+                  <div><label className="text-[9px] font-black text-gray-400 uppercase">GRUP</label><p className="font-black text-zinc-900 text-sm italic">{editedData.branchId}</p></div>
+                </div>
               </div>
             </div>
           </div>

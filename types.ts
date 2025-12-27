@@ -21,6 +21,7 @@ export interface Student {
   photoUrl?: string;
   age: number;
   birthYear?: number;
+  jerseyNumber?: number;
   gender: 'Erkek' | 'Kız';
   parentPhone?: string;
   parentName?: string;
@@ -30,8 +31,9 @@ export interface Student {
   schoolName?: string;
   schoolGrade?: string;
   bloodType?: string;
-  sport: 'Futbol' | 'Voleybol' | 'Cimnastik';
-  branchId: string;
+  sport: 'Futbol' | 'Voleybol' | 'Cimnastik'; // Ana branş
+  activeSports: ('Futbol' | 'Voleybol' | 'Cimnastik')[]; // Kayıtlı olduğu tüm branşlar
+  branchId: string; // Grup (U12 vb)
   level: 'Başlangıç' | 'Orta' | 'İleri';
   status: 'active' | 'passive';
   attendance: number; 
@@ -59,42 +61,25 @@ export interface Trainer {
   specialty: string;
   phone: string;
   groups: string[];
-}
-
-export interface MatchResult {
-  id: string;
-  homeTeam: string;
-  awayTeam: string;
-  homeScore?: number;
-  awayScore?: number;
-  date: string;
-  time: string;
-  location: string;
-  status: 'played' | 'scheduled';
-  category: string;
-}
-
-export interface TrainerNote {
-  id: string;
-  trainerName: string;
-  content: string;
-  date: string;
-  status: 'new' | 'read';
-  priority: 'low' | 'medium' | 'high';
-  category: 'Saha Dışı' | 'Malzeme' | 'Disiplin' | 'Gelişim';
-  targetScope: string;
+  biography?: string; // Özgeçmiş alanı eklendi
 }
 
 export interface MediaPost {
   id: string;
   title: string;
-  type: 'bulletin' | 'gallery' | 'poll';
+  type: 'bulletin' | 'gallery' | 'poll' | 'lineup';
   content: string;
   date: string;
   status: 'pending' | 'published';
   imageUrl?: string;
   likes?: number;
   pollOptions?: string[];
+  lineupData?: {
+    sport: 'Futbol' | 'Voleybol';
+    mode: string;
+    players: { pos: string; name: string; photo?: string; number?: number }[];
+    subs: { name: string; photo?: string; number?: number }[];
+  };
 }
 
 export interface TrainingSession {
@@ -132,6 +117,8 @@ export interface FinanceEntry {
   description: string;
   branch: string;
   paymentMethod: string;
+  studentId?: string; // Sporcu eşleştirme
+  studentName?: string; // Hızlı görünüm için
 }
 
 export interface Notification {
@@ -139,7 +126,36 @@ export interface Notification {
   message: string;
 }
 
-export type ViewType = 'dashboard' | 'students' | 'trainers' | 'schedule' | 'attendance' | 'finance' | 'media' | 'league' | 'ai-coach' | 'analytics' | 'drills' | 'settings' | 'notes';
+export interface TrainerNote {
+  id: string;
+  trainerName: string;
+  content: string;
+  date: string;
+  status: 'new' | 'read';
+  priority: 'low' | 'medium' | 'high';
+  category: 'Saha Dışı' | 'Malzeme' | 'Disiplin' | 'Gelişim';
+  targetScope: string;
+}
+
+export interface LeagueTeam {
+  name: string;
+  played: number;
+  points: number;
+  isUserTeam?: boolean;
+}
+
+export interface MatchResult {
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  date: string;
+  time: string;
+  location: string;
+  category: string;
+  status: 'scheduled' | 'completed';
+}
+
+export type ViewType = 'dashboard' | 'students' | 'trainers' | 'schedule' | 'attendance' | 'finance' | 'media' | 'league' | 'ai-coach' | 'analytics' | 'drills' | 'settings' | 'notes' | 'about';
 export type AppMode = 'admin' | 'parent';
 
 export interface AppContextData {
@@ -153,19 +169,4 @@ export interface AppContextData {
   attendance: any[];
   notifications: Notification[];
   trainerNotes: TrainerNote[];
-}
-
-export interface LeagueTeam {
-  rank: number;
-  name: string;
-  played: number;
-  won: number;
-  drawn: number;
-  lost: number;
-  gf: number;
-  ga: number;
-  gd: number;
-  points: number;
-  form: string[];
-  isUserTeam?: boolean;
 }

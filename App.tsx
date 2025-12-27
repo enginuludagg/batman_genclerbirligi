@@ -13,6 +13,7 @@ import MediaManager from './components/MediaManager';
 import TrainerManager from './components/TrainerManager';
 import Drills from './components/Drills';
 import TrainerNotebook from './components/TrainerNotebook';
+import AboutUs from './components/AboutUs';
 import Auth from './components/Auth';
 import Settings from './components/Settings';
 import { ViewType, Student, Trainer, FinanceEntry, MediaPost, TrainingSession, AppMode, Notification, Drill, TrainerNote, AppContextData } from './types';
@@ -43,15 +44,43 @@ const App: React.FC = () => {
     storageService.syncAll({
       students, trainers, notes: trainerNotes, sessions, finance, media, drills
     });
-    // Görsel geri bildirim için kısa bir gecikme
     const timer = setTimeout(() => setIsSyncing(false), 800);
     return () => clearTimeout(timer);
   }, [students, trainers, trainerNotes, sessions, finance, media, drills]);
 
-  // Değişiklikleri takip et
   useEffect(() => {
     syncData();
   }, [students, trainers, trainerNotes, sessions, finance, media, drills, syncData]);
+
+  const handleUpdateFounderPhoto = (photoUrl: string) => {
+    setTrainers(prev => {
+      const engin = prev.find(t => t.name.toLowerCase().includes('engin'));
+      if (engin) {
+        return prev.map(t => t.id === engin.id ? { ...t, photoUrl } : t);
+      } else {
+        const newFounder: Trainer = {
+          id: 'founder-' + Date.now(),
+          name: 'Engin Uludağ',
+          specialty: 'Teknik Direktör ve Antrenör',
+          phone: '0505 340 11 01',
+          photoUrl,
+          groups: ['Tüm Branşlar'],
+          biography: '14+ Yıl Tecrübe | TFF Futbol C | TVF Voleybol 2.K | TCF Cimnastik 2.K | Etimesgut Kaymakamlığı Başarı Belgesi'
+        };
+        return [newFounder, ...prev];
+      }
+    });
+    setToast({ title: 'PROFİL GÜNCELLENDİ', message: 'Hakkımızda sayfasındaki fotoğrafınız başarıyla kaydedildi.' });
+  };
+
+  const handleAddMedia = (post: Partial<MediaPost>) => {
+    const fullPost: MediaPost = {
+      ...post as MediaPost,
+      id: Date.now().toString(),
+      likes: 0
+    };
+    setMedia(prev => [fullPost, ...prev]);
+  };
 
   const contextData: AppContextData = {
     students, trainers, branches: [], sessions, finance, media, drills, attendance: [], notifications: [], trainerNotes
@@ -76,11 +105,12 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (activeView) {
       case 'dashboard': return <Dashboard context={contextData} appMode={appMode} onNavigate={handleNavigate} />;
+      case 'about': return <AboutUs trainers={trainers} mode={appMode} onUpdateFounderPhoto={handleUpdateFounderPhoto} />;
       case 'students': return <StudentList students={students} setStudents={setStudents} mode={appMode} />;
       case 'schedule': return <Schedule sessions={sessions} setSessions={setSessions} mode={appMode} />;
       case 'ai-coach': return <AICoach context={contextData} mode={appMode} />;
       case 'analytics': return <Analytics students={students} setStudents={setStudents} mode={appMode} />;
-      case 'league': return <League students={students} mode={appMode} />;
+      case 'league': return <League students={students} mode={appMode} onPostLineup={handleAddMedia} />;
       case 'finance': return <Finance finance={finance} setFinance={setFinance} students={students} mode={appMode} />;
       case 'attendance': return <Attendance students={students} sessions={sessions} mode={appMode} />;
       case 'media': return <MediaManager media={media} setMedia={setMedia} mode={appMode} activeTabOverride={mediaTab} setActiveTabOverride={setMediaTab} />;
@@ -98,15 +128,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex min-h-[100dvh] w-full bg-[#f8fafc] selection:bg-[#E30613] selection:text-white pb-20 lg:pb-0">
-      <Sidebar 
-        activeView={activeView} 
-        onViewChange={(v) => { setActiveView(v); setMediaTab('all'); }} 
-        isOpen={isSidebarOpen} 
-        setIsOpen={setIsSidebarOpen} 
-        appMode={appMode} 
-        setAppMode={setAppMode} 
-      />
-      
+      <Sidebar activeView={activeView} onViewChange={(v) => { setActiveView(v); setMediaTab('all'); }} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} appMode={appMode} setAppMode={setAppMode} />
       <main className={`flex-1 flex flex-col transition-all duration-300 min-w-0 ${isSidebarOpen ? 'lg:ml-64 opacity-50 lg:opacity-100' : 'lg:ml-64'}`}>
         <div className="hidden lg:flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100 sticky top-0 z-[500]">
            <div className="flex items-center gap-4">
@@ -126,24 +148,13 @@ const App: React.FC = () => {
               </button>
            </div>
         </div>
-
         <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-slate-100 sticky top-0 z-[1000]">
-           <button onClick={() => setIsLoggedIn(false)} className="bg-slate-900 text-white p-2.5 rounded-xl">
-             <LogOut size={16} />
-           </button>
-           <h1 className="text-xs font-black italic uppercase tracking-tighter">
-            BATMAN <span className="text-[#E30613]">GB AKADEMİ</span>
-           </h1>
-           <div className={`flex items-center justify-center w-10 h-10 rounded-full ${isSyncing ? 'text-zinc-300' : 'text-green-500'}`}>
-              <CheckCircle2 size={20} />
-           </div>
+           <button onClick={() => setIsLoggedIn(false)} className="bg-slate-900 text-white p-2.5 rounded-xl"><LogOut size={16} /></button>
+           <h1 className="text-xs font-black italic uppercase tracking-tighter">BATMAN <span className="text-[#E30613]">GB AKADEMİ<sup>®</sup></span></h1>
+           <div className={`flex items-center justify-center w-10 h-10 rounded-full ${isSyncing ? 'text-zinc-300' : 'text-green-500'}`}><CheckCircle2 size={20} /></div>
         </div>
-
-        <div className="p-4 sm:p-8 max-w-[1400px] mx-auto w-full">
-          {renderView()}
-        </div>
+        <div className="p-4 sm:p-8 max-w-[1400px] mx-auto w-full">{renderView()}</div>
       </main>
-
       {toast && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[6000] w-[calc(100%-2rem)] max-w-sm animate-in slide-in-from-top-10 duration-500">
           <div className="p-4 rounded-2xl bg-slate-900 text-white shadow-2xl flex items-center gap-3 border border-red-600/20">

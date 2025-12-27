@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Search, UserPlus, ChevronLeft, Save, Plus, ChevronRight, Trash2, CheckCircle2, AlertCircle, X, Upload
+  Search, UserPlus, ChevronLeft, Save, Plus, ChevronRight, Trash2, CheckCircle2, AlertCircle, X, Upload, Hash, Check
 } from 'lucide-react';
 import { Student, AppMode } from '../types';
 import StudentDetail from './StudentDetail';
@@ -29,8 +29,9 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
   const firstInputRef = useRef<HTMLInputElement>(null);
   
   const [newStudent, setNewStudent] = useState<Partial<Student>>({
-    name: '', sport: 'Futbol', branchId: 'U12', gender: 'Erkek', level: 'Başlangıç', status: 'active', attendance: 100, photoUrl: '',
-    stats: { strength: 50, speed: 50, stamina: 50, technique: 50 }
+    name: '', sport: 'Futbol', activeSports: ['Futbol'], branchId: 'U12', gender: 'Erkek', level: 'Başlangıç', status: 'active', attendance: 100, photoUrl: '',
+    stats: { strength: 50, speed: 50, stamina: 50, technique: 50 },
+    jerseyNumber: undefined
   });
 
   useEffect(() => {
@@ -39,6 +40,16 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
       setTimeout(() => firstInputRef.current?.focus(), 100);
     }
   }, [viewState, onModalStateChange]);
+
+  const handleOpenAdd = () => {
+    const defaultSport = activeSport === 'Hepsi' ? 'Futbol' : activeSport;
+    setNewStudent(prev => ({ 
+      ...prev, 
+      sport: defaultSport as any,
+      activeSports: [defaultSport as any] 
+    }));
+    setViewState('add');
+  };
 
   const toggleStudentStatus = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -57,6 +68,7 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
     const student: Student = {
       ...newStudent as Student,
       id: Date.now().toString(),
+      activeSports: newStudent.activeSports || [newStudent.sport as any],
       lastTraining: 'Yeni Kayıt',
       feeStatus: 'Pending',
       password: '123456',
@@ -65,7 +77,7 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
     };
     setStudents(prev => [...prev, student]);
     setViewState('list');
-    setNewStudent({ name: '', sport: 'Futbol', branchId: 'U12', gender: 'Erkek', level: 'Başlangıç', status: 'active', attendance: 100, photoUrl: '', stats: { strength: 50, speed: 50, stamina: 50, technique: 50 } });
+    setNewStudent({ name: '', sport: 'Futbol', activeSports: ['Futbol'], branchId: 'U12', gender: 'Erkek', level: 'Başlangıç', status: 'active', attendance: 100, photoUrl: '', stats: { strength: 50, speed: 50, stamina: 50, technique: 50 }, jerseyNumber: undefined });
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,7 +92,11 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
   const filtered = students.filter(s => {
     const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCat = activeCategory === 'TÜM GRUPLAR' || s.branchId === activeCategory;
-    const matchesSport = activeSport === 'Hepsi' || s.sport === activeSport;
+    
+    // Çoklu branş kontrolü
+    const studentSports = s.activeSports || [s.sport];
+    const matchesSport = activeSport === 'Hepsi' || studentSports.includes(activeSport as any);
+    
     const matchesStatus = showPassive ? s.status === 'passive' : s.status === 'active';
     return matchesSearch && matchesCat && matchesSport && matchesStatus;
   });
@@ -104,7 +120,7 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
   }
 
   return (
-    <div className="w-full space-y-6 px-1 animate-in fade-in duration-500">
+    <div className="w-full space-y-6 px-1 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
         <div>
           <h2 className="text-2xl md:text-3xl font-black text-gray-900 uppercase italic">SPORCU <span className="text-red-600">REHBERİ</span></h2>
@@ -112,7 +128,7 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
         </div>
         {mode === 'admin' && (
           <div className="flex gap-2">
-            <button onClick={() => setViewState('add')} className="bg-black text-white px-6 py-3 rounded-2xl flex items-center gap-2 font-black text-xs hover:bg-red-600 transition-all shadow-xl active:scale-95"><Plus size={18} /> SPORCU EKLE</button>
+            <button onClick={handleOpenAdd} className="bg-black text-white px-6 py-3 rounded-2xl flex items-center gap-2 font-black text-xs hover:bg-red-600 transition-all shadow-xl active:scale-95"><Plus size={18} /> SPORCU EKLE</button>
             <button onClick={() => setShowPassive(!showPassive)} className={`px-4 py-3 rounded-2xl text-[9px] font-black uppercase border-2 transition-all ${showPassive ? 'bg-orange-600 border-orange-600 text-white shadow-lg' : 'bg-white border-gray-100 text-gray-400'}`}>{showPassive ? 'ONAY BEKLEYENLER' : 'AKTİF LİSTE'}</button>
           </div>
         )}
@@ -138,37 +154,46 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 px-2">
-        {filtered.map((s) => (
-          <div key={s.id} onClick={() => { setSelectedStudent(s); setViewState('detail'); }} className="bg-white p-4 rounded-[1.5rem] border border-gray-50 shadow-sm flex items-center justify-between hover:border-red-200 transition-all group relative overflow-hidden cursor-pointer">
-            <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${getSportColor(s.sport)}`}></div>
-            <div className="flex items-center gap-3 overflow-hidden pl-2">
-              <div className={`w-12 h-12 ${getSportColor(s.sport)} rounded-2xl flex items-center justify-center text-white text-[10px] font-black italic relative overflow-hidden shadow-sm`}>
-                {s.photoUrl ? <img src={s.photoUrl} className="w-full h-full object-cover" /> : s.name[0]}
+        {filtered.map((s) => {
+          // Çoklu branşları listele
+          const sports = s.activeSports || [s.sport];
+          return (
+            <div key={s.id} onClick={() => { setSelectedStudent(s); setViewState('detail'); }} className="bg-white p-4 rounded-[1.5rem] border border-gray-50 shadow-sm flex items-center justify-between hover:border-red-200 transition-all group relative overflow-hidden cursor-pointer">
+              <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${getSportColor(sports[0])}`}></div>
+              <div className="flex items-center gap-3 overflow-hidden pl-2">
+                <div className={`w-12 h-12 ${getSportColor(sports[0])} rounded-2xl flex items-center justify-center text-white text-[10px] font-black italic relative overflow-hidden shadow-sm`}>
+                  {s.photoUrl ? <img src={s.photoUrl} className="w-full h-full object-cover" /> : s.name[0]}
+                  {s.jerseyNumber && <div className="absolute bottom-0 right-0 bg-zinc-950 text-white text-[7px] px-1 rounded-tl-md font-bold">#{s.jerseyNumber}</div>}
+                </div>
+                <div className="text-left overflow-hidden">
+                  <h4 className="font-black text-gray-900 text-xs uppercase truncate">{s.name}</h4>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className={`text-[8px] font-black uppercase ${s.gender === 'Kız' ? 'text-pink-600' : 'text-blue-600'}`}>{s.gender}</span>
+                    <div className="flex gap-1">
+                       {sports.map(sp => (
+                         <span key={sp} className={`text-[7px] font-black text-white px-1.5 py-0.5 rounded uppercase ${getSportColor(sp)}`}>{sp[0]}</span>
+                       ))}
+                    </div>
+                    <span className="text-[8px] font-black text-red-600 uppercase">{s.branchId}</span>
+                  </div>
+                </div>
               </div>
-              <div className="text-left overflow-hidden">
-                <h4 className="font-black text-gray-900 text-xs uppercase truncate">{s.name}</h4>
-                <p className="text-[8px] font-black uppercase truncate flex items-center gap-1.5">
-                  <span className={s.gender === 'Kız' ? 'text-pink-600' : 'text-blue-600'}>{s.gender}</span>
-                  <span className="text-zinc-500">{s.sport}</span>
-                  <span className="text-red-600">{s.branchId}</span>
-                </p>
+              <div className="flex items-center gap-1 relative z-10">
+                 {mode === 'admin' && (
+                   <>
+                     <button onClick={(e) => toggleStudentStatus(e, s.id)} className={`p-2 transition-colors ${s.status === 'active' ? 'text-gray-300 hover:text-orange-600' : 'text-orange-600 hover:text-green-600'}`} title={s.status === 'active' ? 'Pasife Al' : 'Aktif Et'}>
+                       {s.status === 'active' ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
+                     </button>
+                     <button onClick={(e) => deleteStudent(e, s.id)} className="p-2 text-gray-300 hover:text-red-600" title="Sil">
+                       <Trash2 size={18} />
+                     </button>
+                   </>
+                 )}
+                 <ChevronRight size={18} className="text-gray-300" />
               </div>
             </div>
-            <div className="flex items-center gap-1 relative z-10">
-               {mode === 'admin' && (
-                 <>
-                   <button onClick={(e) => toggleStudentStatus(e, s.id)} className={`p-2 transition-colors ${s.status === 'active' ? 'text-gray-300 hover:text-orange-600' : 'text-orange-600 hover:text-green-600'}`} title={s.status === 'active' ? 'Pasife Al' : 'Aktif Et'}>
-                     {s.status === 'active' ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
-                   </button>
-                   <button onClick={(e) => deleteStudent(e, s.id)} className="p-2 text-gray-300 hover:text-red-600" title="Sil">
-                     <Trash2 size={18} />
-                   </button>
-                 </>
-               )}
-               <ChevronRight size={18} className="text-gray-300" />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {viewState === 'add' && (
@@ -187,23 +212,37 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">SPORCU AD SOYAD</label>
-                  <input 
-                    ref={firstInputRef}
-                    type="text" 
-                    placeholder="Ad Soyad giriniz..." 
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600 focus:bg-white transition-all shadow-sm" 
-                    value={newStudent.name} 
-                    onChange={e => setNewStudent({...newStudent, name: e.target.value})} 
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddStudent()}
-                  />
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="col-span-3">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">SPORCU AD SOYAD</label>
+                    <input 
+                      ref={firstInputRef}
+                      type="text" 
+                      placeholder="Ad Soyad giriniz..." 
+                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600 focus:bg-white transition-all shadow-sm" 
+                      value={newStudent.name} 
+                      onChange={e => setNewStudent({...newStudent, name: e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">NO</label>
+                    <input 
+                      type="number" 
+                      placeholder="99" 
+                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600 focus:bg-white transition-all shadow-sm" 
+                      value={newStudent.jerseyNumber || ''} 
+                      onChange={e => setNewStudent({...newStudent, jerseyNumber: parseInt(e.target.value) || undefined})} 
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">BRANŞ</label>
-                    <select className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-red-600" value={newStudent.sport} onChange={e => setNewStudent({...newStudent, sport: e.target.value as any})}>
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">ANA BRANŞ</label>
+                    <select className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-red-600" value={newStudent.sport} onChange={e => {
+                      const sp = e.target.value as any;
+                      setNewStudent({...newStudent, sport: sp, activeSports: [sp]});
+                    }}>
                       <option value="Futbol">FUTBOL</option>
                       <option value="Voleybol">VOLEYBOL</option>
                       <option value="Cimnastik">CİMNASTİK</option>

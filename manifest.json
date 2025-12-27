@@ -2,23 +2,24 @@
 {
   "name": "Batman Gençlerbirliği Akademi",
   "short_name": "BGB Akademi",
-  "description": "Batman Gençlerbirliği Spor Okulu Resmi Yönetim Platformu",
-  "start_url": ".",
+  "description": "Batman Gençlerbirliği Spor Okulu Resmi Yönetim Platformu V.1.2",
+  "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#1D2D4C",
   "theme_color": "#E30613",
   "icons": [
     {
-      "src": "https://i.ibb.co/LzhYpDCC/batman-logo.png",
+      "src": "https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
-      "src": "https://i.ibb.co/LzhYpDCC/batman-logo.png",
+      "src": "https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }

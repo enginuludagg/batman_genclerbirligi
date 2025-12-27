@@ -11,13 +11,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BGB Akademi">
     
+    <link rel="manifest" href="/manifest.json">
+    
     <!-- İkonlar -->
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup">
     <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup">
     
     <meta name="theme-color" content="#1D2D4C">
     
-    <title>Batman Gençlerbirliği | Akademi Yönetimi</title>
+    <title>BGB Akademi | V.1.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,900&display=swap" rel="stylesheet">
     <style>
@@ -31,13 +33,13 @@
             background-color: #f8fafc; 
             margin: 0; 
             overflow-x: hidden;
-            overscroll-behavior-y: contain; /* Sayfayı aşağı çekince yenilemeyi engeller (Uygulama hissi) */
+            overscroll-behavior-y: contain;
         }
         #root { min-height: 100vh; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Mobil Snap Kaydırma */
+        /* Mobil Kaydırma Snap */
         .mobile-snap {
             scroll-snap-type: x mandatory;
             display: flex;
@@ -46,6 +48,12 @@
         .mobile-snap-item {
             scroll-snap-align: start;
             flex-shrink: 0;
+        }
+
+        /* Antrenör maskesi - Full body resim geçişi */
+        .trainer-mask {
+            mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
         }
     </style>
 <script type="importmap">
@@ -67,14 +75,24 @@
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
     <script>
-        // Arka planda servis kaydı (Offline çalışma için ön hazırlık)
+        // Service Worker Kaydı (PWA için zorunlu)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(() => {
-                    console.log('SW tescil edilemedi, normal modda devam ediliyor.');
+                navigator.serviceWorker.register('/sw.js').then(reg => {
+                    console.log('BGB PWA Aktif:', reg.scope);
+                }).catch(err => {
+                    console.log('PWA Kayıt Hatası:', err);
                 });
             });
         }
+
+        // Chrome "Uygulamayı Yükle" uyarısı dinleyicisi
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log('Uygulama yüklenmeye hazır.');
+        });
     </script>
 </body>
 </html>
