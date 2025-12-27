@@ -7,15 +7,9 @@ import {
   updateDoc, 
   deleteDoc, 
   doc, 
-  query, 
-  where 
+  setDoc 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-/**
- * BGB Veri Servisi (Cloud Modu)
- * LocalStorage yerine verileri Firestore'da tutar.
- */
-// Added missing keys for data entities to fix App.tsx property access errors
 export const KEYS = {
   STUDENTS: 'students',
   TRAINERS: 'trainers',
@@ -27,30 +21,71 @@ export const KEYS = {
 };
 
 export const storageService = {
-  // Veriyi buluta kaydet
+  /**
+   * Herhangi bir veriyi Firestore'a kaydeder veya günceller.
+   */
   saveToCloud: async (colName: string, data: any) => {
     try {
-      const docRef = await addDoc(collection(db, colName), data);
-      return docRef.id;
+      const { id, ...rest } = data;
+      const cleanData = {
+        ...rest,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (id && !id.toString().startsWith('temp-') && !id.toString().includes('founder')) {
+        const docRef = doc(db, colName, id.toString());
+        await setDoc(docRef, cleanData, { merge: true });
+        return id;
+      } else {
+        const docRef = await addDoc(collection(db, colName), {
+          ...cleanData,
+          createdAt: new Date().toISOString()
+        });
+        return docRef.id;
+      }
     } catch (e) {
-      console.error("Firebase Save Error:", e);
+      console.error(`[BGB-Cloud] Kayıt Hatası (${colName}):`, e);
+      return null;
     }
   },
 
-  // Verileri buluttan çek
+  /**
+   * Buluttaki tüm verileri koleksiyon bazlı çeker.
+   */
   loadFromCloud: async (colName: string) => {
-    const querySnapshot = await getDocs(collection(db, colName));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    try {
+      const querySnapshot = await getDocs(collection(db, colName));
+      return querySnapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      }));
+    } catch (e) {
+      console.warn(`[BGB-Cloud] Okuma Hatası (${colName}): Veriler sadece yerel depodan yüklenecek.`);
+      return [];
+    }
   },
 
-  // Klasik yükleme (State başlatma için hala localStorage kullanılabilir)
+  /**
+   * Belirtilen dokümanı buluttan siler.
+   */
+  deleteFromCloud: async (colName: string, docId: string) => {
+    try {
+      if (!docId || docId.toString().startsWith('temp-')) return true;
+      await deleteDoc(doc(db, colName, docId.toString()));
+      return true;
+    } catch (e) {
+      console.error(`[BGB-Cloud] Silme Hatası (${colName}):`, e);
+      return false;
+    }
+  },
+
+  // Offline destek için yerel metodlar
   load: <T>(key: string, defaultValue: T): T => {
-    const saved = localStorage.getItem(key);
+    const saved = localStorage.getItem(`bgb_${key}`);
     return saved ? JSON.parse(saved) : defaultValue;
   },
 
-  syncAll: (data: any) => {
-    // Mevcut yerel kaydı korur
-    localStorage.setItem('bgb_backup', JSON.stringify(data));
+  saveLocal: (key: string, data: any) => {
+    localStorage.setItem(`bgb_${key}`, JSON.stringify(data));
   }
 };
