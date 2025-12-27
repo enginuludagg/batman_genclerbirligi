@@ -8,34 +8,29 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    chunkSizeWarningLimit: 2000, // Uyarı limitini 2MB'a çekerek build logunu temizler
+    // Build uyarısını tamamen susturmak için limiti 2MB yapıyoruz
+    chunkSizeWarningLimit: 2000, 
     rollupOptions: {
       output: {
-        // Büyük kütüphaneleri otomatik olarak ayrı parçalara böler
+        // Kütüphaneleri ayrı parçalara bölerek tarayıcı önbelleklemesini iyileştirir
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react')) return 'vendor-core';
-            if (id.includes('recharts')) return 'vendor-charts';
+            if (id.includes('react')) return 'vendor-react';
+            if (id.includes('recharts')) return 'vendor-recharts';
             if (id.includes('lucide-react')) return 'vendor-icons';
             if (id.includes('@google/genai')) return 'vendor-ai';
-            return 'vendor'; // Diğer kütüphaneler
+            return 'vendor-libs';
           }
         },
-        // Dosya isimlerini daha düzenli hale getirir
+        // Dosya yapısını temiz tutar
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
         assetFileNames: 'assets/[ext]/[name]-[hash].[ext]'
       }
     },
-    // CSS minifikasyonunu zorla
+    // Terser hatasını gidermek için varsayılan 'esbuild' kullanıyoruz
+    minify: 'esbuild', 
     cssMinify: true,
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true, // Üretim modunda console.log'ları temizler
-        drop_debugger: true
-      }
-    }
   },
   server: {
     port: 3000
