@@ -39,7 +39,6 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Mobil Kaydırma Snap */
         .mobile-snap {
             scroll-snap-type: x mandatory;
             display: flex;
@@ -50,12 +49,15 @@
             flex-shrink: 0;
         }
 
-        /* Antrenör maskesi - Full body resim geçişi */
         .trainer-mask {
             mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
             -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
         }
     </style>
+    <script>
+      // Browser'da process.env hatasını önlemek için polyfill
+      window.process = { env: { API_KEY: "" } };
+    </script>
 <script type="importmap">
 {
   "imports": {
@@ -76,10 +78,10 @@
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
     <script>
-        // Service Worker Kaydı (PWA için zorunlu)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').then(reg => {
+                // Service Worker dosyasının doğru konumda olduğundan emin oluyoruz
+                navigator.serviceWorker.register('./sw.js').then(reg => {
                     console.log('BGB PWA Aktif:', reg.scope);
                 }).catch(err => {
                     console.log('PWA Kayıt Hatası:', err);
@@ -87,12 +89,10 @@
             });
         }
 
-        // Chrome "Uygulamayı Yükle" uyarısı dinleyicisi
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            console.log('Uygulama yüklenmeye hazır.');
         });
     </script>
 </body>

@@ -3,7 +3,10 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AppContextData, Student, Drill, AppMode } from "../types";
 
 // API Anahtarını al ve istemciyi yapılandır
-const getAIClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAIClient = () => {
+  const apiKey = process.env.API_KEY || "";
+  return new GoogleGenAI({ apiKey });
+};
 
 /**
  * AI Servislerinde Hata Yönetimi İçin Yerel Bilgi Bankası (Fallbacks)
@@ -38,6 +41,10 @@ const BGB_KNOWLEDGE_BASE = {
  * AI tarafından yeni bir antrenman drilli üretir.
  */
 export const generateNewDrillFromAI = async (sport: string = 'Futbol'): Promise<Drill> => {
+  if (!process.env.API_KEY) {
+     return { ...BGB_KNOWLEDGE_BASE.drills[0], id: `fb-${Date.now()}` } as Drill;
+  }
+
   const ai = getAIClient();
   const prompt = `Batman Gençlerbirliği (BGB) için ${sport} branşında, yaratıcı ve öğretici bir antrenman drilli üret. Yanıtın mutlaka JSON formatında olsun.`;
 
@@ -66,7 +73,6 @@ export const generateNewDrillFromAI = async (sport: string = 'Futbol'): Promise<
     const text = response.text;
     if (!text) throw new Error("Empty AI Response");
     
-    // JSON'u güvenli bir şekilde temizle ve ayrıştır
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const drillData = JSON.parse(cleanJson);
     
@@ -85,6 +91,10 @@ export const generateNewDrillFromAI = async (sport: string = 'Futbol'): Promise<
  * BGB AI Asistanı - Ana Fonksiyon
  */
 export const getAICoachResponse = async (userInput: string, context: AppContextData, mode: AppMode) => {
+  if (!process.env.API_KEY) {
+    return { text: BGB_KNOWLEDGE_BASE.responses[1] };
+  }
+
   const ai = getAIClient();
   const sports = Array.from(new Set(context.students.map(s => s.sport)));
   
@@ -111,6 +121,8 @@ export const getAICoachResponse = async (userInput: string, context: AppContextD
 };
 
 export const getCoachSuggestions = async (student: Student): Promise<string> => {
+  if (!process.env.API_KEY) return "Antrenman disipliniyle gelişimini sürdürüyor.";
+  
   const ai = getAIClient();
   try {
     const response = await ai.models.generateContent({
@@ -127,6 +139,8 @@ export const getCoachSuggestions = async (student: Student): Promise<string> => 
 };
 
 export const getDrillAITips = async (drill: Drill): Promise<string> => {
+  if (!process.env.API_KEY) return "Doğru teknik ve sürekli tekrar başarının anahtarıdır.";
+
   const ai = getAIClient();
   try {
     const response = await ai.models.generateContent({
