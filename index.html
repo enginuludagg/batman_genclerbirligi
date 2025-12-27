@@ -20,42 +20,28 @@
     <meta name="theme-color" content="#1D2D4C">
     
     <title>BGB Akademi | V.1.2</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind CSS (Crossorigin eklendi) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio" crossorigin="anonymous"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,900&display=swap" rel="stylesheet">
     <style>
         * { 
             box-sizing: border-box; 
             -webkit-tap-highlight-color: transparent; 
-            -webkit-overflow-scrolling: touch;
         }
         body { 
             font-family: 'Roboto', sans-serif; 
             background-color: #f8fafc; 
             margin: 0; 
             overflow-x: hidden;
-            overscroll-behavior-y: contain;
         }
         #root { min-height: 100vh; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .mobile-snap {
-            scroll-snap-type: x mandatory;
-            display: flex;
-            overflow-x: auto;
-        }
-        .mobile-snap-item {
-            scroll-snap-align: start;
-            flex-shrink: 0;
-        }
-
-        .trainer-mask {
-            mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
-        }
     </style>
     <script>
-      // Browser'da process.env hatasını önlemek için polyfill
+      // Browser polyfills
       window.process = { env: { API_KEY: "" } };
     </script>
 <script type="importmap">
@@ -76,24 +62,19 @@
 </head>
 <body>
     <div id="root"></div>
+    
+    <!-- Vite için doğru giriş noktası -->
     <script type="module" src="/index.tsx"></script>
+    
     <script>
+        // Service Worker Kaydı (Daha güvenli yöntem)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // Service Worker dosyasının doğru konumda olduğundan emin oluyoruz
-                navigator.serviceWorker.register('./sw.js').then(reg => {
-                    console.log('BGB PWA Aktif:', reg.scope);
-                }).catch(err => {
-                    console.log('PWA Kayıt Hatası:', err);
-                });
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(reg => console.log('BGB PWA Aktif'))
+                    .catch(err => console.error('PWA Kayıt Hatası:', err));
             });
         }
-
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-        });
     </script>
 </body>
 </html>

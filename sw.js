@@ -1,24 +1,29 @@
 
-const CACHE_NAME = 'bgb-akademi-v1';
-const ASSETS = [
-  '/',
-  '/index.html',
-  'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,900&display=swap'
-];
+const CACHE_NAME = 'bgb-v1.2-cache';
 
+// Service worker kurulumu
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
-  );
+  self.skipWaiting();
 });
 
+// Aktivasyon ve eski cache temizliği
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
+      );
+    })
+  );
+  return self.clients.claim();
+});
+
+// Network-first stratejisi (Daha güvenli)
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });
