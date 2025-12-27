@@ -30,7 +30,7 @@ const App: React.FC = () => {
   const [toast, setToast] = useState<Notification | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // --- MERKEZİ VERİ DURUMLARI ---
+  // --- MERKEZİ VERİ DURUMLARI (BGB AKADEMİ) ---
   const [students, setStudents] = useState<Student[]>(() => storageService.load(KEYS.STUDENTS, []));
   const [trainers, setTrainers] = useState<Trainer[]>(() => storageService.load(KEYS.TRAINERS, []));
   const [trainerNotes, setNotes] = useState<TrainerNote[]>(() => storageService.load(KEYS.NOTES, []));
@@ -39,11 +39,11 @@ const App: React.FC = () => {
   const [media, setMedia] = useState<MediaPost[]>(() => storageService.load(KEYS.MEDIA, []));
   const [drills, setDrills] = useState<Drill[]>(() => storageService.load(KEYS.DRILLS, []));
 
-  // --- FIREBASE INITIAL FETCH ---
+  // --- FIREBASE İLK YÜKLEME ---
   useEffect(() => {
     if (!isConfigured) return;
 
-    const initCloudData = async () => {
+    const fetchAllData = async () => {
       setIsSyncing(true);
       try {
         const [cS, cT, cN, cSe, cF, cM, cD] = await Promise.all([
@@ -64,48 +64,47 @@ const App: React.FC = () => {
         if (cM.length) setMedia(cM as MediaPost[]);
         if (cD.length) setDrills(cD as Drill[]);
       } catch (err) {
-        console.error("Firebase Sync Error:", err);
+        console.error("BGB Sync Error:", err);
       } finally {
         setIsSyncing(false);
       }
     };
 
-    initCloudData();
+    fetchAllData();
   }, []);
 
-  // --- GENEL SENKRONİZASYON WRAPPER ---
-  const syncAndSet = async <T extends { id: string }>(
-    collectionKey: string, 
+  // --- VERİ GÜNCELLEME VE SENKRONİZASYON ---
+  const updateAndSync = async <T extends { id: string }>(
+    key: string, 
     items: T[] | ((prev: T[]) => T[]), 
     setter: React.Dispatch<React.SetStateAction<T[]>>
   ) => {
     setter(prev => {
       const updated = typeof items === 'function' ? items(prev) : items;
-      // Local Storage Sync
-      storageService.saveLocal(collectionKey, updated);
-      // Firebase Sync (Sadece yeni veya güncelleneni bulup göndeririz ya da koleksiyon bazlı yönetiriz)
-      if (isConfigured) {
-        // En basit haliyle: Son değişikliği buluta itiyoruz
-        const lastItem = updated[updated.length - 1];
-        if (lastItem) storageService.saveToCloud(collectionKey, lastItem);
+      storageService.saveLocal(key, updated);
+      
+      // Buluta son değişikliği it (Optimistik yaklaşım)
+      if (isConfigured && updated.length > 0) {
+        const last = updated[updated.length - 1];
+        if (last) storageService.saveToCloud(key, last);
       }
       return updated;
     });
   };
 
-  const handleUpdateStudent = (updated: Student[] | ((prev: Student[]) => Student[])) => syncAndSet(KEYS.STUDENTS, updated, setStudents);
-  const handleUpdateTrainer = (updated: Trainer[] | ((prev: Trainer[]) => Trainer[])) => syncAndSet(KEYS.TRAINERS, updated, setTrainers);
-  const handleUpdateFinance = (updated: FinanceEntry[] | ((prev: FinanceEntry[]) => FinanceEntry[])) => syncAndSet(KEYS.FINANCE, updated, setFinance);
-  const handleUpdateMedia = (updated: MediaPost[] | ((prev: MediaPost[]) => MediaPost[])) => syncAndSet(KEYS.MEDIA, updated, setMedia);
-  const handleUpdateDrills = (updated: Drill[] | ((prev: Drill[]) => Drill[])) => syncAndSet(KEYS.DRILLS, updated, setDrills);
-  const handleUpdateSessions = (updated: TrainingSession[] | ((prev: TrainingSession[]) => TrainingSession[])) => syncAndSet(KEYS.SESSIONS, updated, setSessions);
-  const handleUpdateNotes = (updated: TrainerNote[] | ((prev: TrainerNote[]) => TrainerNote[])) => syncAndSet(KEYS.NOTES, updated, setNotes);
+  const handleUpdateStudent = (u: Student[] | ((p: Student[]) => Student[])) => updateAndSync(KEYS.STUDENTS, u, setStudents);
+  const handleUpdateTrainer = (u: Trainer[] | ((p: Trainer[]) => Trainer[])) => updateAndSync(KEYS.TRAINERS, u, setTrainers);
+  const handleUpdateFinance = (u: FinanceEntry[] | ((p: FinanceEntry[]) => FinanceEntry[])) => updateAndSync(KEYS.FINANCE, u, setFinance);
+  const handleUpdateMedia = (u: MediaPost[] | ((p: MediaPost[]) => MediaPost[])) => updateAndSync(KEYS.MEDIA, u, setMedia);
+  const handleUpdateDrills = (u: Drill[] | ((p: Drill[]) => Drill[])) => updateAndSync(KEYS.DRILLS, u, setDrills);
+  const handleUpdateSessions = (u: TrainingSession[] | ((p: TrainingSession[]) => TrainingSession[])) => updateAndSync(KEYS.SESSIONS, u, setSessions);
+  const handleUpdateNotes = (u: TrainerNote[] | ((p: TrainerNote[]) => TrainerNote[])) => updateAndSync(KEYS.NOTES, u, setNotes);
 
   const handleRegister = async (student: Student) => {
     setStudents(prev => [...prev, student]);
     storageService.saveLocal(KEYS.STUDENTS, [...students, student]);
     if (isConfigured) await storageService.saveToCloud(KEYS.STUDENTS, student);
-    setToast({ title: 'KAYIT TAMAMLANDI', message: 'Sporcu verileri buluta işlendi.' });
+    setToast({ title: 'HOŞ GELDİNİZ', message: 'BGB Akademi kayıt işleminiz başarıyla tamamlandı.' });
   };
 
   const handleUpdateFounderPhoto = async (photoUrl: string) => {
@@ -113,8 +112,7 @@ const App: React.FC = () => {
     if (engin) {
       const updatedEngin = { ...engin, photoUrl };
       handleUpdateTrainer(prev => prev.map(t => t.id === engin.id ? updatedEngin : t));
-      if (isConfigured) await storageService.saveToCloud(KEYS.TRAINERS, updatedEngin);
-      setToast({ title: 'PROFİL GÜNCELLENDİ', message: 'Hakkımızda sayfa görseli yenilendi.' });
+      setToast({ title: 'BİLGİ', message: 'Hakkımızda sayfası güncellendi.' });
     }
   };
 
@@ -177,12 +175,12 @@ const App: React.FC = () => {
               {!isConfigured ? (
                 <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-orange-200 bg-orange-50 text-orange-600">
                   <AlertTriangle size={14} />
-                  <span className="text-[9px] font-black uppercase tracking-widest italic">FIREBASE YAPILANDIRMASI BEKLENİYOR</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest italic">FIREBASE YAPILANDIRMASI GEREKLİ</span>
                 </div>
               ) : (
                 <div className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${isSyncing ? 'bg-zinc-50 border-zinc-200 text-zinc-400' : 'bg-green-50 border-green-100 text-green-600'}`}>
                   {isSyncing ? <RefreshCw size={14} className="animate-spin" /> : <Database size={14} />}
-                  <span className="text-[9px] font-black uppercase tracking-widest italic">{isSyncing ? 'BULUTLA EŞLEŞİYOR...' : 'SİSTEM ÇEVRİMİÇİ'}</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest italic">{isSyncing ? 'SENKRONİZE EDİLİYOR...' : 'SİSTEM ÇEVRİMİÇİ'}</span>
                 </div>
               )}
               <button onClick={() => window.location.reload()} className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 hover:text-[#E30613] transition-colors tracking-widest">

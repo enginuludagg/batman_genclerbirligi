@@ -22,7 +22,8 @@ export const KEYS = {
 
 export const storageService = {
   /**
-   * Herhangi bir veriyi Firestore'a kaydeder veya günceller.
+   * BGB Veri Kayıt Portalı
+   * Veriyi Firestore'a kaydeder (ID varsa günceller, yoksa ekler).
    */
   saveToCloud: async (colName: string, data: any) => {
     try {
@@ -32,7 +33,8 @@ export const storageService = {
         updatedAt: new Date().toISOString()
       };
 
-      if (id && !id.toString().startsWith('temp-') && !id.toString().includes('founder')) {
+      // founder veya manuel verilmiş ID'leri koru, diğerlerini Firestore yönetsin
+      if (id && !id.toString().startsWith('temp-')) {
         const docRef = doc(db, colName, id.toString());
         await setDoc(docRef, cleanData, { merge: true });
         return id;
@@ -50,7 +52,7 @@ export const storageService = {
   },
 
   /**
-   * Buluttaki tüm verileri koleksiyon bazlı çeker.
+   * Bulut Veri Çekme
    */
   loadFromCloud: async (colName: string) => {
     try {
@@ -60,13 +62,13 @@ export const storageService = {
         ...doc.data() 
       }));
     } catch (e) {
-      console.warn(`[BGB-Cloud] Okuma Hatası (${colName}): Veriler sadece yerel depodan yüklenecek.`);
+      console.warn(`[BGB-Cloud] Okuma Hatası (${colName}): Yerel veriler kullanılacak.`);
       return [];
     }
   },
 
   /**
-   * Belirtilen dokümanı buluttan siler.
+   * Veri Silme
    */
   deleteFromCloud: async (colName: string, docId: string) => {
     try {
@@ -79,7 +81,7 @@ export const storageService = {
     }
   },
 
-  // Offline destek için yerel metodlar
+  // Yerel Depolama (Offline & Cache)
   load: <T>(key: string, defaultValue: T): T => {
     const saved = localStorage.getItem(`bgb_${key}`);
     return saved ? JSON.parse(saved) : defaultValue;
