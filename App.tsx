@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import StudentList from './components/StudentList';
@@ -16,7 +16,8 @@ import TrainerNotebook from './components/TrainerNotebook';
 import Auth from './components/Auth';
 import Settings from './components/Settings';
 import { ViewType, Student, Trainer, FinanceEntry, MediaPost, TrainingSession, AppMode, Notification, Drill, TrainerNote, AppContextData } from './types';
-import { Bell, X, LogOut, LayoutGrid } from 'lucide-react';
+import { Bell, X, LogOut, LayoutGrid, CloudCheck, Database } from 'lucide-react';
+import { storageService, KEYS } from './services/storageService';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -25,35 +26,38 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [appMode, setAppMode] = useState<AppMode>('admin');
   const [toast, setToast] = useState<Notification | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  // TEMİZ KURULUM: Tüm başlangıç verileri boş dizilere çekildi
-  const [students, setStudents] = useState<Student[]>([]);
-  const [trainers, setTrainers] = useState<Trainer[]>([]);
-  const [trainerNotes, setNotes] = useState<TrainerNote[]>([]);
-  const [sessions, setSessions] = useState<TrainingSession[]>([]);
-  const [finance, setFinance] = useState<FinanceEntry[]>([]);
-  const [media, setMedia] = useState<MediaPost[]>([]);
-  const [drills, setDrills] = useState<Drill[]>([]);
+  // Veri Başlatma
+  const [students, setStudents] = useState<Student[]>(() => storageService.load(KEYS.STUDENTS, []));
+  const [trainers, setTrainers] = useState<Trainer[]>(() => storageService.load(KEYS.TRAINERS, []));
+  const [trainerNotes, setNotes] = useState<TrainerNote[]>(() => storageService.load(KEYS.NOTES, []));
+  const [sessions, setSessions] = useState<TrainingSession[]>(() => storageService.load(KEYS.SESSIONS, []));
+  const [finance, setFinance] = useState<FinanceEntry[]>(() => storageService.load(KEYS.FINANCE, []));
+  const [media, setMedia] = useState<MediaPost[]>(() => storageService.load(KEYS.MEDIA, []));
+  const [drills, setDrills] = useState<Drill[]>(() => storageService.load(KEYS.DRILLS, []));
 
-  // Merkezi bağlam verisi
+  // Merkezi Kayıt Fonksiyonu (Görsel geri bildirim ile)
+  const syncData = useCallback(() => {
+    setIsSyncing(true);
+    storageService.syncAll({
+      students, trainers, notes: trainerNotes, sessions, finance, media, drills
+    });
+    setTimeout(() => setIsSyncing(false), 800);
+  }, [students, trainers, trainerNotes, sessions, finance, media, drills]);
+
+  // Her değişiklikte kaydet
+  useEffect(() => {
+    syncData();
+  }, [syncData]);
+
   const contextData: AppContextData = {
-    students,
-    trainers,
-    branches: [],
-    sessions,
-    finance,
-    media,
-    drills,
-    attendance: [],
-    notifications: [],
-    trainerNotes
+    students, trainers, branches: [], sessions, finance, media, drills, attendance: [], notifications: [], trainerNotes
   };
 
   const handleNavigate = (view: ViewType, subTab?: string) => {
     setActiveView(view);
-    if (view === 'media' && subTab) {
-      setMediaTab(subTab as any);
-    }
+    if (view === 'media' && subTab) setMediaTab(subTab as any);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -71,7 +75,7 @@ const App: React.FC = () => {
     switch (activeView) {
       case 'dashboard': return <Dashboard context={contextData} appMode={appMode} onNavigate={handleNavigate} />;
       case 'students': return <StudentList students={students} setStudents={setStudents} mode={appMode} />;
-      case 'schedule': return <Schedule sessions={sessions} setSessions={(s) => setSessions(s)} mode={appMode} />;
+      case 'schedule': return <Schedule sessions={sessions} setSessions={setSessions} mode={appMode} />;
       case 'ai-coach': return <AICoach context={contextData} mode={appMode} />;
       case 'analytics': return <Analytics students={students} setStudents={setStudents} mode={appMode} />;
       case 'league': return <League students={students} mode={appMode} />;
@@ -109,9 +113,16 @@ const App: React.FC = () => {
                 {activeView.toUpperCase()} <span className="text-slate-200">/</span> {appMode === 'admin' ? 'YÖNETİCİ' : 'VELİ'}
               </h2>
            </div>
-           <button onClick={() => setIsLoggedIn(false)} className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 hover:text-red-600 transition-colors">
-              <LogOut size={16} /> ÇIKIŞ YAP
-           </button>
+           <div className="flex items-center gap-6">
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${isSyncing ? 'bg-zinc-50 border-zinc-200 text-zinc-400' : 'bg-green-50 border-green-100 text-green-600'}`}>
+                <Database size={14} className={isSyncing ? 'animate-pulse' : ''} />
+                <span className="text-[9px] font-black uppercase tracking-widest">{isSyncing ? 'YÜKLENİYOR...' : 'VERİ GÜVENDE'}</span>
+                {!isSyncing && <CloudCheck size={14} />}
+              </div>
+              <button onClick={() => setIsLoggedIn(false)} className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 hover:text-red-600 transition-colors">
+                 <LogOut size={16} /> ÇIKIŞ YAP
+              </button>
+           </div>
         </div>
 
         <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-slate-100 sticky top-0 z-[1000]">
@@ -121,7 +132,9 @@ const App: React.FC = () => {
            <h1 className="text-xs font-black italic uppercase tracking-tighter">
             BATMAN <span className="text-red-600">GB AKADEMİ</span>
            </h1>
-           <div className="w-10"></div>
+           <div className={`flex items-center justify-center w-10 h-10 rounded-full ${isSyncing ? 'text-zinc-300' : 'text-green-500'}`}>
+              <CloudCheck size={20} />
+           </div>
         </div>
 
         <div className="p-4 sm:p-8 max-w-[1400px] mx-auto w-full">
