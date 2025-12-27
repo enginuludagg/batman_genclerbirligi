@@ -8,7 +8,7 @@ import {
   deleteDoc, 
   doc, 
   setDoc 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+} from "firebase/firestore";
 
 export const KEYS = {
   STUDENTS: 'students',
@@ -33,7 +33,6 @@ export const storageService = {
         updatedAt: new Date().toISOString()
       };
 
-      // founder veya manuel verilmiş ID'leri koru, diğerlerini Firestore yönetsin
       if (id && !id.toString().startsWith('temp-')) {
         const docRef = doc(db, colName, id.toString());
         await setDoc(docRef, cleanData, { merge: true });
