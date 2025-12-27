@@ -2,48 +2,57 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2, Sparkles, BrainCircuit, BellRing, CheckCircle2 } from 'lucide-react';
 import { getAICoachResponse } from '../services/geminiService';
-import { Message, AppContextData } from '../types';
+import { Message, AppContextData, AppMode } from '../types';
 import Logo from './Logo';
 
 interface Props {
   context: AppContextData;
+  mode: AppMode;
 }
 
-const AICoach: React.FC<Props> = ({ context }) => {
+const AICoach: React.FC<Props> = ({ context, mode }) => {
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', role: 'assistant', content: 'Merhaba! Ben BGB AI. Batman Gençlerbirliği akademi verilerini analiz ederek size teknik ve idari konularda yardımcı olabilirim.' }
+    { 
+      id: '1', 
+      role: 'assistant', 
+      content: mode === 'admin' 
+        ? 'Hoş geldiniz hocam! BGB Akademi verileri hazır. Analiz etmemi istediğiniz bir grup veya rapor var mı?' 
+        : 'Hoş geldiniz! Ben BGB Asistanı. Kulübümüz, antrenman saatleri veya branşlar hakkında size nasıl yardımcı olabilirim?' 
+    }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [notifStatus, setNotifStatus] = useState<{count: number, msg: string} | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages, notifStatus]);
+  }, [messages, isLoading]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
+    
     const userMessage: Message = { id: Date.now().toString(), role: 'user', content: input };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
-    const result = await getAICoachResponse(input, context);
-    
-    if (result.functionCalls && result.functionCalls.length > 0) {
-      for (const fc of result.functionCalls) {
-        if (fc.name === 'sendNotification') {
-          const { studentIds, message } = fc.args as any;
-          setNotifStatus({ count: studentIds.length, msg: message });
-          setTimeout(() => setNotifStatus(null), 5000);
-        }
-      }
+    try {
+      const result = await getAICoachResponse(input, context, mode);
+      const aiMessage: Message = { 
+        id: (Date.now() + 1).toString(), 
+        role: 'assistant', 
+        content: result.text || "Şu an cevap veremiyorum, lütfen yönetime danışın." 
+      };
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      setMessages(prev => [...prev, { 
+        id: Date.now().toString(), 
+        role: 'assistant', 
+        content: "Üzgünüm, bir bağlantı sorunu oluştu. Lütfen tekrar deneyin." 
+      }]);
+    } finally {
+      setIsLoading(false);
     }
-
-    const aiMessage: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: result.text || "İşlem tamamlandı hocam." };
-    setMessages(prev => [...prev, aiMessage]);
-    setIsLoading(false);
   };
 
   return (
@@ -55,12 +64,14 @@ const AICoach: React.FC<Props> = ({ context }) => {
           </div>
           <div>
             <h3 className="text-white font-black uppercase tracking-tighter italic">BGB <span className="text-red-600">AI</span></h3>
-            <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em]">Akademi Akıllı Asistanı</p>
+            <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em]">
+              {mode === 'admin' ? 'Teknik Analiz Modu' : 'Bilgi Hattı Modu'}
+            </p>
           </div>
         </div>
         <div className="flex gap-2">
             <span className="bg-red-900/30 text-red-500 text-[9px] font-black px-3 py-1.5 rounded-full uppercase flex items-center gap-1.5 animate-pulse">
-                <Sparkles size={10} /> ÇEVRİMİÇİ
+                <Sparkles size={10} /> {mode === 'admin' ? 'GÜVENLİ ERİŞİM' : 'AKTİF'}
             </span>
         </div>
       </div>
@@ -79,24 +90,11 @@ const AICoach: React.FC<Props> = ({ context }) => {
           </div>
         ))}
 
-        {notifStatus && (
-          <div className="flex justify-center animate-bounce">
-            <div className="bg-green-600 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-4">
-              <div className="bg-white/20 p-2 rounded-lg"><BellRing size={20} className="animate-ring" /></div>
-              <div>
-                <p className="text-xs font-black uppercase tracking-widest">{notifStatus.count} VELİYE BİLDİRİM GÖNDERİLDİ</p>
-                <p className="text-[10px] opacity-80 font-bold italic line-clamp-1">"{notifStatus.msg}"</p>
-              </div>
-              <CheckCircle2 size={24} />
-            </div>
-          </div>
-        )}
-
         {isLoading && (
           <div className="flex justify-start">
             <div className="bg-white p-4 rounded-2xl flex items-center gap-3 shadow-sm border border-gray-100">
               <Loader2 size={16} className="animate-spin text-red-600" />
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">BGB AI Verileri İşliyor...</span>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">BGB Asistanı düşünüyor...</span>
             </div>
           </div>
         )}
@@ -107,12 +105,12 @@ const AICoach: React.FC<Props> = ({ context }) => {
           <input 
             type="text" value={input} onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="BGB AI'a sorun: 'U14 grubundaki eksikleri listele'..."
+            placeholder={mode === 'admin' ? "Analiz isteyin: 'U11 grubunun genel durumu nedir?'" : "Sorunuzu yazın..."}
             className="flex-1 pl-6 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-red-600 outline-none font-bold text-sm shadow-inner transition-all"
           />
           <button 
             onClick={handleSend} disabled={isLoading || !input.trim()}
-            className="p-4 bg-red-600 text-white rounded-2xl hover:bg-slate-900 transition-all shadow-lg active:scale-95"
+            className="p-4 bg-red-600 text-white rounded-2xl hover:bg-slate-900 transition-all shadow-lg active:scale-95 disabled:opacity-50"
           >
             <Send size={20} />
           </button>

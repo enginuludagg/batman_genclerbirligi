@@ -1,4 +1,5 @@
 
+
 export interface Student {
   id: string;
   name: string;
@@ -34,6 +35,28 @@ export interface Student {
   feeStatus: 'Paid' | 'Pending' | 'Overdue';
 }
 
+export interface Trainer {
+  id: string;
+  name: string;
+  photoUrl?: string;
+  specialty: string;
+  phone: string;
+  groups: string[];
+}
+
+export interface MatchResult {
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore?: number;
+  awayScore?: number;
+  date: string;
+  time: string;
+  location: string;
+  status: 'played' | 'scheduled';
+  category: string;
+}
+
 export interface TrainerNote {
   id: string;
   trainerName: string;
@@ -42,18 +65,7 @@ export interface TrainerNote {
   status: 'new' | 'read';
   priority: 'low' | 'medium' | 'high';
   category: 'Saha Dışı' | 'Malzeme' | 'Disiplin' | 'Gelişim';
-  targetScope: string; // Notun hangi branş/grup ile ilgili olduğu (Örn: 'Genel', 'U11', 'Voleybol')
-}
-
-export interface FinanceEntry {
-  id: string;
-  type: 'income' | 'expense';
-  category: 'Aidat' | 'Ekipman' | 'Kira' | 'Maaş' | 'Diğer';
-  amount: number;
-  date: string;
-  description: string;
-  branch: string;
-  paymentMethod: 'Elden' | 'Banka' | 'Kredi Kartı';
+  targetScope: string;
 }
 
 export interface MediaPost {
@@ -66,14 +78,6 @@ export interface MediaPost {
   imageUrl?: string;
   likes?: number;
   pollOptions?: string[];
-}
-
-export interface Trainer {
-  id: string;
-  name: string;
-  specialty: string;
-  phone: string;
-  groups: string[];
 }
 
 export interface TrainingSession {
@@ -96,15 +100,28 @@ export interface Drill {
   imageUrl?: string;
 }
 
-export interface Notification {
-  title: string;
-  message: string;
-}
-
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+}
+
+// Added missing FinanceEntry interface
+export interface FinanceEntry {
+  id: string;
+  type: 'income' | 'expense';
+  category: 'Aidat' | 'Ekipman' | 'Kira' | 'Maaş' | 'Diğer';
+  amount: number;
+  date: string;
+  description: string;
+  branch: string;
+  paymentMethod: string;
+}
+
+// Added missing Notification interface
+export interface Notification {
+  title: string;
+  message: string;
 }
 
 export type ViewType = 'dashboard' | 'students' | 'trainers' | 'schedule' | 'attendance' | 'finance' | 'media' | 'league' | 'ai-coach' | 'analytics' | 'drills' | 'settings' | 'notes';
@@ -119,7 +136,7 @@ export interface AppContextData {
   media: MediaPost[];
   drills: Drill[];
   attendance: any[];
-  notifications: any[];
+  notifications: Notification[];
   trainerNotes: TrainerNote[];
 }
 
@@ -136,14 +153,4 @@ export interface LeagueTeam {
   points: number;
   form: string[];
   isUserTeam?: boolean;
-}
-
-export interface MatchResult {
-  id: string;
-  homeTeam: string;
-  awayTeam: string;
-  homeScore: number;
-  awayScore: number;
-  date: string;
-  status: 'played' | 'scheduled';
 }

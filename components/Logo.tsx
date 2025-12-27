@@ -1,9 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
 
-/**
- * Google Drive linklerini doğrudan ve kararlı bir resim URL'sine dönüştürür.
- */
 const getDirectUrl = (url: string): string => {
   if (!url) return url;
   if (url.startsWith('data:') || url.startsWith('blob:')) return url;
@@ -22,7 +19,7 @@ const GLOBAL_LOGO_URL = `https://lh3.googleusercontent.com/d/${DEFAULT_ID}`;
 
 interface LogoProps {
   className?: string;
-  overrideUrl?: string | null; // Ayarlar panelinde anlık önizleme için
+  overrideUrl?: string | null;
 }
 
 const Logo: React.FC<LogoProps> = ({ className = "w-12 h-12", overrideUrl }) => {
@@ -57,34 +54,20 @@ const Logo: React.FC<LogoProps> = ({ className = "w-12 h-12", overrideUrl }) => 
     };
   }, [overrideUrl]);
 
-  if (hasError || !currentLogo) {
-    return (
-      <div className={`relative flex items-center justify-center select-none ${className}`}>
-        <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="50" cy="50" r="48" fill="#1D2D4C" />
-          <path d="M50 12 L22 22 C22 22 19 65 50 88 C81 65 78 22 78 22 L50 12Z" fill="white" />
-          <text x="50" y="55" fill="#E30613" fontSize="20" fontWeight="900" textAnchor="middle">BGB</text>
-        </svg>
-      </div>
-    );
-  }
-
   return (
     <div className={`relative flex items-center justify-center select-none overflow-hidden ${className}`}>
       <img 
-        src={currentLogo} 
+        src={hasError || !currentLogo ? GLOBAL_LOGO_URL : currentLogo} 
         alt="BGB Logo" 
-        // image-rendering: pixelated veya high-quality logolarda daha net sonuç verebilir
-        className="w-full h-full object-contain block align-middle"
-        style={{ imageRendering: 'auto' }}
+        className="w-full h-full object-contain block align-middle transition-opacity duration-300"
+        style={{ 
+          imageRendering: '-webkit-optimize-contrast', // Chrome/Safari için netleştirme
+          backfaceVisibility: 'hidden',
+          transform: 'translateZ(0)' // GPU render zorlama
+        }}
         crossOrigin="anonymous"
         onError={() => {
-          if (!currentLogo.includes('uc?')) {
-            const id = DEFAULT_ID;
-            setCurrentLogo(`https://drive.google.com/uc?export=view&id=${id}`);
-          } else {
-            setHasError(true);
-          }
+          if (!hasError) setHasError(true);
         }}
       />
     </div>
