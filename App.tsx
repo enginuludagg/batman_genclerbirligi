@@ -17,7 +17,7 @@ import AboutUs from './components/AboutUs';
 import Auth from './components/Auth';
 import Settings from './components/Settings';
 import { ViewType, Student, Trainer, FinanceEntry, MediaPost, TrainingSession, AppMode, Notification, Drill, TrainerNote, AppContextData } from './types';
-import { Bell, X, LogOut, LayoutGrid, CheckCircle2, Database, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Bell, X, LogOut, LayoutGrid, CheckCircle2, Database, RefreshCw, AlertTriangle, Menu } from 'lucide-react';
 import { storageService, KEYS } from './services/storageService';
 import { isConfigured } from './services/firebaseConfig';
 
@@ -159,52 +159,50 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-[100dvh] w-full bg-[#f8fafc] pb-20 lg:pb-0 selection:bg-red-600 selection:text-white">
+    <div className="flex min-h-[100dvh] w-full bg-[#f8fafc] pb-safe-bottom lg:pb-0 selection:bg-red-600 selection:text-white overflow-x-hidden">
       <Sidebar activeView={activeView} onViewChange={(v) => { setActiveView(v); setMediaTab('all'); }} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} appMode={appMode} setAppMode={setAppMode} />
-      <main className={`flex-1 flex flex-col transition-all duration-300 min-w-0 ${isSidebarOpen ? 'lg:ml-64 opacity-50 lg:opacity-100' : 'lg:ml-64'}`}>
+      
+      <main className={`flex-1 flex flex-col transition-all duration-500 ease-out min-w-0 min-h-[100dvh] relative ${isSidebarOpen ? 'lg:ml-[280px] scale-[0.98] opacity-50 pointer-events-none lg:opacity-100 lg:pointer-events-auto lg:scale-100' : 'lg:ml-[280px]'}`}>
         
         {/* MASAÜSTÜ HEADER */}
-        <div className="hidden lg:flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100 sticky top-0 z-[500]">
+        <div className="hidden lg:flex items-center justify-between px-8 py-6 bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-[500]">
            <div className="flex items-center gap-4">
-              <div className="bg-red-50 text-[#E30613] p-2 rounded-xl"><LayoutGrid size={20} /></div>
+              <div className="bg-red-50 text-[#E30613] p-2.5 rounded-xl"><LayoutGrid size={20} /></div>
               <h2 className="text-sm font-black uppercase tracking-widest text-slate-400 italic">
-                {activeView.toUpperCase()} <span className="text-slate-200">/</span> BGB AKADEMİ
+                {activeView.toUpperCase()} <span className="text-slate-200 mx-2">/</span> <span className="text-zinc-900">BGB AKADEMİ</span>
               </h2>
            </div>
            <div className="flex items-center gap-6">
               {!isConfigured ? (
                 <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-orange-200 bg-orange-50 text-orange-600">
                   <AlertTriangle size={14} />
-                  <span className="text-[9px] font-black uppercase tracking-widest italic">FIREBASE YAPILANDIRMASI GEREKLİ</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest italic">VERİTABANI BAĞLI DEĞİL</span>
                 </div>
               ) : (
                 <div className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${isSyncing ? 'bg-zinc-50 border-zinc-200 text-zinc-400' : 'bg-green-50 border-green-100 text-green-600'}`}>
                   {isSyncing ? <RefreshCw size={14} className="animate-spin" /> : <Database size={14} />}
-                  <span className="text-[9px] font-black uppercase tracking-widest italic">{isSyncing ? 'SENKRONİZE EDİLİYOR...' : 'SİSTEM ÇEVRİMİÇİ'}</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest italic">{isSyncing ? 'EŞİTLENİYOR...' : 'SİSTEM ONLİNE'}</span>
                 </div>
               )}
-              <button onClick={() => window.location.reload()} className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 hover:text-[#E30613] transition-colors tracking-widest">
-                 <LogOut size={16} /> GÜVENLİ ÇIKIŞ
-              </button>
            </div>
         </div>
 
-        {/* MOBİL HEADER */}
-        <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-slate-100 sticky top-0 z-[1000]">
-           <button onClick={() => setIsLoggedIn(false)} className="bg-slate-900 text-white p-2.5 rounded-xl"><LogOut size={16} /></button>
-           <h1 className="text-xs font-black italic uppercase tracking-tighter">BATMAN <span className="text-[#E30613]">GB AKADEMİ<sup>®</sup></span></h1>
-           <div className="flex items-center">
+        {/* MOBİL HEADER - Daha şık */}
+        <div className="lg:hidden flex items-center justify-between p-4 bg-white/90 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-[1000] shadow-sm">
+           <button onClick={() => setIsSidebarOpen(true)} className="bg-zinc-950 text-white p-2.5 rounded-xl active:scale-90 transition-transform"><Menu size={18} /></button>
+           <h1 className="text-xs font-black italic uppercase tracking-tighter text-zinc-900">BGB <span className="text-[#E30613]">AKADEMİ</span></h1>
+           <div className="flex items-center gap-2">
              {!isConfigured ? (
-               <div className="text-orange-500 p-2"><AlertTriangle size={20} /></div>
+               <div className="text-orange-500 bg-orange-50 p-2 rounded-xl"><AlertTriangle size={16} /></div>
              ) : (
-               <div className={`flex items-center justify-center w-10 h-10 rounded-full ${isSyncing ? 'text-zinc-300 animate-spin' : 'text-green-500'}`}>
-                 {isSyncing ? <RefreshCw size={20} /> : <CheckCircle2 size={20} />}
+               <div className={`flex items-center justify-center w-9 h-9 rounded-xl ${isSyncing ? 'bg-zinc-50 text-zinc-400' : 'bg-green-50 text-green-600'}`}>
+                 {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                </div>
              )}
            </div>
         </div>
 
-        <div className="p-4 sm:p-8 max-w-[1400px] mx-auto w-full">{renderView()}</div>
+        <div className="p-4 sm:p-8 max-w-[1600px] mx-auto w-full flex-1">{renderView()}</div>
       </main>
 
       {/* TOAST BİLDİRİM */}

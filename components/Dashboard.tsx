@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
-import { Users, Activity, Award, Newspaper, ChevronRight, ArrowUpRight, ShieldAlert, Sparkles, Image as ImageIcon, CalendarCheck, UserPlus, UserCheck, Wallet, MessageSquare, QrCode, ScanLine, X, ShieldCheck, MessageCircle } from 'lucide-react';
-import { AppContextData, AppMode, ViewType, Student } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Users, Activity, Award, Newspaper, ChevronRight, ArrowUpRight, ShieldAlert, Sparkles, Image as ImageIcon, CalendarCheck, UserPlus, UserCheck, Wallet, MessageSquare, QrCode, ScanLine, X, ShieldCheck, MessageCircle, CloudSun, Timer, MapPin } from 'lucide-react';
+import { AppContextData, AppMode, ViewType, Student, TrainingSession } from '../types';
 import Logo from './Logo';
 
 interface DashboardProps {
@@ -12,16 +12,42 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ context, appMode, onNavigate }) => {
   const [showIdCard, setShowIdCard] = useState(false);
+  const [nextSession, setNextSession] = useState<TrainingSession | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string>('');
+
   const publishedMedia = context.media.filter(m => m.status === 'published');
   const recentBulletins = publishedMedia.filter(m => m.type === 'bulletin').slice(0, 3);
   const recentGallery = publishedMedia.filter(m => m.type === 'gallery').slice(0, 4);
   
   const currentStudent = context.students[0];
 
+  // Sıradaki Antrenmanı Bulma Mantığı
+  useEffect(() => {
+    if (context.sessions.length > 0) {
+      // Demo amaçlı ilk session'ı alıyoruz, gerçekte tarih kontrolü yapılmalı
+      setNextSession(context.sessions[0]);
+    }
+    
+    // Basit bir geri sayım simülasyonu
+    const timer = setInterval(() => {
+      const now = new Date();
+      const target = new Date();
+      target.setHours(18, 0, 0); // Örnek: Antrenman 18:00'de
+      if (now > target) target.setDate(target.getDate() + 1);
+      
+      const diff = target.getTime() - now.getTime();
+      const h = Math.floor(diff / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      setTimeLeft(`${h}sa ${m}dk`);
+    }, 60000);
+    
+    return () => clearInterval(timer);
+  }, [context.sessions]);
+
   const quickActions = [
-    { id: 'students', label: 'ÖĞRENCİ EKLE', icon: UserPlus, color: 'bg-blue-600', view: 'students' },
+    { id: 'students', label: 'SPORCU EKLE', icon: UserPlus, color: 'bg-blue-600', view: 'students' },
     { id: 'qr-scan', label: 'QR OKUT', icon: ScanLine, color: 'bg-zinc-900', view: 'attendance' },
-    { id: 'finance', label: 'AİDAT GİRİŞİ', icon: Wallet, color: 'bg-orange-600', view: 'finance' },
+    { id: 'finance', label: 'AİDAT AL', icon: Wallet, color: 'bg-orange-600', view: 'finance' },
     { id: 'ai-coach', label: 'AI ANALİZ', icon: MessageSquare, color: 'bg-red-600', view: 'ai-coach' }
   ];
 
@@ -31,169 +57,159 @@ const Dashboard: React.FC<DashboardProps> = ({ context, appMode, onNavigate }) =
   };
 
   return (
-    <div className="space-y-8 w-full animate-in fade-in duration-700 pb-20">
+    <div className="space-y-6 w-full animate-in fade-in duration-700 pb-24">
       
-      {/* Borç Uyarı Bandı (Sadece Veliler İçin) */}
-      {appMode === 'parent' && currentStudent?.feeStatus !== 'Paid' && (
-        <div className="bg-[#E30613] text-white p-5 rounded-[2rem] shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-pulse border-2 border-white/20">
-          <div className="flex items-center gap-4 text-center sm:text-left">
-             <div className="p-3 bg-white/20 rounded-2xl"><ShieldAlert size={24} /></div>
-             <div>
-               <h4 className="font-black text-xs uppercase italic tracking-widest">ÖDEME HATIRLATMASI</h4>
-               <p className="text-[10px] font-bold opacity-90 uppercase">Sayın Velimiz, sporcumuzun aidat ödemesi beklemektedir. Lütfen yönetime bilgi veriniz.</p>
-             </div>
+      {/* Header & Karşılama */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white p-0.5 rounded-2xl shadow-xl border-2 border-[#E30613] flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+             <Logo className="w-full h-full object-contain" />
           </div>
-          <button onClick={contactAdmin} className="px-8 py-3 bg-white text-[#E30613] rounded-xl font-black text-[10px] uppercase shadow-lg active:scale-95 flex items-center gap-2">
-            <MessageCircle size={14} /> BİLGİ AL
+          <div>
+            <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
+              BATMAN <span className="text-[#E30613]">GENÇLERBİRLİĞİ<sup>®</sup></span>
+            </h2>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">AKADEMİ AKTİF • {new Date().toLocaleDateString('tr-TR', {weekday: 'long'})}</p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Hava Durumu & Sonraki Antrenman Widget (Mobil için önemli) */}
+        <div className="flex gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar">
+           <div className="bg-blue-50 px-4 py-2 rounded-2xl border border-blue-100 flex items-center gap-3 min-w-max">
+              <CloudSun size={20} className="text-blue-500" />
+              <div>
+                 <p className="text-[8px] font-black text-blue-300 uppercase tracking-widest">BATMAN</p>
+                 <p className="text-xs font-black text-blue-900">24°C PARÇALI BULUTLU</p>
+              </div>
+           </div>
+           {nextSession && (
+             <div className="bg-red-50 px-4 py-2 rounded-2xl border border-red-100 flex items-center gap-3 min-w-max cursor-pointer" onClick={() => onNavigate('schedule')}>
+                <Timer size={20} className="text-red-600" />
+                <div>
+                   <p className="text-[8px] font-black text-red-300 uppercase tracking-widest">SIRADAKİ İDMAN</p>
+                   <p className="text-xs font-black text-red-900">{timeLeft || 'HESAPLANIYOR'} KALDI</p>
+                </div>
+             </div>
+           )}
+        </div>
+      </div>
+
+      {/* Veli Modu Aksiyonları */}
+      {appMode === 'parent' && (
+        <div className="grid grid-cols-2 gap-3">
+          <button 
+            onClick={() => setShowIdCard(true)}
+            className="flex flex-col items-center justify-center gap-2 bg-zinc-900 text-white p-5 rounded-[1.5rem] shadow-xl active:scale-95 transition-all relative overflow-hidden group"
+          >
+            <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <QrCode size={24} className="mb-1" />
+            <span className="font-black text-[10px] uppercase tracking-widest">DİJİTAL KİMLİK</span>
+          </button>
+          <button 
+            onClick={contactAdmin}
+            className="flex flex-col items-center justify-center gap-2 bg-[#E30613] text-white p-5 rounded-[1.5rem] shadow-xl active:scale-95 transition-all"
+          >
+            <MessageCircle size={24} className="mb-1" />
+            <span className="font-black text-[10px] uppercase tracking-widest">HOCAYA YAZ</span>
           </button>
         </div>
       )}
 
-      {/* Club Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white p-0.5 rounded-2xl shadow-xl border-2 border-[#E30613] flex items-center justify-center flex-shrink-0 overflow-hidden relative">
-             <Logo className="w-full h-full object-contain" />
-          </div>
-          <div>
-            <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
-              BATMAN <span className="text-[#E30613]">GENÇLERBİRLİĞİ<sup>®</sup></span>
-            </h2>
-            <p className="text-[8px] sm:text-[9px] text-slate-400 font-bold uppercase tracking-[0.3em] mt-1 italic tracking-[0.4em]">AKADEMİ YÖNETİM MERKEZİ</p>
-          </div>
-        </div>
-        
-        {/* Veli Dashboard Butonları */}
-        {appMode === 'parent' && (
-          <div className="flex gap-2 w-full sm:w-auto">
-            <button 
-              onClick={() => setShowIdCard(true)}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-zinc-950 text-white px-8 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all hover:bg-[#E30613]"
-            >
-              <QrCode size={20} /> DİJİTAL KİMLİK
-            </button>
-            <button 
-              onClick={contactAdmin}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-green-600 text-white px-8 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all"
-            >
-              <MessageCircle size={20} /> İLETİŞİM & DESTEK
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Admin Quick Actions */}
+      {/* Admin Hızlı İşlemler */}
       {appMode === 'admin' && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 gap-3">
           {quickActions.map(action => (
             <button
               key={action.id}
               onClick={() => onNavigate(action.view as ViewType)}
-              className="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col items-center gap-3 hover:border-[#E30613] transition-all group active:scale-95"
+              className="bg-white p-3 py-4 rounded-[1.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-2 hover:border-[#E30613] transition-all group active:scale-95"
             >
-              <div className={`${action.color} text-white p-3 rounded-2xl group-hover:rotate-6 transition-transform shadow-lg`}>
-                <action.icon size={18} />
+              <div className={`${action.color} text-white p-2.5 rounded-xl group-hover:scale-110 transition-transform shadow-lg`}>
+                <action.icon size={16} />
               </div>
-              <span className="text-[8px] font-black uppercase tracking-widest text-slate-600">{action.label}</span>
+              <span className="text-[7px] font-black uppercase tracking-widest text-slate-600 text-center leading-tight">{action.label}</span>
             </button>
           ))}
         </div>
       )}
 
-      {/* Media Feed Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-           <div className="bg-slate-950 rounded-[2.5rem] p-6 sm:p-10 shadow-2xl relative overflow-hidden group min-h-[350px] flex flex-col justify-end border-2 border-white/5">
-              <div className="absolute inset-0 opacity-40">
-                <img src={publishedMedia[0]?.imageUrl || 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200'} className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent"></div>
-              
-              <div className="relative z-10 space-y-4">
-                 <div className="flex gap-2">
-                    <span className="bg-[#E30613] text-[8px] font-black uppercase tracking-widest px-4 py-1.5 rounded-lg text-white shadow-xl italic">SON HABER</span>
-                    {appMode === 'parent' && (
-                      <span className="bg-zinc-800 text-[8px] font-black uppercase tracking-widest px-4 py-1.5 rounded-lg text-white italic border border-white/10 flex items-center gap-1.5">
-                        <Award size={10} className="text-yellow-500" /> {currentStudent?.badges?.length || 0} BAŞARI
-                      </span>
-                    )}
-                 </div>
-                 <h3 className="text-2xl sm:text-5xl font-black text-white uppercase italic tracking-tighter leading-tight max-w-xl">
-                   {publishedMedia[0]?.title || "YENİ DÖNEM KAYITLARIMIZ VE ANTRENMAN PROGRAMIMIZ YAYINLANDI"}
-                 </h3>
-                 <button onClick={() => onNavigate('media')} className="bg-white text-slate-950 px-8 py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-3 hover:bg-[#E30613] hover:text-white transition-all shadow-2xl active:scale-95">
-                   HABERİN DEVAMI <ArrowUpRight size={14} />
-                 </button>
-              </div>
-           </div>
-
-           <div className="space-y-4">
-              <div className="flex items-center justify-between px-2">
-                 <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 italic flex items-center gap-2">
-                   <Newspaper size={14} className="text-[#E30613]" /> AKADEMİ BÜLTENİ
-                 </h4>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 {recentBulletins.length > 0 ? recentBulletins.map(post => (
-                   <div key={post.id} className="bg-white p-5 rounded-[2rem] border border-slate-50 shadow-sm flex flex-col gap-3 group hover:border-red-200 transition-all cursor-pointer" onClick={() => onNavigate('media')}>
-                      {post.imageUrl && (
-                        <div className="aspect-video rounded-2xl overflow-hidden bg-slate-100 relative">
-                           <img src={post.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        </div>
-                      )}
-                      <div className="px-2">
-                        <h5 className="font-black text-xs uppercase italic line-clamp-1 group-hover:text-[#E30613] transition-colors">{post.title}</h5>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 line-clamp-2 italic">{post.content}</p>
-                      </div>
-                   </div>
-                 )) : (
-                   <p className="text-[10px] font-black text-slate-300 uppercase p-8 italic bg-white rounded-[2rem] border border-dashed text-center md:col-span-2">Henüz bülten yayınlanmadı.</p>
-                 )}
-              </div>
-           </div>
-        </div>
-
-        <div className="space-y-8">
-           <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-slate-50">
-              <div className="flex items-center justify-between mb-6">
-                 <h4 className="font-black uppercase text-[10px] italic text-slate-900 flex items-center gap-2">
-                   <ImageIcon size={14} className="text-[#E30613]" /> AKADEMİ GALERİ
-                 </h4>
-                 <button onClick={() => onNavigate('media', 'gallery')} className="text-[8px] font-black text-[#E30613] uppercase">TÜMÜ</button>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                 {recentGallery.length > 0 ? recentGallery.map(img => (
-                   <div key={img.id} className="aspect-square rounded-2xl overflow-hidden bg-slate-100 relative group cursor-pointer" onClick={() => onNavigate('media', 'gallery')}>
-                      <img src={img.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-                   </div>
-                 )) : (
-                   <div className="col-span-2 aspect-video bg-slate-50 rounded-2xl flex items-center justify-center border-2 border-dashed border-slate-100">
-                      <p className="text-[8px] font-black text-slate-300 uppercase">Fotoğraf Yok</p>
-                   </div>
-                 )}
-              </div>
-           </div>
-
-           <div className="bg-[#E30613] text-white rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group">
-              <ShieldAlert size={100} className="absolute -right-4 -bottom-4 opacity-20 rotate-12" />
-              <h4 className="text-xl font-black uppercase italic tracking-tighter mb-4 leading-tight">GELİŞİM <br/>DİSİPLİNİ</h4>
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-90 leading-relaxed mb-6 italic">
-                Antrenmanlara 15 dakika önce gelmeniz saha içi konsantrasyon için hayati önem taşır. 
+      {/* Haber Manşet */}
+      <div className="bg-zinc-950 rounded-[2.5rem] p-6 sm:p-10 shadow-2xl relative overflow-hidden group min-h-[300px] flex flex-col justify-end border border-white/10 cursor-pointer" onClick={() => onNavigate('media')}>
+          <div className="absolute inset-0 opacity-50">
+            <img src={publishedMedia[0]?.imageUrl || 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200'} className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+          
+          <div className="relative z-10 space-y-3">
+              <span className="bg-[#E30613] w-fit text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-lg text-white shadow-lg flex items-center gap-1.5">
+                <Sparkles size={10} /> AKADEMİ GÜNDEMİ
+              </span>
+              <h3 className="text-2xl sm:text-4xl font-black text-white uppercase italic tracking-tighter leading-none max-w-xl">
+                {publishedMedia[0]?.title || "YENİ DÖNEM KAYITLARIMIZ VE ANTRENMAN PROGRAMIMIZ YAYINLANDI"}
+              </h3>
+              <p className="text-[10px] text-gray-300 font-bold line-clamp-2 max-w-lg">
+                {publishedMedia[0]?.content || "Batman Gençlerbirliği olarak yeni sezonda şampiyonluk parolasıyla sahaya çıkıyoruz. Detaylar için tıklayınız."}
               </p>
-              <button onClick={() => onNavigate('schedule')} className="bg-zinc-950 text-white px-8 py-3.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-xl active:scale-95 hover:bg-white hover:text-[#E30613] transition-all">PROGRAMI İNCELE</button>
-           </div>
-        </div>
+          </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+         {/* Bülten Listesi */}
+         <div className="space-y-4">
+            <div className="flex items-center justify-between px-2">
+               <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 italic flex items-center gap-2">
+                 <Newspaper size={14} className="text-[#E30613]" /> SON DUYURULAR
+               </h4>
+               <button onClick={() => onNavigate('media')} className="text-[9px] font-black text-[#E30613] uppercase">TÜMÜ</button>
+            </div>
+            <div className="space-y-3">
+               {recentBulletins.length > 0 ? recentBulletins.map(post => (
+                 <div key={post.id} onClick={() => onNavigate('media')} className="bg-white p-4 rounded-[1.5rem] border border-slate-50 shadow-sm flex items-center gap-4 active:scale-[0.98] transition-all">
+                    <div className="w-16 h-16 bg-gray-100 rounded-2xl flex-shrink-0 overflow-hidden">
+                       {post.imageUrl ? <img src={post.imageUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-300"><ImageIcon size={20} /></div>}
+                    </div>
+                    <div className="flex-1">
+                      <h5 className="font-black text-[10px] uppercase text-zinc-900 italic line-clamp-1">{post.title}</h5>
+                      <p className="text-[9px] text-slate-400 font-bold mt-1 line-clamp-2">{post.content}</p>
+                    </div>
+                    <ChevronRight size={16} className="text-gray-300" />
+                 </div>
+               )) : (
+                 <div className="p-6 bg-white border border-dashed rounded-[1.5rem] text-center text-[9px] font-black text-gray-300 uppercase">Duyuru bulunmuyor</div>
+               )}
+            </div>
+         </div>
+
+         {/* Galeri Grid */}
+         <div className="space-y-4">
+            <div className="flex items-center justify-between px-2">
+               <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 italic flex items-center gap-2">
+                 <ImageIcon size={14} className="text-[#E30613]" /> GALERİ
+               </h4>
+               <button onClick={() => onNavigate('media', 'gallery')} className="text-[9px] font-black text-[#E30613] uppercase">TÜMÜ</button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+               {recentGallery.length > 0 ? recentGallery.map(img => (
+                 <div key={img.id} onClick={() => onNavigate('media', 'gallery')} className="aspect-square rounded-[1.5rem] overflow-hidden bg-gray-100 relative">
+                    <img src={img.imageUrl} className="w-full h-full object-cover" />
+                 </div>
+               )) : (
+                 <div className="col-span-2 p-6 bg-white border border-dashed rounded-[1.5rem] text-center text-[9px] font-black text-gray-300 uppercase">Fotoğraf yok</div>
+               )}
+            </div>
+         </div>
       </div>
 
       {/* Dijital Kimlik Modal */}
       {showIdCard && (
         <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl">
-           <div className="relative w-full max-w-sm">
+           <div className="relative w-full max-w-sm animate-in zoom-in-95 duration-300">
              <button onClick={() => setShowIdCard(false)} className="absolute -top-12 right-0 text-white flex items-center gap-2 font-black text-[10px] uppercase">KAPAT <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center"><X size={16}/></div></button>
              
-             <div className="bg-white rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+             <div className="bg-white rounded-[3rem] overflow-hidden shadow-2xl">
                 <div className="bg-zinc-950 p-8 text-center relative overflow-hidden">
                    <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
                    <Logo className="w-16 h-16 mx-auto mb-4 relative z-10" />
@@ -211,7 +227,7 @@ const Dashboard: React.FC<DashboardProps> = ({ context, appMode, onNavigate }) =
                    </div>
 
                    <div className="w-full aspect-square bg-white border-2 border-gray-100 rounded-[2.5rem] p-6 flex flex-col items-center justify-center shadow-inner relative group">
-                      <QrCode size={140} className="text-zinc-900 group-hover:scale-110 transition-transform" />
+                      <QrCode size={140} className="text-zinc-900" />
                       <div className="absolute inset-0 bg-white/40 backdrop-blur-sm opacity-0 group-active:opacity-100 flex items-center justify-center transition-opacity">
                          <span className="text-[8px] font-black uppercase text-zinc-900">GEÇERLİ KOD</span>
                       </div>
@@ -220,12 +236,8 @@ const Dashboard: React.FC<DashboardProps> = ({ context, appMode, onNavigate }) =
 
                    <div className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-50 rounded-2xl border border-green-100">
                       <ShieldCheck size={14} className="text-green-600" />
-                      <span className="text-[9px] font-black text-green-700 uppercase tracking-widest">RESMİ SPORCU LİSANSI AKTİF</span>
+                      <span className="text-[9px] font-black text-green-700 uppercase tracking-widest">LİSANS AKTİF</span>
                    </div>
-                </div>
-                
-                <div className="bg-gray-50 p-4 text-center">
-                   <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.3em]">BATMAN GENÇLERBİRLİĞİ SK<sup>®</sup></p>
                 </div>
              </div>
            </div>
