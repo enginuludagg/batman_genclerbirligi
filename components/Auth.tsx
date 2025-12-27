@@ -71,6 +71,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
       return;
     }
 
+    // Fix: Added missing 'badges' and 'scoutingNotes' properties to comply with the Student interface
     const newStudent: Student = {
       id: Date.now().toString(),
       name: formData.studentName,
@@ -88,7 +89,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
       attendance: 0,
       lastTraining: 'Yeni Kayıt',
       feeStatus: 'Pending',
-      stats: { strength: 50, speed: 50, stamina: 50, technique: 50 }
+      stats: { strength: 50, speed: 50, stamina: 50, technique: 50 },
+      badges: [],
+      scoutingNotes: []
     };
 
     onRegisterStudent(newStudent);
@@ -99,22 +102,22 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
     <div className="fixed inset-0 z-[9999] bg-[#f3f4f6] flex items-center justify-center p-2 sm:p-4 overflow-hidden">
       <div className="w-full max-w-2xl bg-white rounded-[3rem] sm:rounded-[4rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 duration-500 max-h-full sm:max-h-[95vh] flex flex-col border border-gray-100">
         
-        <div className="bg-[#1D2D4C] p-8 sm:p-12 text-center relative overflow-hidden flex-shrink-0">
+        <div className="bg-[#1D2D4C] p-8 sm:p-10 text-center relative overflow-hidden flex-shrink-0">
           <div className="absolute top-0 right-0 w-80 h-80 bg-red-600/10 blur-[100px] rounded-full translate-x-1/3 -translate-y-1/3"></div>
           
-          <div className="relative z-10 mb-6 sm:mb-8 flex justify-center">
-            <div className="p-0 bg-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.4)] border-4 border-[#E30613] overflow-hidden flex items-center justify-center w-32 h-32 sm:w-44 sm:h-44 transition-transform duration-700 hover:scale-105">
+          <div className="relative z-10 mb-4 sm:mb-6 flex justify-center">
+            <div className="p-0 bg-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.4)] border-4 border-[#E30613] overflow-hidden flex items-center justify-center w-28 h-28 sm:w-36 sm:h-36 transition-transform duration-700 hover:scale-105">
               <Logo className="w-full h-full scale-[1.15] transform-gpu" />
             </div>
           </div>
 
-          <h1 className="text-white text-2xl sm:text-4xl font-black italic uppercase tracking-tighter relative z-10 leading-none">
+          <h1 className="text-white text-xl sm:text-3xl font-black italic uppercase tracking-tighter relative z-10 leading-none">
             BATMAN <span className="text-[#E30613]">GENÇLERBİRLİĞİ</span>
           </h1>
-          <p className="text-slate-400 text-[9px] sm:text-[11px] font-black uppercase tracking-[0.4em] mt-3 italic relative z-10 opacity-70">AKADEMİ PORTALI</p>
+          <p className="text-slate-400 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.4em] mt-2 italic relative z-10 opacity-70">AKADEMİ PORTALI</p>
         </div>
 
-        <div className="p-8 sm:p-12 overflow-y-auto no-scrollbar flex-1 bg-white">
+        <div className="p-8 sm:p-10 overflow-y-auto no-scrollbar flex-1 bg-white relative">
           {view === 'login' ? (
             <form onSubmit={handleLogin} className="space-y-6 sm:space-y-8 h-full flex flex-col justify-center">
               <div className="space-y-1 text-center">
@@ -158,9 +161,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
               </button>
 
               <div className="pt-4 flex flex-col items-center gap-4">
-                 <div className="flex items-center gap-2 text-[9px] font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-full uppercase tracking-widest border border-slate-100">
-                   <ShieldCheck size={14} className="text-red-600" /> Ayarlar için Admin Girişi Gerekir
-                 </div>
                  <button type="button" onClick={() => setView('register')} className="text-[10px] font-black text-[#E30613] uppercase tracking-[0.2em] flex items-center gap-2 hover:scale-105 transition-transform bg-red-50 px-8 py-4 rounded-full border border-red-100">
                     <UserPlus size={18} /> HEMEN KAYIT OL
                  </button>
@@ -173,7 +173,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Akademi ailesine katılın.</p>
               </div>
 
-              <div className="space-y-4 max-h-[400px] overflow-y-auto no-scrollbar pr-2">
+              <div className="space-y-4 max-h-[350px] overflow-y-auto no-scrollbar pr-2">
                 <div className="bg-slate-50 p-6 rounded-[2.5rem] space-y-3 border border-slate-100">
                   <p className="text-[9px] font-black text-slate-400 uppercase italic">VELİ & GİRİŞ BİLGİLERİ</p>
                   <input type="text" placeholder="Veli Ad Soyad" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.parentName} onChange={e => setFormData({...formData, parentName: e.target.value})} />
@@ -217,6 +217,17 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
               </div>
             </form>
           )}
+
+          {/* Yazılımcı İmzası ve Tescil Logosu */}
+          <div className="mt-10 sm:mt-12 pt-6 border-t border-gray-50 flex flex-col items-center justify-center gap-3">
+             <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full border border-slate-100">
+                <ShieldCheck size={14} className="text-[#1D2D4C]" />
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Tescilli Yazılım Altyapısı</span>
+             </div>
+             <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] italic">
+                Powered by <span className="text-zinc-800">Engin Uludağ</span>
+             </p>
+          </div>
         </div>
       </div>
     </div>

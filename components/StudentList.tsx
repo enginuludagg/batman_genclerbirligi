@@ -59,7 +59,9 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
       id: Date.now().toString(),
       lastTraining: 'Yeni Kayıt',
       feeStatus: 'Pending',
-      password: '123456'
+      password: '123456',
+      badges: [],
+      scoutingNotes: []
     };
     setStudents(prev => [...prev, student]);
     setViewState('list');
@@ -96,7 +98,7 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
     return (
       <div className="animate-in slide-in-from-right-10 duration-300">
         <button onClick={() => setViewState('list')} className="flex items-center gap-2 mb-6 text-zinc-500 font-black uppercase text-[10px] tracking-widest hover:text-black px-4"><ChevronLeft size={16} /> GERİ</button>
-        <StudentDetail student={selectedStudent} onUpdate={(u) => { setStudents(prev => prev.map(s => s.id === u.id ? u : s)); setViewState('list'); }} onClose={() => setViewState('list')} />
+        <StudentDetail mode={mode} student={selectedStudent} onUpdate={(u) => { setStudents(prev => prev.map(s => s.id === u.id ? u : s)); setViewState('list'); }} onClose={() => setViewState('list')} />
       </div>
     );
   }

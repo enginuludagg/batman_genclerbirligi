@@ -1,4 +1,19 @@
 
+export interface Badge {
+  id: string;
+  name: string;
+  type: 'success' | 'warning' | 'info' | 'danger';
+  icon: string;
+  date: string;
+}
+
+export interface ScoutingNote {
+  id: string;
+  content: string;
+  date: string;
+  potential: number; // 1-5
+  scoutName: string;
+}
 
 export interface Student {
   id: string;
@@ -33,6 +48,8 @@ export interface Student {
     run1500m: string;
   };
   feeStatus: 'Paid' | 'Pending' | 'Overdue';
+  badges: Badge[];
+  scoutingNotes: ScoutingNote[];
 }
 
 export interface Trainer {
@@ -106,7 +123,6 @@ export interface Message {
   content: string;
 }
 
-// Added missing FinanceEntry interface
 export interface FinanceEntry {
   id: string;
   type: 'income' | 'expense';
@@ -118,7 +134,6 @@ export interface FinanceEntry {
   paymentMethod: string;
 }
 
-// Added missing Notification interface
 export interface Notification {
   title: string;
   message: string;

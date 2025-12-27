@@ -4,130 +4,131 @@ import {
   X, Phone, User, Activity, Trophy, GraduationCap, 
   Shield, ChevronRight, Save, Edit2, CheckCircle2,
   Droplets, Target, Calendar, UserPlus, School, Info,
-  Zap, Dumbbell, Timer, Brain, LayoutTemplate, Mail, Lock, Upload
+  Zap, Dumbbell, Timer, Brain, LayoutTemplate, Mail, Lock, Upload,
+  Medal, Star, Eye, History, Trash2, Plus
 } from 'lucide-react';
-import { Student } from '../types';
+import { Student, Badge, ScoutingNote, AppMode } from '../types';
 import { ACADEMY_GROUPS } from './StudentList';
 import PlayerCard from './PlayerCard';
 
 interface Props {
   student: Student;
+  mode?: AppMode;
   onUpdate?: (updatedStudent: Student) => void;
   onClose: () => void;
 }
 
-const StudentDetail: React.FC<Props> = ({ student, onClose, onUpdate }) => {
-  const [activeTab, setActiveTab] = useState<'genel' | 'performans' | 'maclar'>('genel');
+const AVAILABLE_BADGES = [
+  { name: 'Devamlılık Rozeti', icon: 'History', color: 'text-blue-600', bg: 'bg-blue-50' },
+  { name: 'Rüzgarın Oğlu', icon: 'Zap', color: 'text-yellow-600', bg: 'bg-yellow-50' },
+  { name: 'Centilmen Sporcu', icon: 'Shield', color: 'text-green-600', bg: 'bg-green-50' },
+  { name: 'Altın Ayak', icon: 'Target', color: 'text-orange-600', bg: 'bg-orange-50' },
+  { name: 'Takım Kaptanı', icon: 'Medal', color: 'text-red-600', bg: 'bg-red-50' }
+];
+
+const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) => {
+  const [activeTab, setActiveTab] = useState<'genel' | 'performans' | 'scouting' | 'basari'>('genel');
   const [isEditing, setIsEditing] = useState(false);
-  const [editedData, setEditedData] = useState<Student>({ ...student });
-  const [showCriteria, setShowCriteria] = useState(false);
+  const [editedData, setEditedData] = useState<Student>({ 
+    ...student, 
+    badges: student.badges || [],
+    scoutingNotes: student.scoutingNotes || []
+  });
   const [showPlayerCard, setShowPlayerCard] = useState(false);
+  const [newScoutNote, setNewScoutNote] = useState('');
+  const [scoutPotential, setScoutPotential] = useState(3);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
-    if (onUpdate) {
-      onUpdate(editedData);
-    }
+    if (onUpdate) onUpdate(editedData);
     setIsEditing(false);
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditedData({ ...editedData, photoUrl: reader.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
+  const addBadge = (badge: typeof AVAILABLE_BADGES[0]) => {
+    if (editedData.badges.some(b => b.name === badge.name)) return;
+    const newBadge: Badge = {
+      id: Date.now().toString(),
+      name: badge.name,
+      icon: badge.icon,
+      type: 'success',
+      date: new Date().toLocaleDateString('tr-TR')
+    };
+    setEditedData({ ...editedData, badges: [...editedData.badges, newBadge] });
   };
 
-  const updateStat = (key: keyof Student['stats'], value: number) => {
-    setEditedData({
-      ...editedData,
-      stats: {
-        ...editedData.stats,
-        [key]: value
-      }
-    });
+  const removeBadge = (id: string) => {
+    setEditedData({ ...editedData, badges: editedData.badges.filter(b => b.id !== id) });
   };
 
-  const statsConfig = [
-    { key: 'strength', label: 'GÜÇ', icon: Dumbbell, color: 'accent-red-600', desc: 'Şınav, Mekik ve İkili Mücadele' },
-    { key: 'speed', label: 'HIZ', icon: Zap, color: 'accent-blue-600', desc: '20m Sprint ve Reaksiyon' },
-    { key: 'stamina', label: 'DİRENÇ', icon: Timer, color: 'accent-green-600', desc: '1500m Koşu ve Devamlılık' },
-    { key: 'technique', label: 'TEKNİK', icon: Brain, color: 'accent-yellow-500', desc: 'Top Kontrolü ve Pas Kalitesi' },
-  ] as const;
+  const addScoutNote = () => {
+    if (!newScoutNote.trim()) return;
+    const note: ScoutingNote = {
+      id: Date.now().toString(),
+      content: newScoutNote,
+      date: new Date().toLocaleDateString('tr-TR'),
+      potential: scoutPotential,
+      scoutName: 'Baş Antrenör'
+    };
+    setEditedData({ ...editedData, scoutingNotes: [note, ...editedData.scoutingNotes] });
+    setNewScoutNote('');
+  };
+
+  // KRİTİK GİZLİLİK: Sekmeler admin olup olmama durumuna göre filtrelenir
+  const tabs = [
+    { id: 'genel', label: 'BİLGİLER', icon: User },
+    { id: 'performans', label: 'ANALİZ', icon: Activity },
+    ...(mode === 'admin' ? [{ id: 'scouting', label: 'SCOUTING', icon: Eye }] : []),
+    { id: 'basari', label: 'BAŞARILAR', icon: Medal }
+  ];
 
   return (
-    <div className="max-w-3xl mx-auto pb-32 space-y-6 px-2">
-      
-      {/* Profil Header */}
-      <div className="bg-zinc-950 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 text-white relative overflow-hidden shadow-2xl">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        
-        <div className="flex flex-col items-center text-center gap-4 sm:gap-6">
-          <div 
-            onClick={() => isEditing && fileInputRef.current?.click()}
-            className={`w-24 h-24 sm:w-32 sm:h-32 bg-zinc-900 rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden border-4 border-zinc-900 shadow-xl relative z-10 transition-all ${isEditing ? 'cursor-pointer hover:border-red-600 group' : ''}`}
-          >
-            {editedData.photoUrl ? (
-              <img src={editedData.photoUrl} alt={editedData.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-3xl sm:text-5xl font-black italic text-white/90">
-                {editedData.name.split(' ').map(n => n[0]).join('')}
-              </div>
+    <div className="max-w-4xl mx-auto pb-32 space-y-6 px-2">
+      <div className="bg-zinc-950 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
+        <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+          <div className="relative group">
+            <div className="w-32 h-32 sm:w-40 sm:h-40 bg-zinc-900 rounded-[3rem] overflow-hidden border-4 border-zinc-800 shadow-2xl">
+              {editedData.photoUrl ? <img src={editedData.photoUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-5xl font-black italic">{editedData.name[0]}</div>}
+            </div>
+            {mode === 'admin' && (
+              <button onClick={() => fileInputRef.current?.click()} className="absolute inset-0 bg-black/60 rounded-[3rem] opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all">
+                <Upload size={24} /><span className="text-[8px] font-black mt-1">GÜNCELLE</span>
+              </button>
             )}
-            {isEditing && (
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity">
-                <Upload size={24} className="text-white mb-1" />
-                <span className="text-[8px] font-black uppercase">FOTO YÜKLE</span>
-              </div>
-            )}
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+            <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => {
+               const file = e.target.files?.[0];
+               if (file) {
+                 const reader = new FileReader();
+                 reader.onloadend = () => setEditedData({ ...editedData, photoUrl: reader.result as string });
+                 reader.readAsDataURL(file);
+               }
+            }} />
           </div>
-
-          <div className="relative z-10 w-full">
-            <span className="bg-red-600 text-[8px] sm:text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest italic mb-3 inline-block">AKADEMİ LİSANSLI</span>
-            {isEditing ? (
-              <div className="space-y-4">
-                <input 
-                  type="text" 
-                  value={editedData.name} 
-                  onChange={e => setEditedData({...editedData, name: e.target.value})}
-                  className="bg-zinc-900 border-2 border-red-600 rounded-xl px-4 py-3 text-lg sm:text-2xl font-black italic uppercase text-white w-full text-center outline-none"
-                />
-              </div>
-            ) : (
-              <>
-                <h2 className="text-xl sm:text-4xl font-black italic uppercase tracking-tighter leading-none">{student.name}</h2>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-4 text-zinc-500 font-black uppercase text-[10px] sm:text-xs tracking-widest">
-                  <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${student.gender === 'Kız' ? 'bg-pink-900/40 text-pink-500' : 'bg-blue-900/40 text-blue-500'}`}>
-                    {student.gender === 'Kız' ? '♀ KIZ' : '♂ ERKEK'}
-                  </span>
-                  <span className="flex items-center gap-1.5 bg-zinc-900 px-3 py-1.5 rounded-full"><Shield size={14} className="text-red-600" /> {student.sport}</span>
-                  <span className="flex items-center gap-1.5 bg-zinc-900 px-3 py-1.5 rounded-full"><Calendar size={14} className="text-red-600" /> {student.age} YAŞ</span>
+          <div className="text-center md:text-left flex-1">
+            <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
+              {editedData.badges.map(b => (
+                <div key={b.id} className="bg-white/10 px-3 py-1 rounded-full flex items-center gap-1.5 border border-white/5" title={b.name}>
+                  <Medal size={12} className="text-yellow-500" />
+                  <span className="text-[9px] font-black uppercase tracking-widest">{b.name}</span>
                 </div>
-              </>
-            )}
+              ))}
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black italic uppercase tracking-tighter leading-none">{editedData.name}</h2>
+            <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4 text-zinc-500 font-black uppercase text-[10px] tracking-widest">
+               <span className="bg-zinc-900 px-4 py-2 rounded-full border border-white/5 flex items-center gap-2">
+                 <Shield size={14} className="text-[#E30613]" /> {editedData.sport}
+               </span>
+               <span className="bg-zinc-900 px-4 py-2 rounded-full border border-white/5 flex items-center gap-2">
+                 <Calendar size={14} className="text-[#E30613]" /> {editedData.age} YAŞ
+               </span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Menü Sekmeleri */}
       <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 overflow-x-auto no-scrollbar sticky top-4 z-20 gap-1">
-        {[
-          { id: 'genel', label: 'BİLGİLER', icon: User },
-          { id: 'performans', label: 'ANALİZ', icon: Activity },
-          { id: 'maclar', label: 'SKORLAR', icon: Trophy }
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all rounded-xl whitespace-nowrap px-4 ${
-              activeTab === tab.id ? 'bg-zinc-900 text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'
-            }`}
-          >
+        {tabs.map(tab => (
+          <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-[9px] font-black uppercase rounded-xl transition-all px-4 ${activeTab === tab.id ? 'bg-zinc-950 text-white shadow-lg' : 'text-gray-400 hover:bg-gray-50'}`}>
             <tab.icon size={14} /> {tab.label}
           </button>
         ))}
@@ -135,78 +136,133 @@ const StudentDetail: React.FC<Props> = ({ student, onClose, onUpdate }) => {
 
       <div className="min-h-[400px]">
         {activeTab === 'genel' && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
-              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2 italic"><UserPlus size={14} className="text-red-600" /> VELİ İLETİŞİM & ERİŞİM</p>
+          <div className="space-y-4 animate-in fade-in">
+            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[9px] font-black text-gray-400 uppercase">VELİ ADI</label>
-                  {isEditing ? (
-                    <input type="text" value={editedData.parentName || ''} onChange={e => setEditedData({...editedData, parentName: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black outline-none focus:border-red-600" />
-                  ) : (
-                    <p className="font-black text-zinc-900 text-sm uppercase italic">{student.parentName || 'MEHMET YILMAZ'}</p>
-                  )}
+                <p className="text-[10px] font-black text-[#E30613] uppercase tracking-widest mb-4 italic">KİŞİSEL VERİLER</p>
+                <div><label className="text-[9px] font-black text-gray-400 uppercase">VELİ ADI</label><p className="font-black text-zinc-900 text-sm italic">{editedData.parentName}</p></div>
+                <div><label className="text-[9px] font-black text-gray-400 uppercase">İLETİŞİM</label><p className="font-black text-zinc-900 text-sm italic">{editedData.parentPhone}</p></div>
+                <div><label className="text-[9px] font-black text-gray-400 uppercase">OKUL</label><p className="font-black text-zinc-900 text-sm italic">{editedData.schoolName || 'BATMAN MERKEZ OKULLARI'}</p></div>
+              </div>
+              <div className="space-y-4">
+                <p className="text-[10px] font-black text-[#E30613] uppercase tracking-widest mb-4 italic">AKADEMİ DURUMU</p>
+                <div className={`p-4 rounded-2xl flex items-center justify-between ${editedData.feeStatus === 'Paid' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-[#E30613] animate-pulse'}`}>
+                  <span className="text-[10px] font-black uppercase">AİDAT DURUMU</span>
+                  <span className="text-xs font-black italic">{editedData.feeStatus === 'Paid' ? 'ÖDENDİ' : 'ÖDEME BEKLİYOR'}</span>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[9px] font-black text-gray-400 uppercase">TELEFON</label>
-                  {isEditing ? (
-                    <input type="text" value={editedData.parentPhone || ''} onChange={e => setEditedData({...editedData, parentPhone: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black outline-none focus:border-red-600" />
-                  ) : (
-                    <a href={`tel:${student.parentPhone}`} className="text-red-600 font-black text-sm italic flex items-center gap-2"><Phone size={14} /> {student.parentPhone}</a>
-                  )}
-                </div>
+                <div><label className="text-[9px] font-black text-gray-400 uppercase">GRUP</label><p className="font-black text-zinc-900 text-sm italic">{editedData.branchId}</p></div>
               </div>
             </div>
           </div>
         )}
 
         {activeTab === 'performans' && (
-          <div className="space-y-6 animate-in zoom-in-95 duration-500">
-            <div className="grid grid-cols-1 gap-4">
-              {statsConfig.map(stat => (
-                <div key={stat.key} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm transition-all group">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-gray-50 rounded-xl text-zinc-900 group-hover:bg-red-600 group-hover:text-white transition-colors">
-                        <stat.icon size={18} />
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-black text-zinc-900 uppercase italic">{stat.label}</p>
-                      </div>
-                    </div>
-                    <div className="text-2xl font-black italic text-zinc-900">
-                      {isEditing ? editedData.stats[stat.key] : student.stats[stat.key]}
-                    </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in zoom-in-95">
+             {Object.entries(editedData.stats).map(([key, val]) => (
+               <div key={key} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-[10px] font-black text-gray-400 uppercase">{key.toUpperCase()}</span>
+                    <span className="text-xl font-black italic">{val}</span>
                   </div>
-                  {isEditing ? (
-                    <input type="range" min="0" max="100" value={editedData.stats[stat.key]} onChange={(e) => updateStat(stat.key, parseInt(e.target.value))} className={`w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer ${stat.color}`} />
-                  ) : (
-                    <div className="w-full bg-gray-50 h-2 rounded-full overflow-hidden border border-gray-100">
-                      <div className={`h-full ${stat.color.replace('accent-', 'bg-')} transition-all duration-1000`} style={{width: `${student.stats[stat.key]}%`}} />
-                    </div>
-                  )}
+                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-[#E30613] transition-all duration-1000" style={{width: `${val}%`}} /></div>
+               </div>
+             ))}
+          </div>
+        )}
+
+        {activeTab === 'scouting' && mode === 'admin' && (
+          <div className="space-y-6 animate-in fade-in">
+             <div className="bg-zinc-900 text-white p-8 rounded-[2.5rem] shadow-xl">
+                <h4 className="text-xs font-black uppercase italic tracking-widest mb-6 flex items-center gap-2">
+                  <Eye className="text-[#E30613]" /> TEKNİK GÖZLEMCİ (SCOUT) RAPORU
+                </h4>
+                <div className="space-y-4">
+                   <div className="flex items-center gap-4 mb-2">
+                      <span className="text-[10px] font-black uppercase text-zinc-500">POTANSİYEL:</span>
+                      <div className="flex gap-1">
+                        {[1,2,3,4,5].map(star => (
+                          <Star key={star} size={20} className={star <= scoutPotential ? 'text-yellow-500 fill-current' : 'text-zinc-700'} onClick={() => setScoutPotential(star)} />
+                        ))}
+                      </div>
+                   </div>
+                   <textarea 
+                    value={newScoutNote} onChange={(e) => setNewScoutNote(e.target.value)}
+                    placeholder="Profesyonel gelişim notu, transfer potansiyeli veya teknik eksiklikler..."
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-xs font-bold outline-none focus:border-[#E30613] h-32 resize-none"
+                   />
+                   <button onClick={addScoutNote} className="w-full py-4 bg-[#E30613] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+                     RAPORU ARŞİVE EKLE
+                   </button>
                 </div>
-              ))}
-            </div>
+             </div>
+
+             <div className="space-y-4">
+                {editedData.scoutingNotes.map(note => (
+                  <div key={note.id} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden">
+                     <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3">
+                           <div className="p-2 bg-zinc-950 text-white rounded-lg"><User size={14} /></div>
+                           <div><p className="text-[10px] font-black uppercase text-zinc-900">{note.scoutName}</p><p className="text-[8px] font-black text-gray-400 uppercase">{note.date}</p></div>
+                        </div>
+                        <div className="flex gap-0.5">
+                           {[1,2,3,4,5].map(s => <Star key={s} size={10} className={s <= note.potential ? 'text-yellow-500 fill-current' : 'text-gray-200'} />)}
+                        </div>
+                     </div>
+                     <p className="text-xs font-bold text-gray-600 italic leading-relaxed">"{note.content}"</p>
+                  </div>
+                ))}
+             </div>
+          </div>
+        )}
+
+        {activeTab === 'basari' && (
+          <div className="space-y-8 animate-in fade-in">
+             {mode === 'admin' && (
+               <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                  <h4 className="text-[10px] font-black uppercase italic tracking-widest text-zinc-400 mb-6 flex items-center gap-2"><Medal className="text-[#E30613]" /> ROZET ÖDÜL KÜTÜPHANESİ</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                     {AVAILABLE_BADGES.map(badge => {
+                       const isOwned = editedData.badges.some(b => b.name === badge.name);
+                       return (
+                         <button 
+                          key={badge.name} onClick={() => addBadge(badge)}
+                          disabled={isOwned}
+                          className={`p-6 rounded-[2rem] border-2 transition-all flex flex-col items-center gap-3 text-center ${isOwned ? 'border-green-100 bg-green-50 opacity-50' : 'border-gray-50 bg-white hover:border-[#E30613]'}`}
+                         >
+                           <div className={`p-4 rounded-2xl ${badge.bg} ${badge.color}`}><Trophy size={24} /></div>
+                           <span className="text-[9px] font-black uppercase tracking-tight">{badge.name}</span>
+                           {isOwned && <span className="text-[7px] font-black text-green-600 flex items-center gap-1"><CheckCircle2 size={10} /> ELDE EDİLDİ</span>}
+                         </button>
+                       );
+                     })}
+                  </div>
+               </div>
+             )}
+
+             <div className="bg-zinc-950 p-8 rounded-[2.5rem] shadow-2xl">
+                <h4 className="text-[10px] font-black uppercase italic tracking-widest text-zinc-500 mb-6">SPORCUNUN ROZETLERİ</h4>
+                <div className="flex flex-wrap gap-4">
+                   {editedData.badges.length > 0 ? editedData.badges.map(b => (
+                     <div key={b.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center gap-4 group">
+                        <Medal className="text-yellow-500" size={20} />
+                        <div><p className="text-white text-[10px] font-black uppercase tracking-widest leading-none">{b.name}</p><p className="text-[8px] font-black text-zinc-500 uppercase mt-1">{b.date}</p></div>
+                        {mode === 'admin' && <button onClick={() => removeBadge(b.id)} className="p-2 text-zinc-700 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14} /></button>}
+                     </div>
+                   )) : (
+                     <p className="text-[10px] font-black text-zinc-600 uppercase italic">Henüz bir rozet kazanılmadı.</p>
+                   )}
+                </div>
+             </div>
           </div>
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 lg:left-64 bg-white/95 backdrop-blur-xl border-t border-gray-100 p-4 sm:p-6 flex flex-col sm:flex-row gap-3 sm:gap-4 z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-        {isEditing ? (
-           <>
-            <button onClick={() => { setIsEditing(false); setEditedData({...student}); }} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black uppercase text-[10px] tracking-widest">VAZGEÇ</button>
-            <button onClick={handleSave} className="flex-[2] py-4 bg-zinc-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 shadow-xl"><Save size={18} /> KAYDET</button>
-           </>
-        ) : (
-          <>
-            <div className="flex gap-2 w-full">
-                <button onClick={onClose} className="flex-1 py-4 bg-zinc-100 text-zinc-900 rounded-2xl font-black uppercase text-[10px] tracking-widest">GERİ</button>
-                <button onClick={() => setShowPlayerCard(true)} className="flex-[2] py-4 bg-zinc-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2"><LayoutTemplate size={16} /> OYUNCU KARTI</button>
-            </div>
-            <button onClick={() => setIsEditing(true)} className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl flex items-center justify-center gap-2"><Edit2 size={16} /> BİLGİLERİ DÜZENLE</button>
-          </>
-        )}
+      <div className="fixed bottom-0 left-0 right-0 lg:left-64 bg-white/95 backdrop-blur-xl border-t border-gray-100 p-6 flex flex-col sm:flex-row gap-4 z-[100] shadow-2xl">
+        <div className="flex-1 flex gap-2">
+          <button onClick={onClose} className="flex-1 py-4 bg-zinc-100 text-zinc-900 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">GERİ DÖN</button>
+          <button onClick={() => setShowPlayerCard(true)} className="flex-[2] py-4 bg-zinc-950 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 shadow-xl hover:bg-[#E30613] transition-all"><LayoutTemplate size={16} /> OYUNCU KARTI</button>
+        </div>
+        {mode === 'admin' && <button onClick={handleSave} className="flex-1 py-4 bg-[#E30613] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl flex items-center justify-center gap-2 hover:bg-black transition-all active:scale-95"><Save size={18} /> TÜMÜNÜ KAYDET</button>}
       </div>
 
       {showPlayerCard && <PlayerCard student={student} onClose={() => setShowPlayerCard(false)} />}

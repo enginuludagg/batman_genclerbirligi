@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, User, Send, CheckCircle2, BrainCircuit, Ruler, Weight, Timer, Activity } from 'lucide-react';
+import { Loader2, User, Send, CheckCircle2, BrainCircuit, Ruler, Weight, Timer, Activity, Medal } from 'lucide-react';
 import { Student } from '../types';
 import { getCoachSuggestions } from '../services/geminiService';
 import Logo from './Logo';
@@ -64,8 +64,17 @@ const ReportCard: React.FC<ReportCardProps> = ({ student, onClose }) => {
                {student.photoUrl ? <img src={student.photoUrl} className="w-full h-full object-cover" /> : <div className="text-4xl font-black text-red-600 italic">{student.name[0]}</div>}
             </div>
             <h2 className="text-2xl font-black uppercase italic tracking-tighter text-zinc-900 text-center leading-none mt-4">{student.name}</h2>
+            
             <div className="w-full space-y-3 mt-10">
-               <div className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl border border-gray-100"><span className="text-[9px] font-black text-gray-400 uppercase">KATILIM</span><span className="text-sm font-black text-green-600 italic">%{student.attendance}</span></div>
+               <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest text-center mb-2">ELDE EDİLEN ROZETLER</p>
+               <div className="flex flex-wrap justify-center gap-2">
+                  {student.badges?.length > 0 ? student.badges.map(b => (
+                    <div key={b.id} className="bg-yellow-50 text-yellow-600 p-2 rounded-xl border border-yellow-100" title={b.name}>
+                       <Medal size={16} />
+                    </div>
+                  )) : <p className="text-[8px] font-black text-gray-300 italic">HENÜZ ROZET YOK</p>}
+               </div>
+               <div className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl border border-gray-100 mt-6"><span className="text-[9px] font-black text-gray-400 uppercase">KATILIM</span><span className="text-sm font-black text-green-600 italic">%{student.attendance}</span></div>
             </div>
           </div>
 
