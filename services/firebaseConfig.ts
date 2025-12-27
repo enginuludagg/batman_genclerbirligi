@@ -2,18 +2,19 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
 /**
- * BGB AKADEMİ - FİNAL FIREBASE YAPILANDIRMASI
- * Firebase Console > Project Settings > Web App yolunu izleyerek bilgileri buraya yapıştırın.
+ * BGB AKADEMİ - FIREBASE YAPILANDIRMASI
  */
 const firebaseConfig = {
-  apiKey: "BURAYA_API_KEY_GELECEK",
-  authDomain: "PROJE_ID.firebaseapp.com",
-  projectId: "PROJE_ID",
-  storageBucket: "PROJE_ID.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
+  apiKey: "AIzaSyCELptObWbgYOALoNZaqJOPVssqJqDHVUs",
+  authDomain: "batmangenclerbirligi.firebaseapp.com",
+  projectId: "batmangenclerbirligi",
+  storageBucket: "batmangenclerbirligi.firebasestorage.app",
+  messagingSenderId: "727250786350",
+  appId: "1:727250786350:web:2fd79f3c61bea7a95ca7bf",
+  measurementId: "G-4D3MQ55VJD"
 };
 
 // Yapılandırma kontrolü
@@ -22,3 +23,4 @@ export const isConfigured = firebaseConfig.apiKey !== "BURAYA_API_KEY_GELECEK";
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+export const analytics = getAnalytics(app);
