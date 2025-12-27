@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Mail, Lock, UserPlus, ArrowRight, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, UserPlus, ArrowRight, AlertCircle, ShieldCheck, CheckCircle2, Users } from 'lucide-react';
 import { AppMode, Student } from '../types';
 import Logo from './Logo';
 
@@ -33,10 +33,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
     setError('');
     
     const inputEmail = email.toLowerCase().trim();
-    const adminEmails = ['enginuludagg@gmail.com', 'elitgelisimakademi@gmail.com'];
+    // Admin listesi (Gelecekte veritabanından gelecek)
+    const adminEmails = ['enginuludagg@gmail.com', 'elitgelisimakademi@gmail.com', 'admin@bgb.com'];
     const adminPassword = 'Eu290202';
 
-    // Admin Giriş Kontrolü
     if (adminEmails.includes(inputEmail)) {
       if (password === adminPassword) {
         onLogin('admin');
@@ -47,7 +47,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
       }
     }
 
-    // Veli Giriş Kontrolü - Sadece sistemdeki gerçek sporculara göre
+    // Veli Girişi - Aynı e-posta ile birden fazla telefon giriş yapabilir
     const registeredStudent = students.find(s => 
       s.parentEmail?.toLowerCase() === inputEmail
     );
@@ -57,21 +57,20 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
       if (password === correctPass) {
         onLogin('parent');
       } else {
-        setError('Veli şifresi hatalı!');
+        setError('Veli şifresi hatalı! Lütfen kontrol ediniz.');
       }
     } else {
-      setError('Bu bilgilere sahip bir üye bulunamadı. Lütfen kayıt olun.');
+      setError('Bu e-posta ile kayıtlı sporcu bulunamadı. Lütfen yeni kayıt oluşturun.');
     }
   };
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     if (students.some(s => s.parentEmail === formData.parentEmail)) {
-      setError('Bu e-posta adresi zaten kullanımda!');
+      setError('Bu e-posta adresi zaten kullanımda! Lütfen giriş yapın.');
       return;
     }
 
-    // Fix: Added missing 'badges' and 'scoutingNotes' properties to comply with the Student interface
     const newStudent: Student = {
       id: Date.now().toString(),
       name: formData.studentName,
@@ -122,7 +121,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
             <form onSubmit={handleLogin} className="space-y-6 sm:space-y-8 h-full flex flex-col justify-center">
               <div className="space-y-1 text-center">
                 <h2 className="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter text-slate-900 leading-none">SİSTEME <span className="text-[#E30613]">GİRİŞ</span></h2>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Resmi üye erişim paneli.</p>
+                <div className="flex items-center justify-center gap-2 mt-1">
+                   <Users size={14} className="text-gray-400" />
+                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Aile içi ortak erişim desteklenir.</p>
+                </div>
               </div>
 
               {error && (
@@ -136,7 +138,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
                   <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#E30613] transition-colors" size={20} />
                   <input 
                     type="email" 
-                    placeholder="E-posta" 
+                    placeholder="Kayıtlı Veli E-postası" 
                     className="w-full pl-16 pr-8 py-5 bg-gray-50 border border-gray-100 rounded-[2rem] text-sm font-black outline-none focus:border-[#E30613] focus:bg-white transition-all shadow-inner" 
                     value={email}
                     onChange={e => setEmail(e.target.value)}
@@ -147,7 +149,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
                   <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#E30613] transition-colors" size={20} />
                   <input 
                     type="password" 
-                    placeholder="Şifre" 
+                    placeholder="Şifreniz" 
                     className="w-full pl-16 pr-8 py-5 bg-gray-50 border border-gray-100 rounded-[2rem] text-sm font-black outline-none focus:border-[#E30613] focus:bg-white transition-all shadow-inner" 
                     value={password}
                     onChange={e => setPassword(e.target.value)}
@@ -157,12 +159,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
               </div>
 
               <button type="submit" className="w-full py-5 sm:py-6 bg-[#1D2D4C] text-white rounded-[2rem] font-black text-sm uppercase tracking-[0.25em] shadow-2xl flex items-center justify-center gap-3 hover:bg-[#E30613] transition-all active:scale-[0.97] group">
-                OTURUM AÇ <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
+                PANELİ AÇ <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
               </button>
 
               <div className="pt-4 flex flex-col items-center gap-4">
                  <button type="button" onClick={() => setView('register')} className="text-[10px] font-black text-[#E30613] uppercase tracking-[0.2em] flex items-center gap-2 hover:scale-105 transition-transform bg-red-50 px-8 py-4 rounded-full border border-red-100">
-                    <UserPlus size={18} /> HEMEN KAYIT OL
+                    <UserPlus size={18} /> YENİ SPORCU KAYDI
                  </button>
               </div>
             </form>
@@ -175,11 +177,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
 
               <div className="space-y-4 max-h-[350px] overflow-y-auto no-scrollbar pr-2">
                 <div className="bg-slate-50 p-6 rounded-[2.5rem] space-y-3 border border-slate-100">
-                  <p className="text-[9px] font-black text-slate-400 uppercase italic">VELİ & GİRİŞ BİLGİLERİ</p>
-                  <input type="text" placeholder="Veli Ad Soyad" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.parentName} onChange={e => setFormData({...formData, parentName: e.target.value})} />
-                  <input type="email" placeholder="E-posta (Giriş İçin)" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.parentEmail} onChange={e => setFormData({...formData, parentEmail: e.target.value})} />
-                  <input type="password" placeholder="Şifre Belirleyin" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.parentPassword} onChange={e => setFormData({...formData, parentPassword: e.target.value})} />
-                  <input type="tel" placeholder="Veli Telefon" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.parentPhone} onChange={e => setFormData({...formData, parentPhone: e.target.value})} />
+                  <p className="text-[9px] font-black text-slate-400 uppercase italic">AİLE & GİRİŞ BİLGİLERİ</p>
+                  <input type="text" placeholder="Veli Ad Soyad (Anne/Baba)" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.parentName} onChange={e => setFormData({...formData, parentName: e.target.value})} />
+                  <input type="email" placeholder="E-posta (Tüm aile bu adresle girecektir)" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.parentEmail} onChange={e => setFormData({...formData, parentEmail: e.target.value})} />
+                  <input type="password" placeholder="Giriş Şifresi Belirleyin" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.parentPassword} onChange={e => setFormData({...formData, parentPassword: e.target.value})} />
+                  <input type="tel" placeholder="İletişim Numarası" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.parentPhone} onChange={e => setFormData({...formData, parentPhone: e.target.value})} />
                 </div>
 
                 <div className="bg-slate-50 p-6 rounded-[2.5rem] space-y-3 border border-slate-100">
@@ -192,40 +194,25 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
                     </select>
                     <input type="number" placeholder="Doğum Yılı" required className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-[#E30613]" value={formData.studentBirthYear} onChange={e => setFormData({...formData, studentBirthYear: e.target.value})} />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <select className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-[#E30613]" value={formData.studentSport} onChange={e => setFormData({...formData, studentSport: e.target.value})}>
-                      <option value="Futbol">FUTBOL</option>
-                      <option value="Voleybol">VOLEYBOL</option>
-                      <option value="Cimnastik">CİMNASTİK</option>
-                    </select>
-                    <select className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-[#E30613]" value={formData.studentGroup} onChange={e => setFormData({...formData, studentGroup: e.target.value})}>
-                      <option value="U10">U10 GRUBU</option>
-                      <option value="U12">U12 GRUBU</option>
-                      <option value="U14">U14 GRUBU</option>
-                      <option value="KALECİ">KALECİ</option>
-                      <option value="MİNİKLER">MİNİKLER</option>
-                    </select>
-                  </div>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <button type="submit" className="w-full py-5 bg-[#E30613] text-white rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl flex items-center justify-center gap-3 hover:bg-[#1D2D4C] transition-all active:scale-[0.97]">
-                  KAYDI TAMAMLA VE GİRİŞ YAP <CheckCircle2 size={20} />
+                  KAYIT OL VE GİRİŞ YAP <CheckCircle2 size={20} />
                 </button>
-                <button type="button" onClick={() => setView('login')} className="w-full text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] text-center">GİRİŞ EKRANINA DÖN</button>
+                <button type="button" onClick={() => setView('login')} className="w-full text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] text-center">ZATEN ÜYEYİM</button>
               </div>
             </form>
           )}
 
-          {/* Yazılımcı İmzası ve Tescil Logosu */}
           <div className="mt-10 sm:mt-12 pt-6 border-t border-gray-50 flex flex-col items-center justify-center gap-3">
              <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full border border-slate-100">
                 <ShieldCheck size={14} className="text-[#1D2D4C]" />
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Tescilli Yazılım Altyapısı</span>
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Çoklu Cihaz Desteği Aktif</span>
              </div>
              <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] italic">
-                Powered by <span className="text-zinc-800">Engin Uludağ</span>
+                BGB Akademi <span className="text-zinc-800">Yazılım Altyapısı</span>
              </p>
           </div>
         </div>

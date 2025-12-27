@@ -5,27 +5,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
+    <!-- Mobil Uygulama Modu (PWA) -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BGB Akademi">
     
+    <!-- İkonlar -->
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup">
+    <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup">
+    
     <meta name="theme-color" content="#1D2D4C">
     
     <title>Batman Gençlerbirliği | Akademi Yönetimi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,900&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Roboto', sans-serif; background-color: #f8fafc; margin: 0; overflow-x: hidden; }
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            -webkit-overflow-scrolling: touch;
+        }
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: #f8fafc; 
+            margin: 0; 
+            overflow-x: hidden;
+            overscroll-behavior-y: contain; /* Sayfayı aşağı çekince yenilemeyi engeller (Uygulama hissi) */
+        }
         #root { min-height: 100vh; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Ekran geçiş animasyonları */
-        .page-enter { opacity: 0; transform: translateY(10px); }
-        .page-enter-active { opacity: 1; transform: translateY(0); transition: all 0.5s ease; }
+        /* Mobil Snap Kaydırma */
+        .mobile-snap {
+            scroll-snap-type: x mandatory;
+            display: flex;
+            overflow-x: auto;
+        }
+        .mobile-snap-item {
+            scroll-snap-align: start;
+            flex-shrink: 0;
+        }
     </style>
 <script type="importmap">
 {
@@ -45,5 +66,15 @@
 <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
+    <script>
+        // Arka planda servis kaydı (Offline çalışma için ön hazırlık)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {
+                    console.log('SW tescil edilemedi, normal modda devam ediliyor.');
+                });
+            });
+        }
+    </script>
 </body>
 </html>

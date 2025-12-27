@@ -16,7 +16,7 @@ import TrainerNotebook from './components/TrainerNotebook';
 import Auth from './components/Auth';
 import Settings from './components/Settings';
 import { ViewType, Student, Trainer, FinanceEntry, MediaPost, TrainingSession, AppMode, Notification, Drill, TrainerNote, AppContextData } from './types';
-import { Bell, X, LogOut, LayoutGrid, CloudCheck, Database } from 'lucide-react';
+import { Bell, X, LogOut, LayoutGrid, CheckCircle2, Database } from 'lucide-react';
 import { storageService, KEYS } from './services/storageService';
 
 const App: React.FC = () => {
@@ -37,19 +37,21 @@ const App: React.FC = () => {
   const [media, setMedia] = useState<MediaPost[]>(() => storageService.load(KEYS.MEDIA, []));
   const [drills, setDrills] = useState<Drill[]>(() => storageService.load(KEYS.DRILLS, []));
 
-  // Merkezi Kayıt Fonksiyonu (Görsel geri bildirim ile)
+  // Merkezi Kayıt Fonksiyonu (Veri güvenliği için gecikmeli sync)
   const syncData = useCallback(() => {
     setIsSyncing(true);
     storageService.syncAll({
       students, trainers, notes: trainerNotes, sessions, finance, media, drills
     });
-    setTimeout(() => setIsSyncing(false), 800);
+    // Görsel geri bildirim için kısa bir gecikme
+    const timer = setTimeout(() => setIsSyncing(false), 800);
+    return () => clearTimeout(timer);
   }, [students, trainers, trainerNotes, sessions, finance, media, drills]);
 
-  // Her değişiklikte kaydet
+  // Değişiklikleri takip et
   useEffect(() => {
     syncData();
-  }, [syncData]);
+  }, [students, trainers, trainerNotes, sessions, finance, media, drills, syncData]);
 
   const contextData: AppContextData = {
     students, trainers, branches: [], sessions, finance, media, drills, attendance: [], notifications: [], trainerNotes
@@ -95,7 +97,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-[100dvh] w-full bg-[#f8fafc] selection:bg-red-600 selection:text-white pb-20 lg:pb-0">
+    <div className="flex min-h-[100dvh] w-full bg-[#f8fafc] selection:bg-[#E30613] selection:text-white pb-20 lg:pb-0">
       <Sidebar 
         activeView={activeView} 
         onViewChange={(v) => { setActiveView(v); setMediaTab('all'); }} 
@@ -108,7 +110,7 @@ const App: React.FC = () => {
       <main className={`flex-1 flex flex-col transition-all duration-300 min-w-0 ${isSidebarOpen ? 'lg:ml-64 opacity-50 lg:opacity-100' : 'lg:ml-64'}`}>
         <div className="hidden lg:flex items-center justify-between px-8 py-6 bg-white border-b border-slate-100 sticky top-0 z-[500]">
            <div className="flex items-center gap-4">
-              <div className="bg-red-50 text-red-600 p-2 rounded-xl"><LayoutGrid size={20} /></div>
+              <div className="bg-red-50 text-[#E30613] p-2 rounded-xl"><LayoutGrid size={20} /></div>
               <h2 className="text-sm font-black uppercase tracking-widest text-slate-400 italic">
                 {activeView.toUpperCase()} <span className="text-slate-200">/</span> {appMode === 'admin' ? 'YÖNETİCİ' : 'VELİ'}
               </h2>
@@ -117,9 +119,9 @@ const App: React.FC = () => {
               <div className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${isSyncing ? 'bg-zinc-50 border-zinc-200 text-zinc-400' : 'bg-green-50 border-green-100 text-green-600'}`}>
                 <Database size={14} className={isSyncing ? 'animate-pulse' : ''} />
                 <span className="text-[9px] font-black uppercase tracking-widest">{isSyncing ? 'YÜKLENİYOR...' : 'VERİ GÜVENDE'}</span>
-                {!isSyncing && <CloudCheck size={14} />}
+                {!isSyncing && <CheckCircle2 size={14} />}
               </div>
-              <button onClick={() => setIsLoggedIn(false)} className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 hover:text-red-600 transition-colors">
+              <button onClick={() => setIsLoggedIn(false)} className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 hover:text-[#E30613] transition-colors">
                  <LogOut size={16} /> ÇIKIŞ YAP
               </button>
            </div>
@@ -130,10 +132,10 @@ const App: React.FC = () => {
              <LogOut size={16} />
            </button>
            <h1 className="text-xs font-black italic uppercase tracking-tighter">
-            BATMAN <span className="text-red-600">GB AKADEMİ</span>
+            BATMAN <span className="text-[#E30613]">GB AKADEMİ</span>
            </h1>
            <div className={`flex items-center justify-center w-10 h-10 rounded-full ${isSyncing ? 'text-zinc-300' : 'text-green-500'}`}>
-              <CloudCheck size={20} />
+              <CheckCircle2 size={20} />
            </div>
         </div>
 
@@ -145,7 +147,7 @@ const App: React.FC = () => {
       {toast && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[6000] w-[calc(100%-2rem)] max-w-sm animate-in slide-in-from-top-10 duration-500">
           <div className="p-4 rounded-2xl bg-slate-900 text-white shadow-2xl flex items-center gap-3 border border-red-600/20">
-            <div className="p-2 bg-red-600 rounded-xl"><Bell size={16} /></div>
+            <div className="p-2 bg-[#E30613] rounded-xl"><Bell size={16} /></div>
             <div className="flex-1">
                <h4 className="font-black text-[10px] uppercase italic tracking-widest">{toast.title}</h4>
                <p className="text-[9px] text-slate-400 mt-0.5">{toast.message}</p>
