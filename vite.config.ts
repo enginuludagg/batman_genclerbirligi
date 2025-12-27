@@ -8,7 +8,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    // Build uyarısını tamamen susturmak için limiti 2MB yapıyoruz
+    // Build uyarısını tamamen susturmak ve performansı korumak için limit 2MB
     chunkSizeWarningLimit: 2000, 
     rollupOptions: {
       output: {
@@ -22,13 +22,13 @@ export default defineConfig({
             return 'vendor-libs';
           }
         },
-        // Dosya yapısını temiz tutar
+        // Dosya yapısını temiz ve mobil uyumlu tutar
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
         assetFileNames: 'assets/[ext]/[name]-[hash].[ext]'
       }
     },
-    // Terser hatasını gidermek için varsayılan 'esbuild' kullanıyoruz
+    // Terser hatasını gidermek için varsayılan yüksek performanslı 'esbuild' kullanıyoruz
     minify: 'esbuild', 
     cssMinify: true,
   },
