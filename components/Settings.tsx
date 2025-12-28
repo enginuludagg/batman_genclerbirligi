@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { Settings as SettingsIcon, Upload, AlertTriangle, Image as ImageIcon, Smartphone, ShieldCheck, Trash2, Terminal, Copy, Command, HelpCircle, Monitor, Download } from 'lucide-react';
+import { Settings as SettingsIcon, Upload, AlertTriangle, Image as ImageIcon, Smartphone, ShieldCheck, Trash2, Terminal, Copy, Command, HelpCircle, Monitor, Download, Globe, CheckCircle2, LogIn, Rocket } from 'lucide-react';
 import Logo from './Logo';
 
-const APP_VERSION = "V.1.4.1"; // Versiyon güncellendi
+const APP_VERSION = "V.1.4.4"; // Versiyon güncellendi
 
 const Settings: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(localStorage.getItem('bgb_custom_logo'));
@@ -76,39 +76,37 @@ const Settings: React.FC = () => {
                 </div>
 
                 <div className="relative z-10 space-y-6">
-                    <div className="bg-blue-600/20 border border-blue-500/30 p-4 rounded-xl flex items-start gap-3">
-                        <Monitor className="text-blue-400 shrink-0" size={20} />
-                        <div>
-                           <h4 className="text-[10px] font-black uppercase text-blue-300 mb-1">ÖNEMLİ!</h4>
-                           <p className="text-[9px] text-zinc-300 leading-relaxed">
-                              'Vite not recognized' hatası alıyorsan, <b>1. ADIM</b> çok önemlidir. Önce kurulumu yapmalısın.
-                           </p>
-                        </div>
-                    </div>
-
                     <div className="space-y-4 text-[10px] font-bold text-zinc-400">
-                        <p>Terminal kutusuna aşağıdaki komutları <u>sırasıyla</u> yazıp Enter'a bas:</p>
+                        <p>Login işlemini başardın! Şimdi tek bir komutla siteyi yayına alıyoruz:</p>
                         
-                        <div className="bg-black/50 p-5 rounded-2xl border border-white/5 font-mono text-green-400 space-y-4 select-text shadow-inner">
-                            <div className="space-y-1">
-                                <p className="text-[8px] text-zinc-500 uppercase font-black flex items-center gap-2"><Download size={10} /> 1. ADIM: KURULUM (EN ÖNEMLİSİ)</p>
+                        <div className="bg-black/50 p-5 rounded-2xl border border-white/5 font-mono text-green-400 space-y-5 select-text shadow-inner">
+                            <div className="space-y-1 opacity-50">
+                                <p className="text-[8px] text-zinc-500 uppercase font-black flex items-center gap-2"><CheckCircle2 size={10} /> 1. ADIM: KURULUM</p>
                                 <div className="flex gap-3 items-center">
-                                    <span className="bg-white/5 px-2 py-1.5 rounded w-full border border-green-500/20 text-green-300">npm install</span>
-                                </div>
-                                <p className="text-[8px] text-zinc-600 italic">Bunu yazıp Enter'a bas, yükleme bitene kadar bekle.</p>
-                            </div>
-
-                            <div className="space-y-1">
-                                <p className="text-[8px] text-zinc-500 uppercase font-black">2. ADIM: OLUŞTUR</p>
-                                <div className="flex gap-3 items-center">
-                                    <span className="bg-white/5 px-2 py-1.5 rounded w-full">npm run build</span>
+                                    <span className="bg-white/5 px-2 py-1.5 rounded w-full border border-green-500/20 text-green-300 line-through decoration-white/30">npm install</span>
                                 </div>
                             </div>
 
-                            <div className="space-y-1">
-                                <p className="text-[8px] text-zinc-500 uppercase font-black">3. ADIM: YAYINLA</p>
+                            <div className="space-y-1 opacity-50">
+                                <p className="text-[8px] text-zinc-500 uppercase font-black flex items-center gap-2"><CheckCircle2 size={10} /> 2. ADIM: OLUŞTUR</p>
                                 <div className="flex gap-3 items-center">
-                                    <span className="bg-white/5 px-2 py-1.5 rounded w-full">npx firebase-tools deploy</span>
+                                    <span className="bg-white/5 px-2 py-1.5 rounded w-full line-through decoration-white/30">npm run build</span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1 opacity-50">
+                                <p className="text-[8px] text-zinc-500 uppercase font-black flex items-center gap-2"><CheckCircle2 size={10} /> 3. ADIM: GİRİŞ</p>
+                                <div className="flex gap-3 items-center">
+                                    <span className="bg-white/5 px-2 py-1.5 rounded w-full text-green-300 line-through decoration-white/30">npx firebase-tools login</span>
+                                </div>
+                                <p className="text-[7px] text-green-500 italic">Başarıyla giriş yapıldı: enginuludagg@gmail.com</p>
+                            </div>
+
+                            <div className="space-y-1 p-2 bg-green-900/20 rounded-lg border border-green-700/30 animate-pulse">
+                                <p className="text-[8px] text-green-400 uppercase font-black flex items-center gap-2"><Rocket size={10} /> 4. SON ADIM: YAYINLA!</p>
+                                <p className="text-[8px] text-zinc-400 italic mb-1.5">Otomatik proje seçimi eklendi. Sadece bunu yaz:</p>
+                                <div className="flex gap-3 items-center">
+                                    <span className="bg-black/40 px-2 py-1.5 rounded w-full text-green-300 font-bold">npx firebase-tools deploy</span>
                                 </div>
                             </div>
                         </div>
