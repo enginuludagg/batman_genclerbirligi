@@ -25,17 +25,27 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
     groups: ['Tüm Branşlar']
   };
 
-  // Resim Optimizasyon (HD Kalite - Mobil Uyumlu)
+  // Resim Optimizasyon (AGRESİF SIKIŞTIRMA - Firestore 1MB Limiti İçin)
   const optimizeImage = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+      // Dosya boyutu kontrolü (20MB üstü baştan reddet)
+      if (file.size > 20 * 1024 * 1024) {
+        alert("Dosya çok büyük. Lütfen daha küçük bir fotoğraf seçin.");
+        reject("File too large");
+        return;
+      }
+
       const reader = new FileReader();
       reader.readAsDataURL(file);
+      
       reader.onload = (event) => {
         const img = new Image();
         img.src = event.target?.result as string;
+        
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1000; // Mobilde bellek sorunu olmaması için güvenli sınır
+          // Maksimum genişlik 800px (Kare fotoğraf için yeterli, dosya boyutunu düşürür)
+          const MAX_WIDTH = 800; 
           let width = img.width;
           let height = img.height;
           
@@ -47,13 +57,29 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
-          ctx && (ctx.imageSmoothingEnabled = true);
-          ctx && (ctx.imageSmoothingQuality = 'high');
-          ctx?.drawImage(img, 0, 0, width, height);
           
-          resolve(canvas.toDataURL('image/jpeg', 0.85)); // %85 Kalite (Optimum denge)
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            // Kaliteyi %60'a düşür (Base64 string boyutu < 1MB olması için kritik)
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.60);
+            
+            // Son boyut kontrolü
+            if (dataUrl.length > 1048487) { // Yaklaşık 1MB
+                 // Hâlâ büyükse tekrar sıkıştır
+                 const secondTry = canvas.toDataURL('image/jpeg', 0.40);
+                 resolve(secondTry);
+            } else {
+                resolve(dataUrl);
+            }
+          } else {
+            reject("Canvas error");
+          }
         };
+
+        img.onerror = () => reject("Image load error");
       };
+      
+      reader.onerror = () => reject("File read error");
     });
   };
 
@@ -66,10 +92,13 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
         onUpdateFounderPhoto(optimizedUrl);
         alert("Profil fotoğrafı başarıyla güncellendi!");
       } catch (err) {
-        alert("Fotoğraf yüklenirken bir hata oluştu. Lütfen tekrar deneyin.");
         console.error(err);
+        if (err !== "File too large") {
+             alert("Fotoğraf veritabanı limitlerini aşıyor veya işlenemedi. Lütfen başka bir fotoğrafla deneyin.");
+        }
       } finally {
         setIsOptimizing(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
       }
     }
   };

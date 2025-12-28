@@ -40,7 +40,18 @@ const App: React.FC = () => {
     } catch { return null; }
   });
 
-  const [activeView, setActiveView] = useState<ViewType>('dashboard');
+  // URL Hash üzerinden View Başlatma (Yenileme Sorunu Çözümü)
+  const getInitialView = (): ViewType => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && ['dashboard', 'students', 'trainers', 'schedule', 'attendance', 'finance', 'media', 'league', 'ai-coach', 'analytics', 'drills', 'settings', 'notes', 'about'].includes(hash)) {
+        return hash as ViewType;
+      }
+    }
+    return 'dashboard';
+  };
+
+  const [activeView, setActiveView] = useState<ViewType>(getInitialView);
   const [mediaTab, setMediaTab] = useState<'all' | 'bulletin' | 'gallery' | 'poll' | 'lineup' | 'pending'>('all');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toast, setToast] = useState<Notification | null>(null);
@@ -57,12 +68,46 @@ const App: React.FC = () => {
   const [drills, setDrills] = useState<Drill[]>(() => storageService.load(KEYS.DRILLS, []));
   const [fixtures, setFixtures] = useState<MatchResult[]>(() => storageService.load(KEYS.FIXTURES, []));
 
+  // --- TARAYICI GEÇMİŞİ YÖNETİMİ (GERİ TUŞU DESTEĞİ) ---
+  useEffect(() => {
+    // Sayfa yüklendiğinde hash varsa onu ayarla
+    const hash = window.location.hash.replace('#', '');
+    if (hash && hash !== activeView) {
+      setActiveView(hash as ViewType);
+    }
+
+    const handlePopState = () => {
+      const currentHash = window.location.hash.replace('#', '');
+      if (currentHash && currentHash !== activeView) {
+        setActiveView(currentHash as ViewType);
+      } else if (!currentHash) {
+        setActiveView('dashboard');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []); // Sadece mount anında
+
+  // View değiştiğinde URL güncelle
+  const handleNavigate = (view: ViewType, subTab?: string) => {
+    setActiveView(view);
+    if (view === 'media' && subTab) setMediaTab(subTab as any);
+    
+    // Geçmişe ekle (Eğer zaten o URL'de değilsek)
+    if (window.location.hash !== `#${view}`) {
+      window.history.pushState({ view }, '', `#${view}`);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setIsSidebarOpen(false); // Mobil menüden geçişte sidebar kapansın
+  };
+
   const handleLogin = (mode: AppMode, student?: Student) => {
     setAppMode(mode);
     setCurrentUser(student || null);
     setIsLoggedIn(true);
-    // Oturumu kaydet
     localStorage.setItem('bgb_session', JSON.stringify({ mode, user: student || null }));
+    handleNavigate('dashboard');
   };
 
   const handleLogout = () => {
@@ -71,6 +116,7 @@ const App: React.FC = () => {
     setAppMode('admin');
     setCurrentUser(null);
     setActiveView('dashboard');
+    window.history.pushState(null, '', ' '); // URL temizle
   };
 
   // --- FIREBASE İLK YÜKLEME VE OTO-DOLDURMA ---
@@ -155,6 +201,10 @@ const App: React.FC = () => {
       
       // Buluta son değişikliği it (Optimistik yaklaşım)
       if (isConfigured && updated.length > 0) {
+        // Son eklenen/güncellenen öğeyi bulma mantığı basitleştirildi
+        // Gerçek senaryoda diff almak gerekebilir ama şimdilik tüm listeyi basmak yerine sonuncuyu basıyoruz.
+        // DİKKAT: Firebase Storage kullanılmıyor. Büyük veri (resim) varsa Firestore limitine takılabilir.
+        // Bu yüzden optimizeImage fonksiyonları çok önemli.
         const last = updated[updated.length - 1];
         if (last) {
           storageService.saveToCloud(key, last).catch(() => setConnectionError(true));
@@ -184,19 +234,21 @@ const App: React.FC = () => {
     const engin = trainers.find(t => t.name.toLowerCase().includes('engin'));
     if (engin) {
       const updatedEngin = { ...engin, photoUrl };
-      handleUpdateTrainer(prev => prev.map(t => t.id === engin.id ? updatedEngin : t));
+      // State güncelleme
+      setTrainers(prev => prev.map(t => t.id === engin.id ? updatedEngin : t));
+      // LocalStorage güncelleme
+      const updatedList = trainers.map(t => t.id === engin.id ? updatedEngin : t);
+      storageService.saveLocal(KEYS.TRAINERS, updatedList);
+      // Cloud güncelleme
+      if (isConfigured) {
+        await storageService.saveToCloud(KEYS.TRAINERS, updatedEngin);
+      }
       setToast({ title: 'BİLGİ', message: 'Hakkımızda sayfası güncellendi.' });
     }
   };
 
   const contextData: AppContextData = {
     students, trainers, branches: [], sessions, finance, media, drills, attendance: [], notifications: [], trainerNotes, fixtures
-  };
-
-  const handleNavigate = (view: ViewType, subTab?: string) => {
-    setActiveView(view);
-    if (view === 'media' && subTab) setMediaTab(subTab as any);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const renderView = () => {
@@ -230,7 +282,7 @@ const App: React.FC = () => {
     <div className="flex min-h-[100dvh] w-full bg-[#f8fafc] pb-safe-bottom lg:pb-0 selection:bg-red-600 selection:text-white overflow-x-hidden">
       <Sidebar 
         activeView={activeView} 
-        onViewChange={(v) => { setActiveView(v); setMediaTab('all'); }} 
+        onViewChange={(v) => handleNavigate(v)} 
         isOpen={isSidebarOpen} 
         setIsOpen={setIsSidebarOpen} 
         appMode={appMode} 
@@ -238,6 +290,10 @@ const App: React.FC = () => {
         onLogout={handleLogout}
       />
       
+      {/* 
+        MobileNav ve Splash gibi fixed elementlerin etkilenmemesi için 
+        main container'ı ayrı tutuyoruz.
+      */}
       <main className={`flex-1 flex flex-col transition-all duration-500 ease-out min-w-0 min-h-[100dvh] relative ${isSidebarOpen ? 'lg:ml-[280px] scale-[0.98] opacity-50 pointer-events-none lg:opacity-100 lg:pointer-events-auto lg:scale-100' : 'lg:ml-[280px]'}`}>
         
         {/* MASAÜSTÜ HEADER */}
@@ -249,7 +305,6 @@ const App: React.FC = () => {
               </h2>
            </div>
            <div className="flex items-center gap-6">
-              {/* Mevcut Kullanıcı Bilgisi (Veli ise) */}
               {appMode === 'parent' && currentUser && (
                 <div className="hidden lg:flex items-center gap-3 bg-zinc-900 text-white px-4 py-1.5 rounded-full">
                    <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-[10px] font-black">{currentUser.name[0]}</div>
@@ -287,11 +342,6 @@ const App: React.FC = () => {
                <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-red-50 text-red-600 border border-red-100 animate-pulse" onClick={() => window.location.reload()}>
                  <CloudOff size={16} />
                </div>
-             ) : !isConfigured ? (
-               <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
-                  <Smartphone size={14} />
-                  <span className="text-[8px] font-black uppercase tracking-wide">YEREL</span>
-               </div>
              ) : (
                <div className={`flex items-center justify-center w-9 h-9 rounded-xl ${isSyncing ? 'bg-zinc-50 text-zinc-400' : 'bg-green-50 text-green-600'}`}>
                  {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
@@ -300,36 +350,20 @@ const App: React.FC = () => {
            </div>
         </div>
 
-        {/* Hata Bildirimi */}
-        {connectionError && (
-          <div className="bg-red-600 text-white p-4 text-center">
-            <div className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wide">
-              <AlertTriangle size={16} />
-              <span>Veritabanı Bulunamadı</span>
-            </div>
-            <p className="text-[9px] mt-1 opacity-90 max-w-md mx-auto mb-3">
-              Veritabanı oluşturulduysa bağlantıyı sağlamak için sayfayı yenileyin.
-            </p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-white text-red-600 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-zinc-100 flex items-center gap-2 mx-auto"
-            >
-              <RotateCcw size={12} /> SAYFAYI YENİLE
-            </button>
-          </div>
-        )}
-
         {/* İçerik Alanı */}
         <div className="p-4 sm:p-8 max-w-[1600px] mx-auto w-full flex-1 pb-24 lg:pb-8">{renderView()}</div>
         
-        {/* MOBİL NAVİGASYON ÇUBUĞU */}
+      </main>
+
+      {/* MOBİL NAVİGASYON - En Dış Katmanda */}
+      {isLoggedIn && (
         <MobileNav 
           activeView={activeView} 
           onViewChange={handleNavigate} 
           onToggleSidebar={() => setIsSidebarOpen(true)}
           appMode={appMode}
         />
-      </main>
+      )}
 
       {/* TOAST BİLDİRİM */}
       {toast && (
