@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -18,7 +17,7 @@ import Auth from './components/Auth';
 import Settings from './components/Settings';
 import MobileNav from './components/MobileNav';
 import { ViewType, Student, Trainer, FinanceEntry, MediaPost, TrainingSession, AppMode, Notification, Drill, TrainerNote, AppContextData, MatchResult } from './types';
-import { Bell, X, LogOut, LayoutGrid, CheckCircle2, Database, RefreshCw, AlertTriangle, Menu, Smartphone } from 'lucide-react';
+import { Bell, X, LogOut, LayoutGrid, CheckCircle2, Database, RefreshCw, AlertTriangle, Menu, Smartphone, ShieldAlert, CloudOff } from 'lucide-react';
 import { storageService, KEYS } from './services/storageService';
 import { isConfigured } from './services/firebaseConfig';
 
@@ -30,6 +29,7 @@ const App: React.FC = () => {
   const [appMode, setAppMode] = useState<AppMode>('admin');
   const [toast, setToast] = useState<Notification | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [connectionError, setConnectionError] = useState(false);
 
   // --- MERKEZİ VERİ DURUMLARI (BGB AKADEMİ) ---
   const [students, setStudents] = useState<Student[]>(() => storageService.load(KEYS.STUDENTS, []));
@@ -47,6 +47,7 @@ const App: React.FC = () => {
 
     const fetchAllData = async () => {
       setIsSyncing(true);
+      setConnectionError(false);
       try {
         const [cS, cT, cN, cSe, cF, cM, cD, cFix] = await Promise.all([
           storageService.loadFromCloud(KEYS.STUDENTS),
@@ -69,6 +70,7 @@ const App: React.FC = () => {
         if (cFix.length) setFixtures(cFix as MatchResult[]);
       } catch (err) {
         console.error("BGB Sync Error:", err);
+        setConnectionError(true);
       } finally {
         setIsSyncing(false);
       }
@@ -90,7 +92,9 @@ const App: React.FC = () => {
       // Buluta son değişikliği it (Optimistik yaklaşım)
       if (isConfigured && updated.length > 0) {
         const last = updated[updated.length - 1];
-        if (last) storageService.saveToCloud(key, last);
+        if (last) {
+          storageService.saveToCloud(key, last).catch(() => setConnectionError(true));
+        }
       }
       return updated;
     });
@@ -178,7 +182,12 @@ const App: React.FC = () => {
               </h2>
            </div>
            <div className="flex items-center gap-6">
-              {!isConfigured ? (
+              {connectionError ? (
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-red-200 bg-red-50 text-red-600 shadow-sm animate-pulse">
+                  <CloudOff size={14} />
+                  <span className="text-[9px] font-black uppercase tracking-widest italic">BAĞLANTI HATASI (DB YOK)</span>
+                </div>
+              ) : !isConfigured ? (
                 <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-blue-200 bg-blue-50 text-blue-600 shadow-sm">
                   <Smartphone size={14} />
                   <span className="text-[9px] font-black uppercase tracking-widest italic">YEREL MOD (CİHAZ KAYDI)</span>
@@ -199,7 +208,11 @@ const App: React.FC = () => {
              <h1 className="text-xs font-black italic uppercase tracking-tighter text-zinc-900 leading-none">AKADEMİ <br/><span className="text-[#E30613]">MOBİL</span></h1>
            </div>
            <div className="flex items-center gap-2">
-             {!isConfigured ? (
+             {connectionError ? (
+               <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-red-50 text-red-600 border border-red-100 animate-pulse">
+                 <CloudOff size={16} />
+               </div>
+             ) : !isConfigured ? (
                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
                   <Smartphone size={14} />
                   <span className="text-[8px] font-black uppercase tracking-wide">YEREL</span>
@@ -211,6 +224,19 @@ const App: React.FC = () => {
              )}
            </div>
         </div>
+
+        {/* Hata Bildirimi */}
+        {connectionError && (
+          <div className="bg-red-600 text-white p-4 text-center">
+            <div className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wide">
+              <AlertTriangle size={16} />
+              <span>Veritabanı Bulunamadı</span>
+            </div>
+            <p className="text-[9px] mt-1 opacity-90 max-w-md mx-auto">
+              Lütfen Firebase Konsolundan "Firestore Database" oluşturun ve "Test Modu"nu seçin. Aksi takdirde veriler kaydedilmez.
+            </p>
+          </div>
+        )}
 
         {/* İçerik Alanı */}
         <div className="p-4 sm:p-8 max-w-[1600px] mx-auto w-full flex-1 pb-24 lg:pb-8">{renderView()}</div>
