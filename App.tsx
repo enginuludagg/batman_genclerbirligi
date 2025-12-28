@@ -23,12 +23,26 @@ import { storageService, KEYS } from './services/storageService';
 import { isConfigured } from './services/firebaseConfig';
 
 const App: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // --- STATE BAŞLANGIÇ DEĞERLERİ (FLASH ÖNLEME) ---
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('bgb_session'));
+  
+  const [appMode, setAppMode] = useState<AppMode>(() => {
+    try {
+      const saved = localStorage.getItem('bgb_session');
+      return saved ? JSON.parse(saved).mode : 'admin';
+    } catch { return 'admin'; }
+  });
+
+  const [currentUser, setCurrentUser] = useState<Student | null>(() => {
+    try {
+      const saved = localStorage.getItem('bgb_session');
+      return saved ? JSON.parse(saved).user : null;
+    } catch { return null; }
+  });
+
   const [activeView, setActiveView] = useState<ViewType>('dashboard');
   const [mediaTab, setMediaTab] = useState<'all' | 'bulletin' | 'gallery' | 'poll' | 'lineup' | 'pending'>('all');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [appMode, setAppMode] = useState<AppMode>('admin');
-  const [currentUser, setCurrentUser] = useState<Student | null>(null); // Giriş yapan velinin öğrencisi
   const [toast, setToast] = useState<Notification | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
@@ -42,21 +56,6 @@ const App: React.FC = () => {
   const [media, setMedia] = useState<MediaPost[]>(() => storageService.load(KEYS.MEDIA, []));
   const [drills, setDrills] = useState<Drill[]>(() => storageService.load(KEYS.DRILLS, []));
   const [fixtures, setFixtures] = useState<MatchResult[]>(() => storageService.load(KEYS.FIXTURES, []));
-
-  // --- OTURUM KONTROLÜ (KALICI GİRİŞ) ---
-  useEffect(() => {
-    const savedSession = localStorage.getItem('bgb_session');
-    if (savedSession) {
-      try {
-        const { mode, user } = JSON.parse(savedSession);
-        setAppMode(mode);
-        setCurrentUser(user);
-        setIsLoggedIn(true);
-      } catch (e) {
-        localStorage.removeItem('bgb_session');
-      }
-    }
-  }, []);
 
   const handleLogin = (mode: AppMode, student?: Student) => {
     setAppMode(mode);

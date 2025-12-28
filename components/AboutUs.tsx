@@ -25,7 +25,7 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
     groups: ['Tüm Branşlar']
   };
 
-  // Resim Optimizasyon (HD Kalite)
+  // Resim Optimizasyon (HD Kalite - Mobil Uyumlu)
   const optimizeImage = (file: File): Promise<string> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -35,7 +35,7 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1200; // Kalite artırıldı
+          const MAX_WIDTH = 1000; // Mobilde bellek sorunu olmaması için güvenli sınır
           let width = img.width;
           let height = img.height;
           
@@ -51,7 +51,7 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
           ctx && (ctx.imageSmoothingQuality = 'high');
           ctx?.drawImage(img, 0, 0, width, height);
           
-          resolve(canvas.toDataURL('image/jpeg', 0.9)); // %90 Kalite
+          resolve(canvas.toDataURL('image/jpeg', 0.85)); // %85 Kalite (Optimum denge)
         };
       };
     });
@@ -75,29 +75,29 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-24 animate-in fade-in duration-700 pb-32 px-2">
+    <div className="max-w-6xl mx-auto space-y-16 sm:space-y-24 animate-in fade-in duration-700 pb-32 px-2">
       
       {/* 1. KULÜP VİZYONU (HERO SECTION) */}
-      <section className="relative overflow-hidden bg-zinc-950 rounded-[4rem] shadow-2xl border border-white/5">
+      <section className="relative overflow-hidden bg-zinc-950 rounded-[3rem] sm:rounded-[4rem] shadow-2xl border border-white/5">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/10 blur-[150px] -translate-y-1/2 translate-x-1/2"></div>
         
-        <div className="relative z-10 p-10 sm:p-24 flex flex-col items-center text-center space-y-12">
-          {/* Kurumsal Logo - Düz ve Net */}
-          <div className="w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-[3rem] p-3 shadow-2xl border-4 border-red-600 animate-in zoom-in duration-1000">
+        <div className="relative z-10 p-8 sm:p-24 flex flex-col items-center text-center space-y-8 sm:space-y-12">
+          {/* Kurumsal Logo */}
+          <div className="w-24 h-24 sm:w-36 sm:h-36 bg-white rounded-[2rem] sm:rounded-[3rem] p-3 shadow-2xl border-4 border-red-600 animate-in zoom-in duration-1000">
              <Logo className="w-full h-full" />
           </div>
           
-          <div className="space-y-6 max-w-4xl">
-            <h1 className="text-5xl sm:text-8xl font-black italic uppercase tracking-tighter leading-none text-white">
+          <div className="space-y-4 sm:space-y-6 max-w-4xl">
+            <h1 className="text-4xl sm:text-8xl font-black italic uppercase tracking-tighter leading-none text-white">
               BATMAN <span className="text-red-600">GENÇLERBİRLİĞİ<sup>®</sup></span>
             </h1>
             <div className="flex items-center justify-center gap-4">
-               <div className="h-px bg-red-600 w-16"></div>
-               <p className="text-red-500 font-black uppercase text-xs sm:text-sm tracking-[0.5em] italic leading-none">PROFESYONEL SPOR AKADEMİSİ</p>
-               <div className="h-px bg-red-600 w-16"></div>
+               <div className="h-px bg-red-600 w-10 sm:w-16"></div>
+               <p className="text-red-500 font-black uppercase text-[10px] sm:text-sm tracking-[0.3em] sm:tracking-[0.5em] italic leading-none whitespace-nowrap">PROFESYONEL SPOR AKADEMİSİ</p>
+               <div className="h-px bg-red-600 w-10 sm:w-16"></div>
             </div>
-            <p className="text-zinc-400 text-lg sm:text-2xl font-medium leading-relaxed italic max-w-3xl mx-auto">
+            <p className="text-zinc-400 text-sm sm:text-2xl font-medium leading-relaxed italic max-w-3xl mx-auto px-2">
               14 yıllık mesleki tecrübe ve akademik disiplinle, Batman'ın gelecekteki yıldızlarını bilimsel metotlarla yetiştiriyoruz.
             </p>
           </div>
@@ -105,25 +105,25 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
       </section>
 
       {/* 2. TEKNİK DİREKTÖR ÖZEL PROFİL */}
-      <section className="space-y-12">
+      <section className="space-y-8 sm:space-y-12">
         <div className="flex flex-col items-center text-center space-y-4">
            <span className="bg-zinc-100 text-zinc-500 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border border-zinc-200">TEKNİK YÖNETİM</span>
-           <h2 className="text-4xl sm:text-6xl font-black italic uppercase tracking-tighter text-zinc-900 leading-none">
-             TEKNİK DİREKTÖR <span className="text-red-600">VE ANTRENÖR</span>
+           <h2 className="text-3xl sm:text-6xl font-black italic uppercase tracking-tighter text-zinc-900 leading-none">
+             TEKNİK DİREKTÖR <span className="text-red-600"><br className="sm:hidden"/>VE ANTRENÖR</span>
            </h2>
         </div>
 
-        <div className="bg-white rounded-[4rem] overflow-hidden shadow-2xl border border-gray-100 flex flex-col lg:flex-row relative group">
+        <div className="bg-white rounded-[3rem] sm:rounded-[4rem] overflow-hidden shadow-2xl border border-gray-100 flex flex-col lg:flex-row relative group">
            {/* Fotoğraf Alanı */}
-           <div className="lg:w-2/5 relative min-h-[500px] bg-zinc-950 overflow-hidden">
+           <div className="lg:w-2/5 relative h-[400px] sm:h-[600px] bg-zinc-950 overflow-hidden">
               <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent z-10"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent z-10"></div>
               
               {founder.photoUrl ? (
                 <img src={founder.photoUrl} className="w-full h-full object-cover object-top relative z-0 transition-transform duration-1000 group-hover:scale-105 trainer-mask" alt={founder.name} />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-white/5 relative z-0">
-                  <span className="text-[12rem] font-black italic leading-none select-none">BGB</span>
+                  <span className="text-[8rem] sm:text-[12rem] font-black italic leading-none select-none">BGB</span>
                 </div>
               )}
 
@@ -131,26 +131,26 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
                 <button 
                   onClick={() => !isOptimizing && fileInputRef.current?.click()}
                   disabled={isOptimizing}
-                  className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 bg-white text-zinc-950 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-red-600 hover:text-white transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 bg-white text-zinc-950 px-6 py-3 sm:px-8 sm:py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-2xl hover:bg-red-600 hover:text-white transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed border-2 border-transparent hover:border-white"
                 >
-                  {isOptimizing ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
-                  {isOptimizing ? 'İŞLENİYOR...' : 'PROFİL RESMİ'}
+                  {isOptimizing ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+                  {isOptimizing ? 'İŞLENİYOR...' : 'RESMİ GÜNCELLE'}
                 </button>
               )}
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handlePhotoUpload} />
 
-              <div className="absolute top-8 left-8 z-30">
-                 <div className="p-4 bg-zinc-900 text-white rounded-3xl shadow-2xl border-2 border-red-600">
-                    <GraduationCap size={28} />
+              <div className="absolute top-6 left-6 z-30">
+                 <div className="p-3 bg-zinc-900 text-white rounded-2xl shadow-2xl border-2 border-red-600">
+                    <GraduationCap size={24} />
                  </div>
               </div>
            </div>
 
            {/* Detaylar - Mesleki Yeterlilik Ön Planda */}
-           <div className="lg:w-3/5 p-10 sm:p-20 flex flex-col justify-center space-y-10 relative">
-              <div className="space-y-6">
-                 <div className="flex items-center gap-4">
-                    <span className="bg-zinc-900 text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest italic shadow-lg">AKADEMİK LİYAKAT</span>
+           <div className="lg:w-3/5 p-8 sm:p-20 flex flex-col justify-center space-y-8 sm:space-y-10 relative">
+              <div className="space-y-4 sm:space-y-6">
+                 <div className="flex flex-wrap items-center gap-3">
+                    <span className="bg-zinc-900 text-white px-4 py-2 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest italic shadow-lg">AKADEMİK LİYAKAT</span>
                     <div className="flex gap-1 text-red-600">
                        {[1,2,3,4,5].map(i => <Star key={i} size={14} fill="currentColor" />)}
                     </div>
@@ -158,17 +158,17 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
                  <h3 className="text-4xl sm:text-7xl font-black italic uppercase tracking-tighter text-zinc-950 leading-none">{founder.name}</h3>
                  
                  {/* Uzmanlık Lisansları (Yeterlilik Odaklı) */}
-                 <div className="flex flex-wrap gap-3">
-                    <div className="flex items-center gap-3 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl"><Trophy size={16} className="text-red-500" /> <span className="text-[11px] font-black uppercase tracking-widest">TFF Futbol C</span></div>
-                    <div className="flex items-center gap-3 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl"><Activity size={16} className="text-red-500" /> <span className="text-[11px] font-black uppercase tracking-widest">TVF Voleybol 2.K</span></div>
-                    <div className="flex items-center gap-3 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl"><Zap size={16} className="text-red-500" /> <span className="text-[11px] font-black uppercase tracking-widest">TCF Cimnastik 2.K</span></div>
+                 <div className="flex flex-wrap gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-2xl shadow-xl"><Trophy size={14} className="text-red-500" /> <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest">TFF Futbol C</span></div>
+                    <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-2xl shadow-xl"><Activity size={14} className="text-red-500" /> <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest">TVF Voleybol 2.K</span></div>
+                    <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 sm:px-5 sm:py-3 rounded-2xl shadow-xl"><Zap size={14} className="text-red-500" /> <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-widest">TCF Cimnastik 2.K</span></div>
                  </div>
               </div>
 
-              <div className="space-y-8">
+              <div className="space-y-6 sm:space-y-8">
                  <div className="flex items-start gap-4">
-                    <Quote className="text-red-600 opacity-20 shrink-0" size={48} />
-                    <p className="text-xl sm:text-2xl text-zinc-700 font-bold italic leading-relaxed">
+                    <Quote className="text-red-600 opacity-20 shrink-0 hidden sm:block" size={48} />
+                    <p className="text-sm sm:text-2xl text-zinc-700 font-bold italic leading-relaxed">
                        14 yılı aşkın saha tecrübesi ve resmi federasyon lisanslarıyla; çocuklarımızın fiziksel kapasitelerini ve sporcu ahlaklarını en üst seviyeye çıkarmayı hedefliyoruz. Mesleki disiplinimizin bir meyvesi olan Başarı Belgelerimiz, Batman Gençlerbirliği'nin eğitim kalitesinin bir tescilidir.
                     </p>
                  </div>
@@ -191,32 +191,32 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
                  </div>
               </div>
 
-              <div className="pt-10 flex items-center justify-between border-t border-zinc-100">
+              <div className="pt-8 sm:pt-10 flex flex-col sm:flex-row items-center justify-between border-t border-zinc-100 gap-6">
                  <button 
                   onClick={() => window.open(`https://wa.me/905053401101`, '_blank')}
-                  className="flex items-center gap-3 px-10 py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all shadow-2xl active:scale-95"
+                  className="w-full sm:w-auto flex items-center justify-center gap-3 px-10 py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all shadow-2xl active:scale-95"
                  >
                     <Phone size={18} /> TEKNİK DİREKTÖR İLE İLETİŞİM
                  </button>
-                 <Logo className="w-16 h-16 grayscale opacity-10" />
+                 <Logo className="w-12 h-12 sm:w-16 sm:h-16 grayscale opacity-10" />
               </div>
            </div>
         </div>
       </section>
 
       {/* 3. DİĞER ANTRENÖRLER */}
-      <section className="space-y-12">
+      <section className="space-y-8 sm:space-y-12">
         <div className="flex flex-col items-center text-center space-y-4">
-           <h2 className="text-3xl sm:text-5xl font-black italic uppercase tracking-tighter text-zinc-900">
+           <h2 className="text-2xl sm:text-5xl font-black italic uppercase tracking-tighter text-zinc-900">
              ANTRENÖR <span className="text-red-600">KADROMUZ</span>
            </h2>
            <p className="text-zinc-400 font-black text-[10px] uppercase tracking-[0.3em] leading-none">BGB AKADEMİ TEKNİK EKİBİ</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
            {trainers.filter(t => !t.name.toLowerCase().includes('engin')).map(trainer => (
-             <div key={trainer.id} className="bg-white p-8 rounded-[3rem] border border-zinc-100 shadow-xl flex items-center gap-6 group hover:border-red-600 transition-all">
-                <div className="w-24 h-24 bg-zinc-950 rounded-[2rem] flex-shrink-0 overflow-hidden relative border-2 border-zinc-900 shadow-lg">
+             <div key={trainer.id} className="bg-white p-6 sm:p-8 rounded-[2.5rem] sm:rounded-[3rem] border border-zinc-100 shadow-xl flex items-center gap-4 sm:gap-6 group hover:border-red-600 transition-all">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-zinc-950 rounded-[2rem] flex-shrink-0 overflow-hidden relative border-2 border-zinc-900 shadow-lg">
                    {trainer.photoUrl ? (
                      <img src={trainer.photoUrl} className="w-full h-full object-cover" alt={trainer.name} />
                    ) : (
@@ -224,11 +224,11 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
                    )}
                 </div>
                 <div>
-                   <h4 className="text-xl font-black italic uppercase text-zinc-900 leading-none mb-2">{trainer.name}</h4>
-                   <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-4 italic">{trainer.specialty}</p>
-                   <div className="flex gap-2">
+                   <h4 className="text-lg sm:text-xl font-black italic uppercase text-zinc-900 leading-none mb-2">{trainer.name}</h4>
+                   <p className="text-[9px] sm:text-[10px] font-black text-red-600 uppercase tracking-widest mb-3 sm:mb-4 italic">{trainer.specialty}</p>
+                   <div className="flex flex-wrap gap-2">
                       {trainer.groups.slice(0, 2).map(g => (
-                        <span key={g} className="bg-zinc-100 text-zinc-500 px-3 py-1 rounded-lg text-[8px] font-black uppercase">{g}</span>
+                        <span key={g} className="bg-zinc-100 text-zinc-500 px-2 py-1 sm:px-3 sm:py-1 rounded-lg text-[7px] sm:text-[8px] font-black uppercase">{g}</span>
                       ))}
                    </div>
                 </div>
@@ -238,15 +238,15 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
       </section>
 
       {/* 4. FOOTER - GELİŞİM VİZYONU (GÜNCEL) */}
-      <section className="text-center space-y-10 py-24 bg-zinc-950 rounded-[4rem] text-white relative overflow-hidden">
+      <section className="text-center space-y-10 py-16 sm:py-24 bg-zinc-950 rounded-[3rem] sm:rounded-[4rem] text-white relative overflow-hidden">
          <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
          <div className="flex justify-center gap-6 relative z-10">
-            <Shield size={56} className="text-red-600" />
-            <Award size={56} className="text-white/20" />
-            <CheckCircle2 size={56} className="text-white/20" />
+            <Shield size={48} className="text-red-600" />
+            <Award size={48} className="text-white/20" />
+            <CheckCircle2 size={48} className="text-white/20" />
          </div>
          <div className="space-y-6 max-w-2xl mx-auto px-6 relative z-10">
-            <h3 className="text-3xl font-black italic uppercase tracking-tighter">BGB <span className="text-red-600">GELİŞİM VİZYONU</span></h3>
+            <h3 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter">BGB <span className="text-red-600">GELİŞİM VİZYONU</span></h3>
             <p className="text-zinc-400 text-xs font-bold uppercase tracking-widest leading-relaxed">
                Batman Gençlerbirliği olarak temel amacımız; mesleki tecrübemizi Batman'ın çocukları için güvenilir bir rehbere dönüştürmektir. Disiplinli eğitim ve sporcu ahlakıyla, her öğrencimizi geleceğe en güçlü şekilde hazırlamaya söz veriyoruz.
             </p>
