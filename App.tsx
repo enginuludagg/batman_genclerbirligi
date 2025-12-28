@@ -70,7 +70,6 @@ const App: React.FC = () => {
 
   // --- TARAYICI GEÇMİŞİ YÖNETİMİ (GERİ TUŞU DESTEĞİ) ---
   useEffect(() => {
-    // Sayfa yüklendiğinde hash varsa onu ayarla
     const hash = window.location.hash.replace('#', '');
     if (hash && hash !== activeView) {
       setActiveView(hash as ViewType);
@@ -87,19 +86,17 @@ const App: React.FC = () => {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, []); // Sadece mount anında
+  }, []); 
 
-  // View değiştiğinde URL güncelle
   const handleNavigate = (view: ViewType, subTab?: string) => {
     setActiveView(view);
     if (view === 'media' && subTab) setMediaTab(subTab as any);
     
-    // Geçmişe ekle (Eğer zaten o URL'de değilsek)
     if (window.location.hash !== `#${view}`) {
       window.history.pushState({ view }, '', `#${view}`);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setIsSidebarOpen(false); // Mobil menüden geçişte sidebar kapansın
+    setIsSidebarOpen(false); 
   };
 
   const handleLogin = (mode: AppMode, student?: Student) => {
@@ -116,7 +113,7 @@ const App: React.FC = () => {
     setAppMode('admin');
     setCurrentUser(null);
     setActiveView('dashboard');
-    window.history.pushState(null, '', ' '); // URL temizle
+    window.history.pushState(null, '', ' '); 
   };
 
   // --- FIREBASE İLK YÜKLEME VE OTO-DOLDURMA ---
@@ -138,7 +135,6 @@ const App: React.FC = () => {
           storageService.loadFromCloud(KEYS.FIXTURES)
         ]);
 
-        // Veritabanı boşsa otomatik başlangıç verisi ekle
         if (cT.length === 0) {
            const founder: Trainer = {
              id: 'founder-engin', 
@@ -189,7 +185,6 @@ const App: React.FC = () => {
     fetchAllData();
   }, []);
 
-  // --- VERİ GÜNCELLEME VE SENKRONİZASYON ---
   const updateAndSync = async <T extends { id: string }>(
     key: string, 
     items: T[] | ((prev: T[]) => T[]), 
@@ -199,12 +194,7 @@ const App: React.FC = () => {
       const updated = typeof items === 'function' ? items(prev) : items;
       storageService.saveLocal(key, updated);
       
-      // Buluta son değişikliği it (Optimistik yaklaşım)
       if (isConfigured && updated.length > 0) {
-        // Son eklenen/güncellenen öğeyi bulma mantığı basitleştirildi
-        // Gerçek senaryoda diff almak gerekebilir ama şimdilik tüm listeyi basmak yerine sonuncuyu basıyoruz.
-        // DİKKAT: Firebase Storage kullanılmıyor. Büyük veri (resim) varsa Firestore limitine takılabilir.
-        // Bu yüzden optimizeImage fonksiyonları çok önemli.
         const last = updated[updated.length - 1];
         if (last) {
           storageService.saveToCloud(key, last).catch(() => setConnectionError(true));
@@ -231,18 +221,14 @@ const App: React.FC = () => {
   };
 
   const handleUpdateFounderPhoto = async (photoUrl: string) => {
-    // 1. Mevcut teknik direktör kaydını bul veya yoksa OLUŞTUR
     const existingFounderIndex = trainers.findIndex(t => t.name.toLowerCase().includes('engin'));
-    
     let updatedTrainers = [...trainers];
     let founderData: Trainer;
 
     if (existingFounderIndex > -1) {
-      // Varsa güncelle
       founderData = { ...updatedTrainers[existingFounderIndex], photoUrl };
       updatedTrainers[existingFounderIndex] = founderData;
     } else {
-      // Yoksa (sistemde ilk kez oluşturuluyorsa)
       founderData = {
         id: 'founder-engin-auto',
         name: 'Engin Uludağ',
@@ -255,14 +241,10 @@ const App: React.FC = () => {
       updatedTrainers.push(founderData);
     }
 
-    // 2. State ve LocalStorage güncelle
     setTrainers(updatedTrainers);
     storageService.saveLocal(KEYS.TRAINERS, updatedTrainers);
-
-    // 3. Kullanıcıya bilgi ver (Alert yerine Toast mesajı)
     setToast({ title: 'BAŞARILI', message: 'Profil fotoğrafı sisteme kaydedildi.' });
 
-    // 4. Buluta gönder
     if (isConfigured) {
       try {
         await storageService.saveToCloud(KEYS.TRAINERS, founderData);
@@ -304,7 +286,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-[100dvh] w-full bg-[#f8fafc] pb-safe-bottom lg:pb-0 selection:bg-red-600 selection:text-white overflow-x-hidden">
+    <div className="flex min-h-[100dvh] w-full bg-[#f8fafc] selection:bg-red-600 selection:text-white overflow-x-hidden">
       <Sidebar 
         activeView={activeView} 
         onViewChange={(v) => handleNavigate(v)} 
@@ -315,10 +297,6 @@ const App: React.FC = () => {
         onLogout={handleLogout}
       />
       
-      {/* 
-        MobileNav ve Splash gibi fixed elementlerin etkilenmemesi için 
-        main container'ı ayrı tutuyoruz.
-      */}
       <main className={`flex-1 flex flex-col transition-all duration-500 ease-out min-w-0 min-h-[100dvh] relative ${isSidebarOpen ? 'lg:ml-[280px] scale-[0.98] opacity-50 pointer-events-none lg:opacity-100 lg:pointer-events-auto lg:scale-100' : 'lg:ml-[280px]'}`}>
         
         {/* MASAÜSTÜ HEADER */}
@@ -375,8 +353,8 @@ const App: React.FC = () => {
            </div>
         </div>
 
-        {/* İçerik Alanı */}
-        <div className="p-4 sm:p-8 max-w-[1600px] mx-auto w-full flex-1 pb-24 lg:pb-8">{renderView()}</div>
+        {/* İçerik Alanı - PB (Padding Bottom) Değeri Artırıldı */}
+        <div className="p-4 sm:p-8 max-w-[1600px] mx-auto w-full flex-1 pb-32 lg:pb-8">{renderView()}</div>
         
       </main>
 

@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { AppContextData, Student, Drill, AppMode } from "../types";
 
@@ -7,7 +8,6 @@ const getAIClient = () => {
 };
 
 // --- SABİT KULÜP BİLGİLERİ (Knowledge Base) ---
-// AI'nın genel sorulara cevap verebilmesi için gerekli bilgiler
 const CLUB_INFO = `
   KULÜP KİMLİĞİ:
   - İsim: Batman Gençlerbirliği (BGB) Spor Kulübü ve Akademisi
@@ -18,11 +18,6 @@ const CLUB_INFO = `
   - Branşlar: Futbol, Voleybol, Cimnastik
   - Yaş Grupları: U10, U11, U12, U13, U14, U15, U16, U17, U18, U19, Minikler.
   - Renkler: Kırmızı - Siyah
-  
-  EĞİTİM FELSEFESİ:
-  - Bilimsel antrenman metotları kullanılır.
-  - Sadece sportif değil, ahlaki gelişim de ön plandadır.
-  - Veli-Antrenör-Sporcu üçgeninde iletişim esastır.
 `;
 
 // --- VARSAYILAN CEVAPLAR (Offline Modu) ---
@@ -89,7 +84,6 @@ export const generateNewDrillFromAI = async (sport: string = 'Futbol'): Promise<
 
 export const getAICoachResponse = async (userInput: string, context: AppContextData, mode: AppMode, currentStudent?: Student | null) => {
   if (!process.env.API_KEY) {
-     // API Key yoksa basit kural tabanlı cevaplar
      const lower = userInput.toLowerCase();
      if (lower.includes('merhaba')) return { text: "Merhaba! BGB Akademi asistanınız hizmetinizde." };
      if (lower.includes('iletişim') || lower.includes('adres')) return { text: "Kulübümüze 0505 340 11 01 numarasından ulaşabilirsiniz." };
@@ -99,75 +93,45 @@ export const getAICoachResponse = async (userInput: string, context: AppContextD
   const ai = getAIClient();
   
   // --- DİNAMİK CONTEXT HAZIRLAMA ---
-  let dynamicContext = "";
   let userRoleDescription = "";
   const today = new Date().toLocaleDateString('tr-TR');
 
-  // Ortak veriler (Maçlar vb.)
+  // Ortak veriler
+  const scheduleText = context.sessions.map(s => `- ${s.day} ${s.time}: ${s.group} (${s.location})`).join('\n');
   const upcomingMatches = context.fixtures
     .filter(f => f.status === 'scheduled')
     .map(f => `- ${f.date} ${f.time}: ${f.homeTeam} vs ${f.awayTeam} (${f.category})`)
     .join('\n');
 
+  let specializedData = "";
+
   if (mode === 'admin') {
-    userRoleDescription = "Şu an KULÜP YÖNETİCİSİ (Admin/Antrenör) ile konuşuyorsun. Tüm verilere erişim yetkin var.";
-    
-    // Admin için özet veriler
+    userRoleDescription = "Kullanıcı: KULÜP YÖNETİCİSİ (Hoca/Admin). Her türlü veriyi görme yetkisi var.";
     const studentCount = context.students.length;
     const balance = context.finance.reduce((acc, curr) => curr.type === 'income' ? acc + curr.amount : acc - curr.amount, 0);
     
-    dynamicContext = `
-      YÖNETİCİ VERİLERİ:
-      - Toplam Sporcu Sayısı: ${studentCount}
-      - Güncel Kasa Bakiyesi: ${balance} TL
-      - Planlanmış Maçlar:\n${upcomingMatches || 'Yok'}
-      - Bugünün Tarihi: ${today}
+    specializedData = `
+      YÖNETİCİ ÖZEL VERİLERİ:
+      - Toplam Sporcu: ${studentCount}
+      - Kasa Bakiyesi: ${balance} TL
+      - Antrenör Notları: ${context.trainerNotes.length} adet rapor var.
     `;
 
   } else if (mode === 'parent' && currentStudent) {
-    userRoleDescription = `Şu an bir SPORCU VELİSİ ile konuşuyorsun. Velisi olduğu öğrenci: ${currentStudent.name}.
-    DİKKAT: Sadece bu öğrencinin verilerini ve genel kulüp bilgilerini paylaşabilirsin. Başka öğrencilerin bilgisini veya kulübün finansal durumunu ASLA paylaşma.`;
+    userRoleDescription = `Kullanıcı: SPORCU VELİSİ.
+    Velisi olduğu öğrenci: ${currentStudent.name}.
+    DİKKAT: Sadece bu öğrencinin verilerini paylaşabilirsin. Başka öğrenci, finans veya antrenör notlarını ASLA paylaşma.`;
 
     const s = currentStudent;
-    const stats = s.stats;
-    // Öğrencinin maçları
-    const myMatches = context.fixtures
-      .filter(f => f.category === s.branchId && f.status === 'scheduled')
-      .map(f => `${f.date}: ${f.awayTeam}`)
-      .join(', ');
-    
-    // Antrenör notları (Sadece bu öğrenciyi ilgilendiren genel notlar veya gelişim notları)
-    // Not: Gerçek hayatta öğrenciye özel notlar ayrı tutulmalı, burada scoutingNotes kullanıyoruz.
-    const notes = s.scoutingNotes.map(n => `- ${n.date}: ${n.content} (Yazan: ${n.scoutName})`).join('\n');
-
-    dynamicContext = `
-      VELİSİ OLUNAN ÖĞRENCİ DETAYLARI:
-      - İsim: ${s.name}
-      - Doğum Yılı: ${s.birthYear || 'Belirtilmemiş'}
-      - Branş: ${s.sport}
-      - Grup: ${s.branchId}
-      - Seviye: ${s.level}
-      - Durum: ${s.status === 'active' ? 'Aktif' : 'Pasif/İzinli'}
+    specializedData = `
+      ÖĞRENCİ DETAYLARI (${s.name}):
+      - Grup: ${s.branchId} | Branş: ${s.sport}
+      - Durum: ${s.status === 'active' ? 'Aktif' : 'Pasif'}
       - Devamlılık: %${s.attendance}
       - Son Antrenman: ${s.lastTraining}
-      - Aidat Durumu: ${s.feeStatus === 'Paid' ? 'Ödendi' : s.feeStatus === 'Pending' ? 'Ödeme Bekliyor' : 'Gecikmiş'}
-      
-      FİZİKSEL VE TEKNİK VERİLER:
-      - Hız: ${stats.speed}/100
-      - Güç: ${stats.strength}/100
-      - Teknik: ${stats.technique}/100
-      - Kondisyon: ${stats.stamina}/100
-      - Boy: ${s.physicalStats?.height || '?'} cm
-      - Kilo: ${s.physicalStats?.weight || '?'} kg
-      
-      YAKLAŞAN MAÇLARI: ${myMatches || 'Planlanmış maç yok'}
-      
-      GELİŞİM NOTLARI:
-      ${notes || 'Henüz girilmiş bir not yok.'}
+      - Aidat Durumu: ${s.feeStatus === 'Paid' ? 'Ödendi' : 'Ödeme Bekliyor'}
+      - Fiziksel: Hız ${s.stats.speed}, Güç ${s.stats.strength}
     `;
-  } else {
-    userRoleDescription = "Kullanıcı kimliği belirsiz. Sadece genel kulüp sorularını cevapla.";
-    dynamicContext = "Özel veri yok.";
   }
 
   try {
@@ -175,34 +139,40 @@ export const getAICoachResponse = async (userInput: string, context: AppContextD
       model: 'gemini-3-flash-preview',
       contents: [{ role: 'user', parts: [{ text: userInput }] }],
       config: {
-        systemInstruction: `Sen Batman Gençlerbirliği (BGB) Spor Kulübü'nün akıllı asistanısın.
+        temperature: 0.2, // Yaratıcılığı düşürdük, daha gerçekçi olsun
+        systemInstruction: `
+        Sen Batman Gençlerbirliği (BGB) Spor Kulübü'nün yapay zeka asistanısın.
         
-        GÖREVİN:
-        Kullanıcının sorularını samimi, motive edici ve profesyonel bir dille cevaplamak.
-        
-        KULLANICI BAĞLAMI:
-        ${userRoleDescription}
-        
-        VERİ KAYNAKLARI:
-        1. GENEL KULÜP BİLGİSİ (Herkes Sorabilir):
+        KİMLİĞİN VE KESİN SINIRLARIN (BUNLARA UYMAK ZORUNDASIN):
+        1. Sen SADECE bir sohbet botusun. Veritabanına YAZMA, GÜNCELLEME, SİLME yetkin YOK.
+        2. ASLA "Programı güncelledim", "Yeni drill ekledim", "Listeyi düzenledim" gibi yalan beyanlarda bulunma.
+        3. Kullanıcı senden bir işlem yapmanı isterse (örneğin: "Ahmet'i kaydet", "Maç ekle"), nazikçe "Ben sadece bilgi verebilirim, bu işlemi yapmak için lütfen ilgili menüyü kullanın" de.
+        4. "TFF kaynaklarından veri çektim", "Uluslararası veritabanından güncelledim" gibi uydurma cümleler kurma. Sadece sana aşağıda verilen verileri kullan.
+
+        MEVCUT KULÜP BİLGİLERİ:
         ${CLUB_INFO}
         
-        2. KİŞİSEL/ÖZEL VERİLER (Sadece yetkili görsün):
-        ${dynamicContext}
-        
-        KURALLAR:
-        - Velilere "Çocuğumun durumu nasıl?" sorusunda yukarıdaki FİZİKSEL VE TEKNİK VERİLER'i yorumlayarak cevap ver.
-        - "Maç ne zaman?" sorusunda ilgili maç bilgilerini ver.
-        - Bilmediğin veya verilerde olmayan bir şey sorulursa uydurma, "Sistemde bu bilgi henüz kayıtlı değil hocam/sayın velim." de.
-        - Finansal soruları velilere yanıtlama ("Bu bilgiye erişim yetkiniz yok" de).
-        - Kısa, öz ve Türkçe cevap ver.
+        GÜNCEL HAFTALIK PROGRAM:
+        ${scheduleText || 'Program bilgisi henüz girilmemiş.'}
+
+        FİKSTÜR / MAÇLAR:
+        ${upcomingMatches || 'Planlanmış maç yok.'}
+
+        ${specializedData}
+
+        TARİH: ${today}
+
+        CEVAP TARZI:
+        - Kısa, net ve profesyonel ol.
+        - Kullanıcı işlem istediğinde "Bunu yapmak için sol menüden [İlgili Menü] sekmesini kullanabilirsiniz" de.
+        - Bilmediğin bir veri sorulursa "Sistemde bu bilgi kayıtlı değil" de.
         `
       }
     });
     return { text: res.text || "Anlaşıldı." };
   } catch (e) {
     console.error("AI Error:", e);
-    return { text: "Şu an bağlantıda bir sorun yaşıyorum. Lütfen daha sonra tekrar deneyin." };
+    return { text: "Bağlantıda bir sorun var. Lütfen tekrar deneyin." };
   }
 };
 
