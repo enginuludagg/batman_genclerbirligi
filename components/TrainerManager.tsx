@@ -12,6 +12,7 @@ interface Props {
 const TrainerManager: React.FC<Props> = ({ trainers, setTrainers, mode }) => {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingTrainer, setEditingTrainer] = useState<Trainer | null>(null);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const [newTrainer, setNewTrainer] = useState<Partial<Trainer>>({ 
     name: '', 
     specialty: 'Futbol Antrenörü', 
@@ -29,16 +30,43 @@ const TrainerManager: React.FC<Props> = ({ trainers, setTrainers, mode }) => {
     }
   }, [isAddOpen, editingTrainer]);
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Resim Optimizasyon
+  const optimizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 500;
+          let width = img.width;
+          let height = img.height;
+          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+      };
+    });
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        if (editingTrainer) setEditingTrainer({...editingTrainer, photoUrl: base64});
-        else setNewTrainer({...newTrainer, photoUrl: base64});
-      };
-      reader.readAsDataURL(file);
+      setIsOptimizing(true);
+      try {
+        const optimized = await optimizeImage(file);
+        if (editingTrainer) setEditingTrainer({...editingTrainer, photoUrl: optimized});
+        else setNewTrainer({...newTrainer, photoUrl: optimized});
+      } catch (e) {
+        alert("Fotoğraf işlenirken hata oluştu.");
+      } finally {
+        setIsOptimizing(false);
+      }
     }
   };
 
@@ -137,15 +165,15 @@ const TrainerManager: React.FC<Props> = ({ trainers, setTrainers, mode }) => {
             
             <div className="space-y-6">
               <div className="flex flex-col items-center">
-                 <div onClick={() => fileInputRef.current?.click()} className="w-28 h-28 bg-gray-50 rounded-[2.5rem] border-4 border-dashed border-gray-100 flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-red-600 transition-all">
+                 <div onClick={() => !isOptimizing && fileInputRef.current?.click()} className={`w-28 h-28 bg-gray-50 rounded-[2.5rem] border-4 border-dashed border-gray-100 flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-red-600 transition-all ${isOptimizing ? 'opacity-50' : ''}`}>
                     {(editingTrainer?.photoUrl || newTrainer.photoUrl) ? (
                       <img src={editingTrainer?.photoUrl || newTrainer.photoUrl} className="w-full h-full object-cover" alt="Hoca" />
                     ) : (
-                      <Upload size={32} className="text-gray-300 group-hover:text-red-600" />
+                      <Upload size={32} className={`text-gray-300 group-hover:text-red-600 ${isOptimizing ? 'animate-bounce' : ''}`} />
                     )}
                  </div>
                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handlePhotoUpload} />
-                 <p className="text-[9px] font-black text-gray-400 uppercase mt-3 tracking-widest">Antrenör Fotoğrafı</p>
+                 <p className="text-[9px] font-black text-gray-400 uppercase mt-3 tracking-widest">{isOptimizing ? 'İŞLENİYOR...' : 'FOTOĞRAF YÜKLE'}</p>
               </div>
 
               <div className="space-y-4">
@@ -196,7 +224,8 @@ const TrainerManager: React.FC<Props> = ({ trainers, setTrainers, mode }) => {
 
               <button 
                 onClick={editingTrainer ? handleUpdate : handleAdd} 
-                className="w-full py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-3 mt-4"
+                disabled={isOptimizing}
+                className="w-full py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-3 mt-4 disabled:opacity-50"
               >
                 <Save size={18} /> {editingTrainer ? 'DEĞİŞİKLİKLERİ KAYDET' : 'ANTRENÖRÜ EKLE'}
               </button>

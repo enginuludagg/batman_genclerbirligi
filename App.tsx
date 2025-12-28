@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -27,6 +28,7 @@ const App: React.FC = () => {
   const [mediaTab, setMediaTab] = useState<'all' | 'bulletin' | 'gallery' | 'poll' | 'lineup' | 'pending'>('all');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [appMode, setAppMode] = useState<AppMode>('admin');
+  const [currentUser, setCurrentUser] = useState<Student | null>(null); // Giriş yapan velinin öğrencisi
   const [toast, setToast] = useState<Notification | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
@@ -167,8 +169,9 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleLogin = (mode: AppMode) => {
+  const handleLogin = (mode: AppMode, student?: Student) => {
     setAppMode(mode);
+    setCurrentUser(student || null);
     setIsLoggedIn(true);
   };
 
@@ -178,7 +181,7 @@ const App: React.FC = () => {
       case 'about': return <AboutUs trainers={trainers} mode={appMode} onUpdateFounderPhoto={handleUpdateFounderPhoto} />;
       case 'students': return <StudentList students={students} setStudents={handleUpdateStudent} mode={appMode} />;
       case 'schedule': return <Schedule sessions={sessions} setSessions={handleUpdateSessions} mode={appMode} />;
-      case 'ai-coach': return <AICoach context={contextData} mode={appMode} />;
+      case 'ai-coach': return <AICoach context={contextData} mode={appMode} currentUser={currentUser} />;
       case 'analytics': return <Analytics students={students} setStudents={setStudents} mode={appMode} />;
       case 'league': return <League students={students} mode={appMode} fixtures={fixtures} setFixtures={handleUpdateFixtures} onPostLineup={(p) => { 
         const post = {...p, id: Date.now().toString()} as MediaPost;
@@ -214,6 +217,14 @@ const App: React.FC = () => {
               </h2>
            </div>
            <div className="flex items-center gap-6">
+              {/* Mevcut Kullanıcı Bilgisi (Veli ise) */}
+              {appMode === 'parent' && currentUser && (
+                <div className="hidden lg:flex items-center gap-3 bg-zinc-900 text-white px-4 py-1.5 rounded-full">
+                   <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-[10px] font-black">{currentUser.name[0]}</div>
+                   <span className="text-[10px] font-black uppercase tracking-widest">{currentUser.name}</span>
+                </div>
+              )}
+
               {connectionError ? (
                 <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-red-200 bg-red-50 text-red-600 shadow-sm animate-pulse cursor-pointer" onClick={() => window.location.reload()}>
                   <CloudOff size={14} />

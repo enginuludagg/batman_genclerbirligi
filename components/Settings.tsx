@@ -1,21 +1,51 @@
+
 import React, { useState, useRef } from 'react';
 import { Settings as SettingsIcon, Upload, AlertTriangle, Image as ImageIcon, Smartphone, ShieldCheck, Trash2, Terminal, CheckCircle2, Rocket } from 'lucide-react';
 import Logo from './Logo';
 
-const APP_VERSION = "V.1.4.8"; // Hata düzeltme sürümü
+const APP_VERSION = "V.1.5.0 (STABLE)";
 
 const Settings: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(localStorage.getItem('bgb_custom_logo'));
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const optimizeLogo = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 300; // Logo için küçük boyut yeterli
+          const scaleSize = MAX_WIDTH / img.width;
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleSize;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/png', 0.7));
+        };
+      };
+    });
+  };
+
   const saveSettings = () => {
     setIsSaving(true);
     setTimeout(() => {
-      if (logo) localStorage.setItem('bgb_custom_logo', logo);
-      window.dispatchEvent(new Event('logoUpdated'));
-      setIsSaving(false);
-      alert('Sistem ayarları başarıyla güncellendi!');
+      try {
+        if (logo) {
+            localStorage.setItem('bgb_custom_logo', logo);
+        }
+        window.dispatchEvent(new Event('logoUpdated'));
+        alert('Sistem ayarları başarıyla güncellendi!');
+      } catch (e) {
+        console.error(e);
+        alert("HATA: Resim boyutu çok büyük! Lütfen daha küçük veya düşük çözünürlüklü bir logo deneyin.");
+      } finally {
+        setIsSaving(false);
+      }
     }, 800);
   };
 
@@ -52,13 +82,12 @@ const Settings: React.FC = () => {
                 <button onClick={() => fileInputRef.current?.click()} className="w-full py-4 bg-zinc-100 text-zinc-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 border-2 border-dashed border-zinc-200 shadow-sm">
                 <Upload size={16} /> CİHAZDAN YÜKLE
                 </button>
-                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => setLogo(reader.result as string);
-                    reader.readAsDataURL(file);
-                }
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                      const optimized = await optimizeLogo(file);
+                      setLogo(optimized);
+                  }
                 }} />
             </div>
             <button onClick={saveSettings} disabled={isSaving} className="w-full py-5 bg-red-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-zinc-900 transition-all">
@@ -118,7 +147,7 @@ const Settings: React.FC = () => {
           <div className="bg-zinc-950 text-white p-8 rounded-[2.5rem] shadow-2xl">
              <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4"><Smartphone className="text-red-600" size={20} /><h3 className="font-black uppercase text-xs tracking-widest italic">SİSTEM DURUMU</h3></div>
              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl"><span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">YAZILIM SÜRÜMÜ</span><span className="text-[10px] font-black bg-white/10 px-3 py-1 rounded-full">{APP_VERSION}</span></div>
+                <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl"><span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">YAZILIM SÜRÜMÜ</span><span className="text-[10px] font-black bg-white/10 px-3 py-1 rounded-full text-green-400">{APP_VERSION}</span></div>
                 <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl"><span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">HOSTİNG</span><span className="text-[10px] font-black text-blue-400 flex items-center gap-1.5"><ShieldCheck size={14} /> FIREBASE AKTİF</span></div>
              </div>
           </div>

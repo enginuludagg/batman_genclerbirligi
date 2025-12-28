@@ -1,14 +1,5 @@
 
 import { db } from "./firebaseConfig";
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  setDoc 
-} from "firebase/firestore";
 
 export const KEYS = {
   STUDENTS: 'students',
@@ -35,11 +26,10 @@ export const storageService = {
       };
 
       if (id && !id.toString().startsWith('temp-')) {
-        const docRef = doc(db, colName, id.toString());
-        await setDoc(docRef, cleanData, { merge: true });
+        await db.collection(colName).doc(id.toString()).set(cleanData, { merge: true });
         return id;
       } else {
-        const docRef = await addDoc(collection(db, colName), {
+        const docRef = await db.collection(colName).add({
           ...cleanData,
           createdAt: new Date().toISOString()
         });
@@ -47,6 +37,7 @@ export const storageService = {
       }
     } catch (e) {
       console.error(`[BGB-Cloud] Kayıt Hatası (${colName}):`, e);
+      // Hata olsa bile uygulamayı kırmamak için null döndür
       return null;
     }
   },
@@ -56,7 +47,7 @@ export const storageService = {
    */
   loadFromCloud: async (colName: string) => {
     try {
-      const querySnapshot = await getDocs(collection(db, colName));
+      const querySnapshot = await db.collection(colName).get();
       return querySnapshot.docs.map(doc => ({ 
         id: doc.id, 
         ...doc.data() 
@@ -73,7 +64,7 @@ export const storageService = {
   deleteFromCloud: async (colName: string, docId: string) => {
     try {
       if (!docId || docId.toString().startsWith('temp-')) return true;
-      await deleteDoc(doc(db, colName, docId.toString()));
+      await db.collection(colName).doc(docId.toString()).delete();
       return true;
     } catch (e) {
       console.error(`[BGB-Cloud] Silme Hatası (${colName}):`, e);
@@ -83,11 +74,20 @@ export const storageService = {
 
   // Yerel Depolama (Offline & Cache)
   load: <T>(key: string, defaultValue: T): T => {
-    const saved = localStorage.getItem(`bgb_${key}`);
-    return saved ? JSON.parse(saved) : defaultValue;
+    try {
+      const saved = localStorage.getItem(`bgb_${key}`);
+      return saved ? JSON.parse(saved) : defaultValue;
+    } catch (e) {
+      console.warn("LocalStorage okuma hatası", e);
+      return defaultValue;
+    }
   },
 
   saveLocal: (key: string, data: any) => {
-    localStorage.setItem(`bgb_${key}`, JSON.stringify(data));
+    try {
+      localStorage.setItem(`bgb_${key}`, JSON.stringify(data));
+    } catch (e) {
+      console.error("LocalStorage kayıt hatası (Muhtemelen kota doldu)", e);
+    }
   }
 };

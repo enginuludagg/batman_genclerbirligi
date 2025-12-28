@@ -26,6 +26,7 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
   const [activeCategory, setActiveCategory] = useState('TÜM GRUPLAR');
   const [activeSport, setActiveSport] = useState<'Hepsi' | 'Futbol' | 'Voleybol' | 'Cimnastik'>('Hepsi');
   const [showPassive, setShowPassive] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const firstInputRef = useRef<HTMLInputElement>(null);
   
   const [newStudent, setNewStudent] = useState<Partial<Student>>({
@@ -40,6 +41,30 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
       setTimeout(() => firstInputRef.current?.focus(), 100);
     }
   }, [viewState, onModalStateChange]);
+
+  // Resim Optimizasyon Fonksiyonu
+  const optimizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 500; // Profil için 500px yeterli
+          let width = img.width;
+          let height = img.height;
+          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+      };
+    });
+  };
 
   const handleOpenAdd = () => {
     const defaultSport = activeSport === 'Hepsi' ? 'Futbol' : activeSport;
@@ -80,12 +105,18 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
     setNewStudent({ name: '', sport: 'Futbol', activeSports: ['Futbol'], branchId: 'U12', gender: 'Erkek', level: 'Başlangıç', status: 'active', attendance: 100, photoUrl: '', stats: { strength: 50, speed: 50, stamina: 50, technique: 50 }, jerseyNumber: undefined });
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setNewStudent(prev => ({ ...prev, photoUrl: reader.result as string }));
-      reader.readAsDataURL(file);
+      setIsOptimizing(true);
+      try {
+        const optimized = await optimizeImage(file);
+        setNewStudent(prev => ({ ...prev, photoUrl: optimized }));
+      } catch (err) {
+        alert("Resim yüklenirken hata oluştu.");
+      } finally {
+        setIsOptimizing(false);
+      }
     }
   };
 
@@ -155,7 +186,6 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 px-2">
         {filtered.map((s) => {
-          // Çoklu branşları listele
           const sports = s.activeSports || [s.sport];
           return (
             <div key={s.id} onClick={() => { setSelectedStudent(s); setViewState('detail'); }} className="bg-white p-4 rounded-[1.5rem] border border-gray-50 shadow-sm flex items-center justify-between hover:border-red-200 transition-all group relative overflow-hidden cursor-pointer">
@@ -204,11 +234,11 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
             
             <div className="space-y-6">
               <div className="flex flex-col items-center">
-                 <div onClick={() => document.getElementById('new-photo-up')?.click()} className="w-28 h-28 bg-gray-50 rounded-[2.5rem] border-4 border-dashed border-gray-100 flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-red-600 transition-all">
-                    {newStudent.photoUrl ? <img src={newStudent.photoUrl} className="w-full h-full object-cover" /> : <Upload size={32} className="text-gray-300" />}
+                 <div onClick={() => !isOptimizing && document.getElementById('new-photo-up')?.click()} className={`w-28 h-28 bg-gray-50 rounded-[2.5rem] border-4 border-dashed border-gray-100 flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-red-600 transition-all ${isOptimizing ? 'opacity-50' : ''}`}>
+                    {newStudent.photoUrl ? <img src={newStudent.photoUrl} className="w-full h-full object-cover" /> : <Upload size={32} className={`text-gray-300 ${isOptimizing ? 'animate-bounce' : ''}`} />}
                  </div>
                  <input type="file" id="new-photo-up" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
-                 <p className="text-[9px] font-black text-gray-400 uppercase mt-3">Profil Fotoğrafı</p>
+                 <p className="text-[9px] font-black text-gray-400 uppercase mt-3">{isOptimizing ? 'İŞLENİYOR...' : 'PROFİL FOTOĞRAFI'}</p>
               </div>
 
               <div className="space-y-4">
@@ -259,7 +289,8 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
 
               <button 
                 onClick={handleAddStudent} 
-                className="w-full py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-red-600 active:scale-95 transition-all mt-4 flex items-center justify-center gap-3"
+                disabled={isOptimizing}
+                className="w-full py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-red-600 active:scale-95 transition-all mt-4 flex items-center justify-center gap-3 disabled:opacity-50"
               >
                 <Save size={18} /> KAYDI TAMAMLA
               </button>

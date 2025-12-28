@@ -38,7 +38,47 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
   const [showPlayerCard, setShowPlayerCard] = useState(false);
   const [newScoutNote, setNewScoutNote] = useState('');
   const [scoutPotential, setScoutPotential] = useState(3);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Resim Optimizasyon
+  const optimizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 500;
+          let width = img.width;
+          let height = img.height;
+          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+      };
+    });
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsOptimizing(true);
+      try {
+        const optimized = await optimizeImage(file);
+        setEditedData(prev => ({ ...prev, photoUrl: optimized }));
+      } catch (err) {
+        alert("Resim işlenirken hata oluştu.");
+      } finally {
+        setIsOptimizing(false);
+      }
+    }
+  };
 
   const handleSave = () => {
     // Branş değişikliği yapıldıysa ilk branşı 'sport' (ana branş) olarak ata
@@ -102,22 +142,15 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
         <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
         <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
           <div className="relative group">
-            <div className="w-32 h-32 sm:w-40 sm:h-40 bg-zinc-900 rounded-[3rem] overflow-hidden border-4 border-zinc-800 shadow-2xl">
+            <div className={`w-32 h-32 sm:w-40 sm:h-40 bg-zinc-900 rounded-[3rem] overflow-hidden border-4 border-zinc-800 shadow-2xl transition-opacity ${isOptimizing ? 'opacity-50' : ''}`}>
               {editedData.photoUrl ? <img src={editedData.photoUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-5xl font-black italic">{editedData.name[0]}</div>}
             </div>
             {mode === 'admin' && (
-              <button onClick={() => fileInputRef.current?.click()} className="absolute inset-0 bg-black/60 rounded-[3rem] opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all">
-                <Upload size={24} /><span className="text-[8px] font-black mt-1">GÜNCELLE</span>
+              <button disabled={isOptimizing} onClick={() => fileInputRef.current?.click()} className="absolute inset-0 bg-black/60 rounded-[3rem] opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all cursor-pointer">
+                <Upload size={24} className={isOptimizing ? 'animate-bounce' : ''} /><span className="text-[8px] font-black mt-1">{isOptimizing ? 'İŞLENİYOR' : 'GÜNCELLE'}</span>
               </button>
             )}
-            <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => {
-               const file = e.target.files?.[0];
-               if (file) {
-                 const reader = new FileReader();
-                 reader.onloadend = () => setEditedData({ ...editedData, photoUrl: reader.result as string });
-                 reader.readAsDataURL(file);
-               }
-            }} />
+            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handlePhotoUpload} />
           </div>
           <div className="text-center md:text-left flex-1">
             <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
@@ -302,7 +335,7 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
           <button onClick={onClose} className="flex-1 py-4 bg-zinc-100 text-zinc-900 rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">GERİ DÖN</button>
           <button onClick={() => setShowPlayerCard(true)} className="flex-[2] py-4 bg-zinc-950 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 shadow-xl hover:bg-[#E30613] transition-all"><LayoutTemplate size={16} /> OYUNCU KARTI</button>
         </div>
-        {mode === 'admin' && <button onClick={handleSave} className="flex-1 py-4 bg-[#E30613] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl flex items-center justify-center gap-2 hover:bg-black transition-all active:scale-95"><Save size={18} /> TÜMÜNÜ KAYDET</button>}
+        {mode === 'admin' && <button onClick={handleSave} disabled={isOptimizing} className="flex-1 py-4 bg-[#E30613] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl flex items-center justify-center gap-2 hover:bg-black transition-all active:scale-95 disabled:opacity-50"><Save size={18} /> {isOptimizing ? 'İŞLENİYOR...' : 'KAYDET'}</button>}
       </div>
 
       {showPlayerCard && <PlayerCard student={student} onClose={() => setShowPlayerCard(false)} />}

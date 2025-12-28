@@ -2,22 +2,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2, Sparkles, BrainCircuit, BellRing, CheckCircle2 } from 'lucide-react';
 import { getAICoachResponse } from '../services/geminiService';
-import { Message, AppContextData, AppMode } from '../types';
+import { Message, AppContextData, AppMode, Student } from '../types';
 import Logo from './Logo';
 
 interface Props {
   context: AppContextData;
   mode: AppMode;
+  currentUser?: Student | null;
 }
 
-const AICoach: React.FC<Props> = ({ context, mode }) => {
+const AICoach: React.FC<Props> = ({ context, mode, currentUser }) => {
   const [messages, setMessages] = useState<Message[]>([
     { 
       id: '1', 
       role: 'assistant', 
       content: mode === 'admin' 
-        ? 'Hoş geldiniz hocam! BGB Akademi verileri hazır. Analiz etmemi istediğiniz bir grup veya rapor var mı?' 
-        : 'Hoş geldiniz! Ben BGB Asistanı. Kulübümüz, antrenman saatleri veya branşlar hakkında size nasıl yardımcı olabilirim?' 
+        ? 'Hoş geldiniz hocam! Tüm kulüp verilerine erişimim var. Nasıl yardımcı olabilirim?' 
+        : `Hoş geldiniz Sayın Velimiz! ${currentUser ? `${currentUser.name} ve kulübümüz` : 'Kulübümüz'} hakkında sorularınızı yanıtlayabilirim.` 
     }
   ]);
   const [input, setInput] = useState('');
@@ -37,7 +38,9 @@ const AICoach: React.FC<Props> = ({ context, mode }) => {
     setIsLoading(true);
 
     try {
-      const result = await getAICoachResponse(input, context, mode);
+      // Veli ise ve currentUser varsa, AI sadece o öğrencinin verisini bilecek
+      const result = await getAICoachResponse(input, context, mode, currentUser);
+      
       const aiMessage: Message = { 
         id: (Date.now() + 1).toString(), 
         role: 'assistant', 
@@ -65,13 +68,13 @@ const AICoach: React.FC<Props> = ({ context, mode }) => {
           <div>
             <h3 className="text-white font-black uppercase tracking-tighter italic">BGB <span className="text-red-600">AI</span></h3>
             <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em]">
-              {mode === 'admin' ? 'Teknik Analiz Modu' : 'Bilgi Hattı Modu'}
+              {mode === 'admin' ? 'Yönetici Asistanı' : 'Veli Bilgilendirme'}
             </p>
           </div>
         </div>
         <div className="flex gap-2">
             <span className="bg-red-900/30 text-red-500 text-[9px] font-black px-3 py-1.5 rounded-full uppercase flex items-center gap-1.5 animate-pulse">
-                <Sparkles size={10} /> {mode === 'admin' ? 'GÜVENLİ ERİŞİM' : 'AKTİF'}
+                <Sparkles size={10} /> {mode === 'admin' ? 'TAM ERİŞİM' : 'ÖZEL ERİŞİM'}
             </span>
         </div>
       </div>
@@ -94,7 +97,7 @@ const AICoach: React.FC<Props> = ({ context, mode }) => {
           <div className="flex justify-start">
             <div className="bg-white p-4 rounded-2xl flex items-center gap-3 shadow-sm border border-gray-100">
               <Loader2 size={16} className="animate-spin text-red-600" />
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">BGB Asistanı düşünüyor...</span>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Yanıt hazırlanıyor...</span>
             </div>
           </div>
         )}
@@ -105,7 +108,7 @@ const AICoach: React.FC<Props> = ({ context, mode }) => {
           <input 
             type="text" value={input} onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            placeholder={mode === 'admin' ? "Analiz isteyin: 'U11 grubunun genel durumu nedir?'" : "Sorunuzu yazın..."}
+            placeholder={mode === 'admin' ? "Kulüp verileri hakkında soru sorun..." : `${currentUser ? currentUser.name : 'Çocuğunuz'} hakkında bilgi alın...`}
             className="flex-1 pl-6 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-red-600 outline-none font-bold text-sm shadow-inner transition-all"
           />
           <button 

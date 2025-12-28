@@ -28,6 +28,7 @@ const MediaManager: React.FC<Props> = ({ media, setMedia, mode, activeTabOverrid
 
   useEffect(() => { if (activeTabOverride) setActiveTab(activeTabOverride); }, [activeTabOverride]);
 
+  // Firestore 1MB limitine takılmamak için agresif optimizasyon
   const optimizeImage = (file: File): Promise<string> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -37,7 +38,7 @@ const MediaManager: React.FC<Props> = ({ media, setMedia, mode, activeTabOverrid
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1200;
+          const MAX_WIDTH = 800; // Genişliği 800px'e düşürdük
           let width = img.width;
           let height = img.height;
           if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
@@ -45,7 +46,8 @@ const MediaManager: React.FC<Props> = ({ media, setMedia, mode, activeTabOverrid
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.8));
+          // Kaliteyi 0.6'ya düşürdük (Firestore limiti için şart)
+          resolve(canvas.toDataURL('image/jpeg', 0.6));
         };
       };
     });
@@ -55,9 +57,14 @@ const MediaManager: React.FC<Props> = ({ media, setMedia, mode, activeTabOverrid
     const file = e.target.files?.[0];
     if (file) {
       setIsOptimizing(true);
-      const optimizedBase64 = await optimizeImage(file);
-      setForm(prev => ({ ...prev, imageUrl: optimizedBase64 }));
-      setIsOptimizing(false);
+      try {
+        const optimizedBase64 = await optimizeImage(file);
+        setForm(prev => ({ ...prev, imageUrl: optimizedBase64 }));
+      } catch (e) {
+        alert("Resim işlenirken hata oluştu.");
+      } finally {
+        setIsOptimizing(false);
+      }
     }
   };
 

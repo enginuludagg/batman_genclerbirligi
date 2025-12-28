@@ -1,6 +1,6 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import firebase from "firebase/compat/app";
+import "firebase/compat/firestore";
+import "firebase/compat/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCELptObWbgYOALoNZaqJOPVssqJqDHVUs",
@@ -13,11 +13,11 @@ const firebaseConfig = {
 };
 
 // Uygulamayı başlat
-const app = initializeApp(firebaseConfig);
+const app = !firebase.apps.length ? firebase.initializeApp(firebaseConfig) : firebase.app();
 
 // Servisleri dışa aktar
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+export const db = firebase.firestore();
+export const auth = firebase.auth();
 
 // Analytics disabled due to export error
 export const analytics = null;

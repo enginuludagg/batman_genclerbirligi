@@ -5,7 +5,7 @@ import { AppMode, Student } from '../types';
 import Logo from './Logo';
 
 interface AuthProps {
-  onLogin: (mode: AppMode) => void;
+  onLogin: (mode: AppMode, student?: Student) => void;
   onRegisterStudent: (student: Student) => void;
   students: Student[];
 }
@@ -48,7 +48,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
     const registeredStudent = students.find(s => s.parentEmail?.toLowerCase() === inputEmail);
     if (registeredStudent) {
       const correctPass = registeredStudent.password || '123456';
-      if (password === correctPass) onLogin('parent');
+      if (password === correctPass) onLogin('parent', registeredStudent);
       else setError('Veli şifresi hatalı! Lütfen kontrol ediniz.');
     } else {
       setError('Bu e-posta ile kayıtlı sporcu bulunamadı.');
@@ -86,7 +86,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
     };
 
     onRegisterStudent(newStudent);
-    onLogin('parent');
+    // Kayıt sonrası otomatik giriş
+    onLogin('parent', newStudent);
   };
 
   return (
