@@ -77,7 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
               <h1 className="text-xs font-black tracking-tighter leading-none uppercase">
                 BATMAN <br/><span className="text-[#E30613] text-sm">GENÇLERBİRLİĞİ</span>
               </h1>
-              <p className="text-[8px] text-zinc-500 font-bold tracking-[0.3em] mt-1">V.1.2</p>
+              <p className="text-[8px] text-zinc-500 font-bold tracking-[0.3em] mt-1">V.1.3</p>
            </div>
         </div>
 
