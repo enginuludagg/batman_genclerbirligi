@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Calendar, Trophy, 
   Wallet, UserCheck, Newspaper, GraduationCap, 
   BarChart, MessageSquare, Menu, X, ShieldAlert,
-  UserCircle, Settings, LogOut, Dumbbell, ClipboardList, Info
+  UserCircle, Settings, LogOut, Dumbbell, ClipboardList, Info, Wifi
 } from 'lucide-react';
 import { ViewType, AppMode } from '../types';
 import Logo from './Logo';
@@ -77,7 +77,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
               <h1 className="text-xs font-black tracking-tighter leading-none uppercase">
                 BATMAN <br/><span className="text-[#E30613] text-sm">GENÇLERBİRLİĞİ</span>
               </h1>
-              <p className="text-[8px] text-zinc-500 font-bold tracking-[0.3em] mt-1">V.1.3</p>
+              <div className="flex items-center gap-1 mt-1">
+                <Wifi size={8} className="text-green-500" />
+                <p className="text-[8px] text-green-500 font-bold tracking-[0.2em]">ONLINE V.1.4</p>
+              </div>
            </div>
         </div>
 
@@ -148,3 +151,4 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
 };
 
 export default Sidebar;
+    
