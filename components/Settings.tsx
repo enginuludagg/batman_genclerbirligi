@@ -1,9 +1,8 @@
-
 import React, { useState, useRef } from 'react';
-import { Settings as SettingsIcon, Upload, AlertTriangle, Image as ImageIcon, Smartphone, ShieldCheck, Trash2 } from 'lucide-react';
+import { Settings as SettingsIcon, Upload, AlertTriangle, Image as ImageIcon, Smartphone, ShieldCheck, Trash2, Terminal, Copy, Command } from 'lucide-react';
 import Logo from './Logo';
 
-const APP_VERSION = "V.1.3"; // Versiyon güncellendi
+const APP_VERSION = "V.1.4"; // Versiyon güncellendi
 
 const Settings: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(localStorage.getItem('bgb_custom_logo'));
@@ -45,25 +44,68 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 space-y-6">
-          <div className="flex items-center gap-3 pb-4 border-b border-gray-50"><ImageIcon className="text-red-600" size={20} /><h3 className="font-black uppercase text-xs tracking-widest italic">KURUMSAL LOGO</h3></div>
-          <div className="flex flex-col items-center gap-6 py-2">
-            <div className="w-44 h-44 bg-gray-50 rounded-[2.5rem] border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden"><Logo className="w-full h-full" overrideUrl={logo} /></div>
-            <button onClick={() => fileInputRef.current?.click()} className="w-full py-4 bg-zinc-100 text-zinc-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 border-2 border-dashed border-zinc-200 shadow-sm">
-               <Upload size={16} /> CİHAZDAN YÜKLE
+        <div className="space-y-6">
+            <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-50"><ImageIcon className="text-red-600" size={20} /><h3 className="font-black uppercase text-xs tracking-widest italic">KURUMSAL LOGO</h3></div>
+            <div className="flex flex-col items-center gap-6 py-2">
+                <div className="w-44 h-44 bg-gray-50 rounded-[2.5rem] border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden"><Logo className="w-full h-full" overrideUrl={logo} /></div>
+                <button onClick={() => fileInputRef.current?.click()} className="w-full py-4 bg-zinc-100 text-zinc-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 border-2 border-dashed border-zinc-200 shadow-sm">
+                <Upload size={16} /> CİHAZDAN YÜKLE
+                </button>
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setLogo(reader.result as string);
+                    reader.readAsDataURL(file);
+                }
+                }} />
+            </div>
+            <button onClick={saveSettings} disabled={isSaving} className="w-full py-5 bg-red-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-zinc-900 transition-all">
+                {isSaving ? 'GÜNCELLENİYOR...' : 'LOGOYU KAYDET'}
             </button>
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => {
-               const file = e.target.files?.[0];
-               if (file) {
-                  const reader = new FileReader();
-                  reader.onloadend = () => setLogo(reader.result as string);
-                  reader.readAsDataURL(file);
-               }
-            }} />
-          </div>
-          <button onClick={saveSettings} disabled={isSaving} className="w-full py-5 bg-red-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-zinc-900 transition-all">
-             {isSaving ? 'GÜNCELLENİYOR...' : 'LOGOYU KAYDET'}
-          </button>
+            </div>
+            
+            {/* YAYINA ALMA REHBERİ KARTI */}
+            <div className="bg-zinc-900 text-white p-8 rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform"><Terminal size={80} /></div>
+                <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4 relative z-10">
+                    <Terminal className="text-green-500" size={20} />
+                    <h3 className="font-black uppercase text-xs tracking-widest italic">SİTEYİ YAYINA ALMA (WINDOWS UYUMLU)</h3>
+                </div>
+                <div className="space-y-4 text-[10px] font-bold text-zinc-400 relative z-10">
+                    <p>Siteni yayınlamak için aşağıdaki komutları <u>Terminal</u> ekranına sırasıyla yazıp Enter'a bas:</p>
+                    
+                    <div className="bg-black/50 p-5 rounded-2xl border border-white/5 font-mono text-green-400 space-y-3 select-text shadow-inner">
+                        <div className="flex gap-3 items-center">
+                            <span className="text-zinc-600 w-4">1.</span>
+                            <span className="bg-white/5 px-2 py-1 rounded w-full">npx firebase login</span>
+                        </div>
+                        <div className="flex gap-3 items-center">
+                            <span className="text-zinc-600 w-4">2.</span>
+                            <span className="bg-white/5 px-2 py-1 rounded w-full">npm run build</span>
+                        </div>
+                        <div className="flex gap-3 items-center">
+                            <span className="text-zinc-600 w-4">3.</span>
+                            <span className="bg-white/5 px-2 py-1 rounded w-full">npx firebase deploy</span>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded-xl">
+                        <p className="text-red-400 font-bold mb-1 flex items-center gap-2">
+                            <AlertTriangle size={12} /> HALA HATA ALIYORSAN:
+                        </p>
+                        <p className="text-[9px] text-zinc-400 mb-2">Windows güvenlik ayarı scriptleri engelliyor olabilir. Aşağıdaki komutu yapıştırıp 'Y' tuşuna basarak onay ver, sonra tekrar dene:</p>
+                        <code className="text-[8px] text-red-200 font-mono block bg-black/30 p-2 rounded select-all cursor-pointer hover:bg-black/50 transition-colors">
+                            Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+                        </code>
+                    </div>
+                    
+                    <p className="italic opacity-60 flex items-center gap-2 mt-2">
+                        <ShieldCheck size={12} /> Hosting URL terminalde görünecektir.
+                    </p>
+                </div>
+            </div>
         </div>
 
         <div className="space-y-6">
@@ -71,7 +113,7 @@ const Settings: React.FC = () => {
              <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4"><Smartphone className="text-red-600" size={20} /><h3 className="font-black uppercase text-xs tracking-widest italic">SİSTEM DURUMU</h3></div>
              <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl"><span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">YAZILIM SÜRÜMÜ</span><span className="text-[10px] font-black bg-white/10 px-3 py-1 rounded-full">{APP_VERSION}</span></div>
-                <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl"><span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">HOSTİNG</span><span className="text-[10px] font-black text-blue-400 flex items-center gap-1.5"><ShieldCheck size={14} /> VERCEL AKTİF</span></div>
+                <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl"><span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">HOSTİNG</span><span className="text-[10px] font-black text-blue-400 flex items-center gap-1.5"><ShieldCheck size={14} /> FIREBASE AKTİF</span></div>
              </div>
           </div>
 
