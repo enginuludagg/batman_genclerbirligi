@@ -16,9 +16,10 @@ interface SidebarProps {
   setIsOpen: (open: boolean) => void;
   appMode: AppMode;
   setAppMode: (mode: AppMode) => void;
+  onLogout?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, setIsOpen, appMode, setAppMode }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, setIsOpen, appMode, setAppMode, onLogout }) => {
   const adminMenu = [
     { id: 'dashboard', label: 'Ana Panel', icon: LayoutDashboard },
     { id: 'about', label: 'Hakkımızda', icon: Info },
@@ -54,6 +55,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
     if (window.innerWidth < 1024) setIsOpen(false);
   };
 
+  const handleLogoutClick = () => {
+    if (confirm("Çıkış yapmak istediğinize emin misiniz?")) {
+      if (onLogout) onLogout();
+      else window.location.reload();
+    }
+  };
+
   return (
     <>
       {/* Mobil Hamburger Buton */}
@@ -79,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
               </h1>
               <div className="flex items-center gap-1 mt-1">
                 <Wifi size={8} className="text-green-500" />
-                <p className="text-[8px] text-green-500 font-bold tracking-[0.2em]">ONLINE V.1.4</p>
+                <p className="text-[8px] text-green-500 font-bold tracking-[0.2em]">ONLINE V.1.5.0</p>
               </div>
            </div>
         </div>
@@ -130,7 +138,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
         {/* Footer */}
         <div className="p-4 border-t border-white/5 bg-black/20">
            <button 
-             onClick={() => window.location.reload()}
+             onClick={handleLogoutClick}
              className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-zinc-900 hover:bg-red-600 text-zinc-500 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest group border border-white/5"
            >
               <LogOut size={16} className="group-hover:-translate-x-1 transition-transform" /> 
@@ -151,4 +159,3 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
 };
 
 export default Sidebar;
-    

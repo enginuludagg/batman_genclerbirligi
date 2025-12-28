@@ -19,13 +19,15 @@ const Settings: React.FC = () => {
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 300; // Logo için küçük boyut yeterli
+          const MAX_WIDTH = 400; // Logo için biraz daha artırıldı
           const scaleSize = MAX_WIDTH / img.width;
           canvas.width = MAX_WIDTH;
           canvas.height = img.height * scaleSize;
           const ctx = canvas.getContext('2d');
+          ctx && (ctx.imageSmoothingEnabled = true);
+          ctx && (ctx.imageSmoothingQuality = 'high');
           ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL('image/png', 0.7));
+          resolve(canvas.toDataURL('image/png', 0.9)); // %90 Kalite
         };
       };
     });

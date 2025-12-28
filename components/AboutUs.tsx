@@ -1,6 +1,6 @@
 
-import React, { useRef } from 'react';
-import { Shield, Star, Award, Quote, Medal, Trophy, Activity, Zap, Phone, School, History, GraduationCap, Camera, Milestone, CheckCircle2 } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Shield, Star, Award, Quote, Medal, Trophy, Activity, Zap, Phone, School, History, GraduationCap, Camera, Milestone, CheckCircle2, Loader2 } from 'lucide-react';
 import { Trainer, AppMode } from '../types';
 import Logo from './Logo';
 
@@ -12,6 +12,7 @@ interface Props {
 
 const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   
   // Teknik Direktör (Engin Uludağ) verisini filtrele veya varsayılan oluştur
   const founder = trainers.find(t => t.name.toLowerCase().includes('engin')) || {
@@ -24,12 +25,52 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
     groups: ['Tüm Branşlar']
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Resim Optimizasyon (HD Kalite)
+  const optimizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1200; // Kalite artırıldı
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > MAX_WIDTH) { 
+            height *= MAX_WIDTH / width; 
+            width = MAX_WIDTH; 
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx && (ctx.imageSmoothingEnabled = true);
+          ctx && (ctx.imageSmoothingQuality = 'high');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          resolve(canvas.toDataURL('image/jpeg', 0.9)); // %90 Kalite
+        };
+      };
+    });
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && onUpdateFounderPhoto) {
-      const reader = new FileReader();
-      reader.onloadend = () => onUpdateFounderPhoto(reader.result as string);
-      reader.readAsDataURL(file);
+      setIsOptimizing(true);
+      try {
+        const optimizedUrl = await optimizeImage(file);
+        onUpdateFounderPhoto(optimizedUrl);
+        alert("Profil fotoğrafı başarıyla güncellendi!");
+      } catch (err) {
+        alert("Fotoğraf yüklenirken bir hata oluştu. Lütfen tekrar deneyin.");
+        console.error(err);
+      } finally {
+        setIsOptimizing(false);
+      }
     }
   };
 
@@ -88,10 +129,12 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
 
               {mode === 'admin' && (
                 <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 bg-white text-zinc-950 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-red-600 hover:text-white transition-all active:scale-95"
+                  onClick={() => !isOptimizing && fileInputRef.current?.click()}
+                  disabled={isOptimizing}
+                  className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 bg-white text-zinc-950 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-red-600 hover:text-white transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  <Camera size={18} /> PROFİL RESMİ
+                  {isOptimizing ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
+                  {isOptimizing ? 'İŞLENİYOR...' : 'PROFİL RESMİ'}
                 </button>
               )}
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handlePhotoUpload} />

@@ -28,7 +28,7 @@ const MediaManager: React.FC<Props> = ({ media, setMedia, mode, activeTabOverrid
 
   useEffect(() => { if (activeTabOverride) setActiveTab(activeTabOverride); }, [activeTabOverride]);
 
-  // Firestore 1MB limitine takılmamak için agresif optimizasyon
+  // Firestore 1MB limitine takılmamak için ancak kaliteden ödün vermeyen optimizasyon
   const optimizeImage = (file: File): Promise<string> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -38,16 +38,18 @@ const MediaManager: React.FC<Props> = ({ media, setMedia, mode, activeTabOverrid
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 800; // Genişliği 800px'e düşürdük
+          const MAX_WIDTH = 1080; // Full HD genişlik
           let width = img.width;
           let height = img.height;
           if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
+          ctx && (ctx.imageSmoothingEnabled = true);
+          ctx && (ctx.imageSmoothingQuality = 'high');
           ctx?.drawImage(img, 0, 0, width, height);
-          // Kaliteyi 0.6'ya düşürdük (Firestore limiti için şart)
-          resolve(canvas.toDataURL('image/jpeg', 0.6));
+          // Kaliteyi 0.9 yaptık (Yüksek Kalite)
+          resolve(canvas.toDataURL('image/jpeg', 0.9));
         };
       };
     });

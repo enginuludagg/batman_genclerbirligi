@@ -43,6 +43,37 @@ const App: React.FC = () => {
   const [drills, setDrills] = useState<Drill[]>(() => storageService.load(KEYS.DRILLS, []));
   const [fixtures, setFixtures] = useState<MatchResult[]>(() => storageService.load(KEYS.FIXTURES, []));
 
+  // --- OTURUM KONTROLÜ (KALICI GİRİŞ) ---
+  useEffect(() => {
+    const savedSession = localStorage.getItem('bgb_session');
+    if (savedSession) {
+      try {
+        const { mode, user } = JSON.parse(savedSession);
+        setAppMode(mode);
+        setCurrentUser(user);
+        setIsLoggedIn(true);
+      } catch (e) {
+        localStorage.removeItem('bgb_session');
+      }
+    }
+  }, []);
+
+  const handleLogin = (mode: AppMode, student?: Student) => {
+    setAppMode(mode);
+    setCurrentUser(student || null);
+    setIsLoggedIn(true);
+    // Oturumu kaydet
+    localStorage.setItem('bgb_session', JSON.stringify({ mode, user: student || null }));
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('bgb_session');
+    setIsLoggedIn(false);
+    setAppMode('admin');
+    setCurrentUser(null);
+    setActiveView('dashboard');
+  };
+
   // --- FIREBASE İLK YÜKLEME VE OTO-DOLDURMA ---
   useEffect(() => {
     if (!isConfigured) return;
@@ -169,12 +200,6 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleLogin = (mode: AppMode, student?: Student) => {
-    setAppMode(mode);
-    setCurrentUser(student || null);
-    setIsLoggedIn(true);
-  };
-
   const renderView = () => {
     switch (activeView) {
       case 'dashboard': return <Dashboard context={contextData} appMode={appMode} onNavigate={handleNavigate} />;
@@ -204,7 +229,15 @@ const App: React.FC = () => {
 
   return (
     <div className="flex min-h-[100dvh] w-full bg-[#f8fafc] pb-safe-bottom lg:pb-0 selection:bg-red-600 selection:text-white overflow-x-hidden">
-      <Sidebar activeView={activeView} onViewChange={(v) => { setActiveView(v); setMediaTab('all'); }} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} appMode={appMode} setAppMode={setAppMode} />
+      <Sidebar 
+        activeView={activeView} 
+        onViewChange={(v) => { setActiveView(v); setMediaTab('all'); }} 
+        isOpen={isSidebarOpen} 
+        setIsOpen={setIsSidebarOpen} 
+        appMode={appMode} 
+        setAppMode={setAppMode}
+        onLogout={handleLogout}
+      />
       
       <main className={`flex-1 flex flex-col transition-all duration-500 ease-out min-w-0 min-h-[100dvh] relative ${isSidebarOpen ? 'lg:ml-[280px] scale-[0.98] opacity-50 pointer-events-none lg:opacity-100 lg:pointer-events-auto lg:scale-100' : 'lg:ml-[280px]'}`}>
         

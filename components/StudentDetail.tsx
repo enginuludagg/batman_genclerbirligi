@@ -41,7 +41,7 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
   const [isOptimizing, setIsOptimizing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Resim Optimizasyon
+  // Resim Optimizasyon (HD)
   const optimizeImage = (file: File): Promise<string> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -51,15 +51,17 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 500;
+          const MAX_WIDTH = 1200; // Kalite artırıldı
           let width = img.width;
           let height = img.height;
           if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
+          ctx && (ctx.imageSmoothingEnabled = true);
+          ctx && (ctx.imageSmoothingQuality = 'high');
           ctx?.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.7));
+          resolve(canvas.toDataURL('image/jpeg', 0.9)); // %90 Kalite
         };
       };
     });

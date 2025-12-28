@@ -42,7 +42,7 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
     }
   }, [viewState, onModalStateChange]);
 
-  // Resim Optimizasyon Fonksiyonu
+  // Resim Optimizasyon Fonksiyonu (HD KALİTE GÜNCELLEMESİ)
   const optimizeImage = (file: File): Promise<string> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -52,15 +52,26 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 500; // Profil için 500px yeterli
+          const MAX_WIDTH = 1200; // Kalite artırıldı (HD)
           let width = img.width;
           let height = img.height;
-          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+          
+          // Sadece büyükse küçült
+          if (width > MAX_WIDTH) { 
+            height *= MAX_WIDTH / width; 
+            width = MAX_WIDTH; 
+          }
+          
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
+          // Daha iyi interpolation için
+          ctx && (ctx.imageSmoothingEnabled = true);
+          ctx && (ctx.imageSmoothingQuality = 'high');
           ctx?.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.7));
+          
+          // Kalite %90 (Netlik için)
+          resolve(canvas.toDataURL('image/jpeg', 0.9));
         };
       };
     });
