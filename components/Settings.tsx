@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Settings as SettingsIcon, Upload, AlertTriangle, Image as ImageIcon, Smartphone, ShieldCheck, Trash2, Terminal, Copy, Command, HelpCircle, Monitor, Download, Globe, CheckCircle2, LogIn, Rocket } from 'lucide-react';
 import Logo from './Logo';
 
-const APP_VERSION = "V.1.4.5"; // Versiyon güncellendi
+const APP_VERSION = "V.1.4.6"; // Versiyon güncellendi
 
 const Settings: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(localStorage.getItem('bgb_custom_logo'));
@@ -77,7 +77,7 @@ const Settings: React.FC = () => {
 
                 <div className="relative z-10 space-y-6">
                     <div className="space-y-4 text-[10px] font-bold text-zinc-400">
-                        <p>Login işlemini başardın! Şimdi tek bir komutla siteyi yayına alıyoruz:</p>
+                        <p>Artık her şey hazır! Proje kimliği eklendi. Sadece butona bas:</p>
                         
                         <div className="bg-black/50 p-5 rounded-2xl border border-white/5 font-mono text-green-400 space-y-5 select-text shadow-inner">
                             <div className="space-y-1 opacity-50">
@@ -104,7 +104,7 @@ const Settings: React.FC = () => {
 
                             <div className="space-y-1 p-2 bg-green-900/20 rounded-lg border border-green-700/30 animate-pulse">
                                 <p className="text-[8px] text-green-400 uppercase font-black flex items-center gap-2"><Rocket size={10} /> 4. SON ADIM: YAYINLA!</p>
-                                <p className="text-[8px] text-zinc-400 italic mb-1.5">Otomatik proje seçimi eklendi. Sadece bunu yaz:</p>
+                                <p className="text-[8px] text-zinc-400 italic mb-1.5">Proje kimlik dosyası (.firebaserc) oluşturuldu. Komut çalışacak:</p>
                                 <div className="flex gap-3 items-center">
                                     <span className="bg-black/40 px-2 py-1.5 rounded w-full text-green-300 font-bold border border-green-500/30">npx firebase-tools deploy</span>
                                 </div>
