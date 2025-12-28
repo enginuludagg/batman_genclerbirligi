@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { Settings as SettingsIcon, Upload, AlertTriangle, Image as ImageIcon, Smartphone, ShieldCheck, Trash2 } from 'lucide-react';
 import Logo from './Logo';
 
-const APP_VERSION = "V.1.2.1"; // Versiyon güncellendi
+const APP_VERSION = "V.1.3"; // Versiyon güncellendi
 
 const Settings: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(localStorage.getItem('bgb_custom_logo'));
