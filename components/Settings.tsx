@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Settings as SettingsIcon, Upload, AlertTriangle, Image as ImageIcon, Smartphone, ShieldCheck, Trash2, Terminal, Copy, Command, HelpCircle, Monitor, Download, Globe, CheckCircle2, LogIn, Rocket } from 'lucide-react';
 import Logo from './Logo';
 
-const APP_VERSION = "V.1.4.4"; // Versiyon güncellendi
+const APP_VERSION = "V.1.4.5"; // Versiyon güncellendi
 
 const Settings: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(localStorage.getItem('bgb_custom_logo'));
@@ -106,7 +106,7 @@ const Settings: React.FC = () => {
                                 <p className="text-[8px] text-green-400 uppercase font-black flex items-center gap-2"><Rocket size={10} /> 4. SON ADIM: YAYINLA!</p>
                                 <p className="text-[8px] text-zinc-400 italic mb-1.5">Otomatik proje seçimi eklendi. Sadece bunu yaz:</p>
                                 <div className="flex gap-3 items-center">
-                                    <span className="bg-black/40 px-2 py-1.5 rounded w-full text-green-300 font-bold">npx firebase-tools deploy</span>
+                                    <span className="bg-black/40 px-2 py-1.5 rounded w-full text-green-300 font-bold border border-green-500/30">npx firebase-tools deploy</span>
                                 </div>
                             </div>
                         </div>
