@@ -1,0 +1,8 @@
+{
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "name": "BGB Akademi",
+  "short_name": "BGB",
+  "description": "Batman Gençlerbirliği Spor Okulu Yönetim Sistemi"
+}

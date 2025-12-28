@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>BGB Akademi</title>
+    
+    <!-- PWA Ayarları -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#111111">
+    
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (Standart CDN) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#E30613',
+              secondary: '#1D2D4C',
+            },
+            borderRadius: {
+              'bgb': '2rem',
+            }
+          }
+        }
+      }
+    </script>
+
+    <style>
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: #f8fafc;
+            margin: 0;
+            overscroll-behavior-y: contain;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        
+        #splash-loader {
+            position: fixed; inset: 0; background: #111;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; transition: opacity 0.5s;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "recharts": "https://esm.sh/recharts@^3.6.0",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "firebase/": "https://esm.sh/firebase@^12.7.0/"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root">
+        <div id="splash-loader">
+            <div style="text-align:center;">
+               <img src="https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup" width="80" height="80" alt="BGB" style="animation: pulse 2s infinite;">
+               <p style="color:#666; font-size:10px; font-weight:900; letter-spacing:4px; margin-top:20px; font-family:sans-serif;">YÜKLENİYOR</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+      // Process polyfill
+      window.process = { env: { API_KEY: "" } };
+      
+      window.onload = () => {
+        setTimeout(() => {
+           const l = document.getElementById('splash-loader');
+           if(l) { l.style.opacity = '0'; setTimeout(() => l.remove(), 500); }
+        }, 1200);
+      };
+    </script>
+    
+    <script type="module" src="/index.tsx"></script>
+    <style>
+      @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+</body>
+</html>
