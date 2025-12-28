@@ -3,13 +3,13 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDqocnbfd-InC4hID01jXp2D5Y5dUHA6Wo",
-  authDomain: "goldenlig-batman.firebaseapp.com",
-  projectId: "goldenlig-batman",
-  storageBucket: "goldenlig-batman.firebasestorage.app",
-  messagingSenderId: "325419372570",
-  appId: "1:325419372570:web:b6ebec427b52daf62681a3",
-  measurementId: "G-VJ4J106C1S"
+  apiKey: "AIzaSyCELptObWbgYOALoNZaqJOPVssqJqDHVUs",
+  authDomain: "batmangenclerbirligi.firebaseapp.com",
+  projectId: "batmangenclerbirligi",
+  storageBucket: "batmangenclerbirligi.firebasestorage.app",
+  messagingSenderId: "727250786350",
+  appId: "1:727250786350:web:2fd79f3c61bea7a95ca7bf",
+  measurementId: "G-4D3MQ55VJD"
 };
 
 // Uygulamayı başlat
@@ -19,8 +19,8 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
-// Analytics sadece tarayıcı ortamında çalışır
+// Analytics disabled due to export error
 export const analytics = null;
 
-// Konfigürasyon tamamlandı (Artık her zaman true)
+// Konfigürasyon tamamlandı
 export const isConfigured = true;
