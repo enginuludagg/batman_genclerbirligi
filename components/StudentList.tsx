@@ -42,9 +42,16 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
     }
   }, [viewState, onModalStateChange]);
 
-  // Resim Optimizasyon Fonksiyonu (HD KALİTE GÜNCELLEMESİ)
+  // Agresif Resim Optimizasyon Fonksiyonu
   const optimizeImage = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+      // 20MB limit
+      if (file.size > 20 * 1024 * 1024) {
+        alert("Dosya çok büyük. Lütfen daha küçük bir fotoğraf seçin.");
+        reject("File too large");
+        return;
+      }
+
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = (event) => {
@@ -52,11 +59,11 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1200; // Kalite artırıldı (HD)
+          // Maksimum genişlik 600px (Firestore limiti ve mobil hız için)
+          const MAX_WIDTH = 600; 
           let width = img.width;
           let height = img.height;
           
-          // Sadece büyükse küçült
           if (width > MAX_WIDTH) { 
             height *= MAX_WIDTH / width; 
             width = MAX_WIDTH; 
@@ -65,15 +72,19 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
-          // Daha iyi interpolation için
-          ctx && (ctx.imageSmoothingEnabled = true);
-          ctx && (ctx.imageSmoothingQuality = 'high');
-          ctx?.drawImage(img, 0, 0, width, height);
           
-          // Kalite %90 (Netlik için)
-          resolve(canvas.toDataURL('image/jpeg', 0.9));
+          if(ctx) {
+             ctx.drawImage(img, 0, 0, width, height);
+             // Kalite %50 (Çok hızlı yükleme için)
+             const dataUrl = canvas.toDataURL('image/jpeg', 0.50);
+             
+             resolve(dataUrl);
+          } else {
+             reject("Canvas error");
+          }
         };
       };
+      reader.onerror = error => reject(error);
     });
   };
 

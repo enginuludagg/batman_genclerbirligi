@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
-import { Mail, Lock, UserPlus, ArrowRight, AlertCircle, ShieldCheck, CheckCircle2, Users, Trophy } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Mail, Lock, UserPlus, ArrowRight, AlertCircle, ShieldCheck, CheckCircle2, Users, Trophy, Loader2, Upload, Camera } from 'lucide-react';
 import { AppMode, Student } from '../types';
 import Logo from './Logo';
 
 interface AuthProps {
   onLogin: (mode: AppMode, student?: Student) => void;
-  onRegisterStudent: (student: Student) => void;
+  onRegisterStudent: (student: Student) => Promise<void>;
   students: Student[];
 }
 
@@ -15,7 +15,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState({
     parentName: '',
     parentPhone: '',
@@ -25,8 +29,70 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
     studentBirthYear: '2012',
     studentGender: 'Erkek',
     studentSport: 'Futbol',
-    studentGroup: 'U12'
+    studentGroup: 'U12',
+    photoUrl: ''
   });
+
+  // Agresif Resim Sıkıştırma (Mobil Veri Dostu)
+  const optimizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      // 20MB limit kontrolü
+      if (file.size > 20 * 1024 * 1024) {
+        setError("Dosya çok büyük. Lütfen daha küçük bir fotoğraf seçin.");
+        reject("File too large");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          // 600px genişlik - Profil fotoğrafı için yeterli ve çok hafif
+          const MAX_WIDTH = 600; 
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > MAX_WIDTH) { 
+            height *= MAX_WIDTH / width; 
+            width = MAX_WIDTH; 
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          if(ctx) {
+             ctx.drawImage(img, 0, 0, width, height);
+             // %50 Kalite - Firestore limiti için kritik
+             resolve(canvas.toDataURL('image/jpeg', 0.50));
+          } else {
+             reject("Canvas error");
+          }
+        };
+      };
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsOptimizing(true);
+      setError('');
+      try {
+        const optimized = await optimizeImage(file);
+        setFormData(prev => ({ ...prev, photoUrl: optimized }));
+      } catch (err) {
+        console.error(err);
+        setError("Fotoğraf işlenirken hata oluştu.");
+      } finally {
+        setIsOptimizing(false);
+      }
+    }
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,16 +121,24 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (students.some(s => s.parentEmail === formData.parentEmail)) {
       setError('Bu e-posta adresi zaten kullanımda!');
       return;
     }
 
+    if (!formData.photoUrl) {
+      setError('Lütfen sporcunun profil fotoğrafını yükleyiniz.');
+      return;
+    }
+
+    setIsRegistering(true);
+
     const newStudent: Student = {
       id: Date.now().toString(),
       name: formData.studentName,
+      photoUrl: formData.photoUrl,
       age: new Date().getFullYear() - parseInt(formData.studentBirthYear),
       birthYear: parseInt(formData.studentBirthYear),
       gender: formData.studentGender as 'Erkek' | 'Kız',
@@ -85,9 +159,15 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
       scoutingNotes: []
     };
 
-    onRegisterStudent(newStudent);
-    // Kayıt sonrası otomatik giriş
-    onLogin('parent', newStudent);
+    try {
+      await onRegisterStudent(newStudent);
+      // Kayıt sonrası otomatik giriş
+      onLogin('parent', newStudent);
+    } catch (e) {
+      console.error(e);
+      setError("Kayıt sırasında bir hata oluştu. İnternet bağlantınızı kontrol edip tekrar deneyin.");
+      setIsRegistering(false);
+    }
   };
 
   return (
@@ -162,7 +242,31 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
               </form>
             ) : (
               <form onSubmit={handleRegister} className="space-y-4">
+                {error && (
+                  <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-2xl flex items-center gap-3 text-red-200 text-[10px] font-bold animate-pulse">
+                    <AlertCircle size={14} /> {error}
+                  </div>
+                )}
+
                 <div className="max-h-[300px] overflow-y-auto custom-scrollbar space-y-4 pr-1">
+                  
+                  {/* FOTOĞRAF YÜKLEME ALANI */}
+                  <div className="flex flex-col items-center">
+                     <div 
+                       onClick={() => !isOptimizing && fileInputRef.current?.click()} 
+                       className={`w-24 h-24 rounded-[2rem] border-2 border-dashed border-white/20 bg-black/20 flex items-center justify-center cursor-pointer relative overflow-hidden group ${isOptimizing ? 'opacity-50' : ''}`}
+                     >
+                        {formData.photoUrl ? (
+                          <img src={formData.photoUrl} className="w-full h-full object-cover" />
+                        ) : (
+                          <Camera className="text-white/50 group-hover:text-white" size={28} />
+                        )}
+                        {isOptimizing && <div className="absolute inset-0 flex items-center justify-center bg-black/50"><Loader2 size={24} className="text-white animate-spin" /></div>}
+                     </div>
+                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+                     <p className="text-[9px] font-bold text-white/40 uppercase mt-2">{isOptimizing ? 'İŞLENİYOR...' : 'FOTOĞRAF YÜKLE'}</p>
+                  </div>
+
                   <div className="space-y-3">
                     <p className="text-[9px] font-black text-[#E30613] uppercase tracking-widest">VELİ BİLGİLERİ</p>
                     <input type="text" placeholder="Veli Ad Soyad" required className="w-full p-3 bg-black/20 border border-white/10 rounded-xl text-white text-xs font-bold outline-none focus:border-[#E30613]" value={formData.parentName} onChange={e => setFormData({...formData, parentName: e.target.value})} />
@@ -183,8 +287,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
                   </div>
                 </div>
                 
-                <button type="submit" className="w-full py-4 bg-white text-zinc-900 hover:bg-gray-100 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98]">
-                  KAYDI TAMAMLA <CheckCircle2 size={16} />
+                <button type="submit" disabled={isRegistering || isOptimizing} className="w-full py-4 bg-white text-zinc-900 hover:bg-gray-100 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-50">
+                  {isRegistering ? <Loader2 size={16} className="animate-spin" /> : <><CheckCircle2 size={16} /> KAYDI TAMAMLA</>}
                 </button>
                 <button type="button" onClick={() => setView('login')} className="w-full text-[9px] font-black text-white/40 hover:text-white uppercase tracking-widest">
                   GİRİŞ EKRANINA DÖN

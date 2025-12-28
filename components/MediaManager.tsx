@@ -38,7 +38,7 @@ const MediaManager: React.FC<Props> = ({ media, setMedia, mode, activeTabOverrid
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1080; // Full HD genişlik
+          const MAX_WIDTH = 800; // Mobilde garanti yükleme için düşürüldü
           let width = img.width;
           let height = img.height;
           if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
@@ -48,8 +48,8 @@ const MediaManager: React.FC<Props> = ({ media, setMedia, mode, activeTabOverrid
           ctx && (ctx.imageSmoothingEnabled = true);
           ctx && (ctx.imageSmoothingQuality = 'high');
           ctx?.drawImage(img, 0, 0, width, height);
-          // Kaliteyi 0.9 yaptık (Yüksek Kalite)
-          resolve(canvas.toDataURL('image/jpeg', 0.9));
+          // Kaliteyi 0.7 yaptık (Denge)
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
         };
       };
     });

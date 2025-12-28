@@ -89,12 +89,12 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
       setIsOptimizing(true);
       try {
         const optimizedUrl = await optimizeImage(file);
-        onUpdateFounderPhoto(optimizedUrl);
-        alert("Profil fotoğrafı başarıyla güncellendi!");
+        // App.tsx'teki fonksiyonu çağır (Toast mesajı orada veriliyor)
+        await onUpdateFounderPhoto(optimizedUrl);
       } catch (err) {
         console.error(err);
         if (err !== "File too large") {
-             alert("Fotoğraf veritabanı limitlerini aşıyor veya işlenemedi. Lütfen başka bir fotoğrafla deneyin.");
+             alert("Fotoğraf işlenirken beklenmedik bir hata oluştu.");
         }
       } finally {
         setIsOptimizing(false);

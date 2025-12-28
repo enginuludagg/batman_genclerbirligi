@@ -41,9 +41,9 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
   const [isOptimizing, setIsOptimizing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Resim Optimizasyon (HD)
+  // Resim Optimizasyon (AGRESİF)
   const optimizeImage = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = (event) => {
@@ -51,17 +51,25 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1200; // Kalite artırıldı
+          const MAX_WIDTH = 800; // Mobilde hızlı yükleme için
           let width = img.width;
           let height = img.height;
-          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+          
+          if (width > MAX_WIDTH) { 
+            height *= MAX_WIDTH / width; 
+            width = MAX_WIDTH; 
+          }
+          
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
-          ctx && (ctx.imageSmoothingEnabled = true);
-          ctx && (ctx.imageSmoothingQuality = 'high');
-          ctx?.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.9)); // %90 Kalite
+          if(ctx) {
+             ctx.drawImage(img, 0, 0, width, height);
+             // %60 Kalite ile Base64
+             resolve(canvas.toDataURL('image/jpeg', 0.60));
+          } else {
+             reject("Canvas error");
+          }
         };
       };
     });
@@ -83,7 +91,6 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
   };
 
   const handleSave = () => {
-    // Branş değişikliği yapıldıysa ilk branşı 'sport' (ana branş) olarak ata
     const finalData = {
       ...editedData,
       sport: editedData.activeSports[0] || 'Futbol'
@@ -95,7 +102,7 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
   const toggleSport = (sp: 'Futbol' | 'Voleybol' | 'Cimnastik') => {
     const current = editedData.activeSports || [editedData.sport];
     if (current.includes(sp)) {
-      if (current.length === 1) return; // En az bir branş kalmalı
+      if (current.length === 1) return;
       setEditedData({ ...editedData, activeSports: current.filter(s => s !== sp) });
     } else {
       setEditedData({ ...editedData, activeSports: [...current, sp] });
@@ -188,7 +195,6 @@ const StudentDetail: React.FC<Props> = ({ student, mode, onClose, onUpdate }) =>
           <div className="space-y-4 animate-in fade-in">
             <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
               
-              {/* BRANŞ YÖNETİMİ - ÇOKLU BRANŞ DESTEĞİ */}
               {mode === 'admin' && (
                 <div className="space-y-4">
                   <p className="text-[10px] font-black text-[#E30613] uppercase tracking-widest italic">BRANŞ YÖNETİMİ (ÇOKLU SEÇİM)</p>

@@ -231,19 +231,44 @@ const App: React.FC = () => {
   };
 
   const handleUpdateFounderPhoto = async (photoUrl: string) => {
-    const engin = trainers.find(t => t.name.toLowerCase().includes('engin'));
-    if (engin) {
-      const updatedEngin = { ...engin, photoUrl };
-      // State güncelleme
-      setTrainers(prev => prev.map(t => t.id === engin.id ? updatedEngin : t));
-      // LocalStorage güncelleme
-      const updatedList = trainers.map(t => t.id === engin.id ? updatedEngin : t);
-      storageService.saveLocal(KEYS.TRAINERS, updatedList);
-      // Cloud güncelleme
-      if (isConfigured) {
-        await storageService.saveToCloud(KEYS.TRAINERS, updatedEngin);
+    // 1. Mevcut teknik direktör kaydını bul veya yoksa OLUŞTUR
+    const existingFounderIndex = trainers.findIndex(t => t.name.toLowerCase().includes('engin'));
+    
+    let updatedTrainers = [...trainers];
+    let founderData: Trainer;
+
+    if (existingFounderIndex > -1) {
+      // Varsa güncelle
+      founderData = { ...updatedTrainers[existingFounderIndex], photoUrl };
+      updatedTrainers[existingFounderIndex] = founderData;
+    } else {
+      // Yoksa (sistemde ilk kez oluşturuluyorsa)
+      founderData = {
+        id: 'founder-engin-auto',
+        name: 'Engin Uludağ',
+        specialty: 'Teknik Direktör',
+        phone: '0505 340 11 01',
+        groups: ['Tüm Yaş Grupları'],
+        biography: '14 yıllık tecrübe, TFF C ve TVF 2. Kademe Antrenörlük belgesi.',
+        photoUrl
+      };
+      updatedTrainers.push(founderData);
+    }
+
+    // 2. State ve LocalStorage güncelle
+    setTrainers(updatedTrainers);
+    storageService.saveLocal(KEYS.TRAINERS, updatedTrainers);
+
+    // 3. Kullanıcıya bilgi ver (Alert yerine Toast mesajı)
+    setToast({ title: 'BAŞARILI', message: 'Profil fotoğrafı sisteme kaydedildi.' });
+
+    // 4. Buluta gönder
+    if (isConfigured) {
+      try {
+        await storageService.saveToCloud(KEYS.TRAINERS, founderData);
+      } catch (e) {
+        console.error("Cloud save failed", e);
       }
-      setToast({ title: 'BİLGİ', message: 'Hakkımızda sayfası güncellendi.' });
     }
   };
 
