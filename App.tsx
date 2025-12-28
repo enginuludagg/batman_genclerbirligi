@@ -17,7 +17,7 @@ import Auth from './components/Auth';
 import Settings from './components/Settings';
 import MobileNav from './components/MobileNav';
 import { ViewType, Student, Trainer, FinanceEntry, MediaPost, TrainingSession, AppMode, Notification, Drill, TrainerNote, AppContextData, MatchResult } from './types';
-import { Bell, X, LogOut, LayoutGrid, CheckCircle2, Database, RefreshCw, AlertTriangle, Menu, Smartphone, ShieldAlert, CloudOff } from 'lucide-react';
+import { Bell, X, LogOut, LayoutGrid, CheckCircle2, Database, RefreshCw, AlertTriangle, Menu, Smartphone, ShieldAlert, CloudOff, RotateCcw } from 'lucide-react';
 import { storageService, KEYS } from './services/storageService';
 import { isConfigured } from './services/firebaseConfig';
 
@@ -41,7 +41,7 @@ const App: React.FC = () => {
   const [drills, setDrills] = useState<Drill[]>(() => storageService.load(KEYS.DRILLS, []));
   const [fixtures, setFixtures] = useState<MatchResult[]>(() => storageService.load(KEYS.FIXTURES, []));
 
-  // --- FIREBASE İLK YÜKLEME ---
+  // --- FIREBASE İLK YÜKLEME VE OTO-DOLDURMA ---
   useEffect(() => {
     if (!isConfigured) return;
 
@@ -60,14 +60,46 @@ const App: React.FC = () => {
           storageService.loadFromCloud(KEYS.FIXTURES)
         ]);
 
+        // Veritabanı boşsa otomatik başlangıç verisi ekle
+        if (cT.length === 0) {
+           const founder: Trainer = {
+             id: 'founder-engin', 
+             name: 'Engin Uludağ', 
+             specialty: 'Teknik Direktör', 
+             phone: '0505 340 11 01', 
+             groups: ['Tüm Yaş Grupları'], 
+             biography: '14 yıllık tecrübe, TFF C ve TVF 2. Kademe Antrenörlük belgesi.',
+             photoUrl: ''
+           };
+           await storageService.saveToCloud(KEYS.TRAINERS, founder);
+           setTrainers([founder]);
+        } else {
+           setTrainers(cT as Trainer[]);
+        }
+
+        if (cM.length === 0) {
+           const welcomePost: MediaPost = {
+             id: 'welcome-post', 
+             title: 'SİSTEM AKTİF - HOŞ GELDİNİZ', 
+             type: 'bulletin',
+             content: 'Batman Gençlerbirliği Dijital Altyapı sistemi başarıyla kuruldu. Veritabanı bağlantısı sağlandı.',
+             date: new Date().toLocaleDateString('tr-TR'), 
+             status: 'published', 
+             likes: 0
+           };
+           await storageService.saveToCloud(KEYS.MEDIA, welcomePost);
+           setMedia([welcomePost]);
+        } else {
+           setMedia(cM as MediaPost[]);
+        }
+
         if (cS.length) setStudents(cS as Student[]);
-        if (cT.length) setTrainers(cT as Trainer[]);
         if (cN.length) setNotes(cN as TrainerNote[]);
         if (cSe.length) setSessions(cSe as TrainingSession[]);
         if (cF.length) setFinance(cF as FinanceEntry[]);
-        if (cM.length) setMedia(cM as MediaPost[]);
         if (cD.length) setDrills(cD as Drill[]);
         if (cFix.length) setFixtures(cFix as MatchResult[]);
+
       } catch (err) {
         console.error("BGB Sync Error:", err);
         setConnectionError(true);
@@ -183,9 +215,9 @@ const App: React.FC = () => {
            </div>
            <div className="flex items-center gap-6">
               {connectionError ? (
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-red-200 bg-red-50 text-red-600 shadow-sm animate-pulse">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-red-200 bg-red-50 text-red-600 shadow-sm animate-pulse cursor-pointer" onClick={() => window.location.reload()}>
                   <CloudOff size={14} />
-                  <span className="text-[9px] font-black uppercase tracking-widest italic">BAĞLANTI HATASI (DB YOK)</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest italic">BAĞLANTI HATASI (YENİLE)</span>
                 </div>
               ) : !isConfigured ? (
                 <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-blue-200 bg-blue-50 text-blue-600 shadow-sm">
@@ -209,7 +241,7 @@ const App: React.FC = () => {
            </div>
            <div className="flex items-center gap-2">
              {connectionError ? (
-               <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-red-50 text-red-600 border border-red-100 animate-pulse">
+               <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-red-50 text-red-600 border border-red-100 animate-pulse" onClick={() => window.location.reload()}>
                  <CloudOff size={16} />
                </div>
              ) : !isConfigured ? (
@@ -232,9 +264,15 @@ const App: React.FC = () => {
               <AlertTriangle size={16} />
               <span>Veritabanı Bulunamadı</span>
             </div>
-            <p className="text-[9px] mt-1 opacity-90 max-w-md mx-auto">
-              Lütfen Firebase Konsolundan "Firestore Database" oluşturun ve "Test Modu"nu seçin. Aksi takdirde veriler kaydedilmez.
+            <p className="text-[9px] mt-1 opacity-90 max-w-md mx-auto mb-3">
+              Veritabanı oluşturulduysa bağlantıyı sağlamak için sayfayı yenileyin.
             </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 bg-white text-red-600 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-zinc-100 flex items-center gap-2 mx-auto"
+            >
+              <RotateCcw size={12} /> SAYFAYI YENİLE
+            </button>
           </div>
         )}
 
@@ -261,6 +299,19 @@ const App: React.FC = () => {
             </div>
             <button onClick={() => setToast(null)} className="text-slate-500 hover:text-white"><X size={16} /></button>
           </div>
+        </div>
+      )}
+
+      {/* İLK KURULUM YÜKLEME EKRANI */}
+      {isSyncing && trainers.length === 0 && !connectionError && (
+        <div className="fixed inset-0 z-[9999] bg-[#111] flex flex-col items-center justify-center text-white animate-in fade-in duration-300">
+           <div className="relative mb-8">
+             <div className="w-24 h-24 border-4 border-zinc-800 rounded-full"></div>
+             <div className="w-24 h-24 border-4 border-t-[#E30613] rounded-full animate-spin absolute inset-0"></div>
+             <div className="absolute inset-0 flex items-center justify-center font-black italic text-xl tracking-tighter">BGB</div>
+           </div>
+           <h2 className="text-2xl font-black italic uppercase tracking-tighter mb-2">SİSTEM KURULUYOR</h2>
+           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 animate-pulse">VERİTABANI BAĞLANTISI SAĞLANIYOR...</p>
         </div>
       )}
     </div>
