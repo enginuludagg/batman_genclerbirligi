@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Users, Activity, Award, Newspaper, ChevronRight, ArrowUpRight, ShieldAlert, Sparkles, Image as ImageIcon, CalendarCheck, UserPlus, UserCheck, Wallet, MessageSquare, QrCode, ScanLine, X, ShieldCheck, MessageCircle, CloudSun, Timer, MapPin } from 'lucide-react';
+import { Users, Activity, Award, Newspaper, ChevronRight, ArrowUpRight, ShieldAlert, Sparkles, Image as ImageIcon, CalendarCheck, UserPlus, UserCheck, Wallet, MessageSquare, QrCode, ScanLine, X, ShieldCheck, MessageCircle, CloudSun, Timer, MapPin, Trophy, TrendingUp, TrendingDown } from 'lucide-react';
 import { AppContextData, AppMode, ViewType, Student, TrainingSession } from '../types';
 import Logo from './Logo';
 
@@ -13,35 +13,22 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ context, appMode, onNavigate }) => {
   const [showIdCard, setShowIdCard] = useState(false);
   const [nextSession, setNextSession] = useState<TrainingSession | null>(null);
-  const [timeLeft, setTimeLeft] = useState<string>('');
-
+  
   const publishedMedia = context.media.filter(m => m.status === 'published');
   const recentBulletins = publishedMedia.filter(m => m.type === 'bulletin').slice(0, 3);
   const recentGallery = publishedMedia.filter(m => m.type === 'gallery').slice(0, 4);
-  
   const currentStudent = context.students[0];
 
-  // Sıradaki Antrenmanı Bulma Mantığı
+  // İstatistikler
+  const activeStudentCount = context.students.filter(s => s.status === 'active').length;
+  const totalBalance = context.finance.reduce((acc, curr) => curr.type === 'income' ? acc + curr.amount : acc - curr.amount, 0);
+  const nextMatch = context.fixtures.filter(f => f.status === 'scheduled')[0];
+
   useEffect(() => {
     if (context.sessions.length > 0) {
-      // Demo amaçlı ilk session'ı alıyoruz, gerçekte tarih kontrolü yapılmalı
+      // Basit mantık: İlk seansı göster (Gelişmiş tarih kontrolü eklenebilir)
       setNextSession(context.sessions[0]);
     }
-    
-    // Basit bir geri sayım simülasyonu
-    const timer = setInterval(() => {
-      const now = new Date();
-      const target = new Date();
-      target.setHours(18, 0, 0); // Örnek: Antrenman 18:00'de
-      if (now > target) target.setDate(target.getDate() + 1);
-      
-      const diff = target.getTime() - now.getTime();
-      const h = Math.floor(diff / (1000 * 60 * 60));
-      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      setTimeLeft(`${h}sa ${m}dk`);
-    }, 60000);
-    
-    return () => clearInterval(timer);
   }, [context.sessions]);
 
   const quickActions = [
@@ -71,30 +58,47 @@ const Dashboard: React.FC<DashboardProps> = ({ context, appMode, onNavigate }) =
             </h2>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">AKADEMİ AKTİF • {new Date().toLocaleDateString('tr-TR', {weekday: 'long'})}</p>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">AKADEMİ YÖNETİM PANELİ</p>
             </div>
           </div>
         </div>
-        
-        {/* Hava Durumu & Sonraki Antrenman Widget (Mobil için önemli) */}
-        <div className="flex gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar">
-           <div className="bg-blue-50 px-4 py-2 rounded-2xl border border-blue-100 flex items-center gap-3 min-w-max">
-              <CloudSun size={20} className="text-blue-500" />
-              <div>
-                 <p className="text-[8px] font-black text-blue-300 uppercase tracking-widest">BATMAN</p>
-                 <p className="text-xs font-black text-blue-900">24°C PARÇALI BULUTLU</p>
-              </div>
-           </div>
-           {nextSession && (
-             <div className="bg-red-50 px-4 py-2 rounded-2xl border border-red-100 flex items-center gap-3 min-w-max cursor-pointer" onClick={() => onNavigate('schedule')}>
-                <Timer size={20} className="text-red-600" />
-                <div>
-                   <p className="text-[8px] font-black text-red-300 uppercase tracking-widest">SIRADAKİ İDMAN</p>
-                   <p className="text-xs font-black text-red-900">{timeLeft || 'HESAPLANIYOR'} KALDI</p>
-                </div>
-             </div>
-           )}
-        </div>
+      </div>
+
+      {/* CANLI İSTATİSTİK KARTLARI (YENİ) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+         <div className="bg-white p-6 rounded-[2rem] border border-blue-50 shadow-sm flex items-center gap-4 relative overflow-hidden group">
+            <div className="absolute right-0 top-0 p-8 opacity-5 group-hover:scale-110 transition-transform"><Users size={64} className="text-blue-600" /></div>
+            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600"><Users size={24} /></div>
+            <div>
+               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">KAYITLI SPORCU</p>
+               <h3 className="text-2xl font-black text-slate-900 italic">{activeStudentCount} <span className="text-sm text-gray-400 not-italic font-bold">/ {context.students.length}</span></h3>
+            </div>
+         </div>
+
+         <div onClick={() => onNavigate('finance')} className="bg-white p-6 rounded-[2rem] border border-green-50 shadow-sm flex items-center gap-4 relative overflow-hidden group cursor-pointer hover:border-green-200 transition-all">
+            <div className="absolute right-0 top-0 p-8 opacity-5 group-hover:scale-110 transition-transform"><Wallet size={64} className="text-green-600" /></div>
+            <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600"><Wallet size={24} /></div>
+            <div>
+               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">KASA DURUMU</p>
+               <h3 className={`text-2xl font-black italic ${totalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>₺{totalBalance.toLocaleString()}</h3>
+            </div>
+         </div>
+
+         <div onClick={() => onNavigate('league')} className="bg-zinc-900 p-6 rounded-[2rem] shadow-xl flex items-center gap-4 relative overflow-hidden group cursor-pointer">
+            <div className="absolute right-0 top-0 p-8 opacity-5 group-hover:scale-110 transition-transform"><Trophy size={64} className="text-white" /></div>
+            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-orange-500"><Trophy size={24} /></div>
+            <div className="relative z-10 flex-1">
+               <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">SIRADAKİ MAÇ</p>
+               {nextMatch ? (
+                 <>
+                   <h3 className="text-lg font-black text-white italic uppercase truncate leading-none">{nextMatch.awayTeam}</h3>
+                   <p className="text-[10px] font-bold text-zinc-400 uppercase mt-1 flex items-center gap-1"><CalendarCheck size={12} /> {nextMatch.date} • {nextMatch.time}</p>
+                 </>
+               ) : (
+                 <p className="text-xs font-black text-zinc-500 italic">FİKSTÜR YOK</p>
+               )}
+            </div>
+         </div>
       </div>
 
       {/* Veli Modu Aksiyonları */}

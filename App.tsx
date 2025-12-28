@@ -16,15 +16,15 @@ import TrainerNotebook from './components/TrainerNotebook';
 import AboutUs from './components/AboutUs';
 import Auth from './components/Auth';
 import Settings from './components/Settings';
-import { ViewType, Student, Trainer, FinanceEntry, MediaPost, TrainingSession, AppMode, Notification, Drill, TrainerNote, AppContextData } from './types';
-import { Bell, X, LogOut, LayoutGrid, CheckCircle2, Database, RefreshCw, AlertTriangle, Menu } from 'lucide-react';
+import MobileNav from './components/MobileNav';
+import { ViewType, Student, Trainer, FinanceEntry, MediaPost, TrainingSession, AppMode, Notification, Drill, TrainerNote, AppContextData, MatchResult } from './types';
+import { Bell, X, LogOut, LayoutGrid, CheckCircle2, Database, RefreshCw, AlertTriangle, Menu, Smartphone } from 'lucide-react';
 import { storageService, KEYS } from './services/storageService';
 import { isConfigured } from './services/firebaseConfig';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeView, setActiveView] = useState<ViewType>('dashboard');
-  // HATA ÇÖZÜMÜ: 'lineup' seçeneği buraya eklendi
   const [mediaTab, setMediaTab] = useState<'all' | 'bulletin' | 'gallery' | 'poll' | 'lineup' | 'pending'>('all');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [appMode, setAppMode] = useState<AppMode>('admin');
@@ -39,6 +39,7 @@ const App: React.FC = () => {
   const [finance, setFinance] = useState<FinanceEntry[]>(() => storageService.load(KEYS.FINANCE, []));
   const [media, setMedia] = useState<MediaPost[]>(() => storageService.load(KEYS.MEDIA, []));
   const [drills, setDrills] = useState<Drill[]>(() => storageService.load(KEYS.DRILLS, []));
+  const [fixtures, setFixtures] = useState<MatchResult[]>(() => storageService.load(KEYS.FIXTURES, []));
 
   // --- FIREBASE İLK YÜKLEME ---
   useEffect(() => {
@@ -47,14 +48,15 @@ const App: React.FC = () => {
     const fetchAllData = async () => {
       setIsSyncing(true);
       try {
-        const [cS, cT, cN, cSe, cF, cM, cD] = await Promise.all([
+        const [cS, cT, cN, cSe, cF, cM, cD, cFix] = await Promise.all([
           storageService.loadFromCloud(KEYS.STUDENTS),
           storageService.loadFromCloud(KEYS.TRAINERS),
           storageService.loadFromCloud(KEYS.NOTES),
           storageService.loadFromCloud(KEYS.SESSIONS),
           storageService.loadFromCloud(KEYS.FINANCE),
           storageService.loadFromCloud(KEYS.MEDIA),
-          storageService.loadFromCloud(KEYS.DRILLS)
+          storageService.loadFromCloud(KEYS.DRILLS),
+          storageService.loadFromCloud(KEYS.FIXTURES)
         ]);
 
         if (cS.length) setStudents(cS as Student[]);
@@ -64,6 +66,7 @@ const App: React.FC = () => {
         if (cF.length) setFinance(cF as FinanceEntry[]);
         if (cM.length) setMedia(cM as MediaPost[]);
         if (cD.length) setDrills(cD as Drill[]);
+        if (cFix.length) setFixtures(cFix as MatchResult[]);
       } catch (err) {
         console.error("BGB Sync Error:", err);
       } finally {
@@ -100,6 +103,7 @@ const App: React.FC = () => {
   const handleUpdateDrills = (u: Drill[] | ((p: Drill[]) => Drill[])) => updateAndSync(KEYS.DRILLS, u, setDrills);
   const handleUpdateSessions = (u: TrainingSession[] | ((p: TrainingSession[]) => TrainingSession[])) => updateAndSync(KEYS.SESSIONS, u, setSessions);
   const handleUpdateNotes = (u: TrainerNote[] | ((p: TrainerNote[]) => TrainerNote[])) => updateAndSync(KEYS.NOTES, u, setNotes);
+  const handleUpdateFixtures = (u: MatchResult[] | ((p: MatchResult[]) => MatchResult[])) => updateAndSync(KEYS.FIXTURES, u, setFixtures);
 
   const handleRegister = async (student: Student) => {
     setStudents(prev => [...prev, student]);
@@ -118,7 +122,7 @@ const App: React.FC = () => {
   };
 
   const contextData: AppContextData = {
-    students, trainers, branches: [], sessions, finance, media, drills, attendance: [], notifications: [], trainerNotes
+    students, trainers, branches: [], sessions, finance, media, drills, attendance: [], notifications: [], trainerNotes, fixtures
   };
 
   const handleNavigate = (view: ViewType, subTab?: string) => {
@@ -140,7 +144,7 @@ const App: React.FC = () => {
       case 'schedule': return <Schedule sessions={sessions} setSessions={handleUpdateSessions} mode={appMode} />;
       case 'ai-coach': return <AICoach context={contextData} mode={appMode} />;
       case 'analytics': return <Analytics students={students} setStudents={setStudents} mode={appMode} />;
-      case 'league': return <League students={students} mode={appMode} onPostLineup={(p) => { 
+      case 'league': return <League students={students} mode={appMode} fixtures={fixtures} setFixtures={handleUpdateFixtures} onPostLineup={(p) => { 
         const post = {...p, id: Date.now().toString()} as MediaPost;
         handleUpdateMedia(prev => [post, ...prev]);
       }} />;
@@ -175,9 +179,9 @@ const App: React.FC = () => {
            </div>
            <div className="flex items-center gap-6">
               {!isConfigured ? (
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-orange-200 bg-orange-50 text-orange-600">
-                  <AlertTriangle size={14} />
-                  <span className="text-[9px] font-black uppercase tracking-widest italic">VERİTABANI BAĞLI DEĞİL</span>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-blue-200 bg-blue-50 text-blue-600 shadow-sm">
+                  <Smartphone size={14} />
+                  <span className="text-[9px] font-black uppercase tracking-widest italic">YEREL MOD (CİHAZ KAYDI)</span>
                 </div>
               ) : (
                 <div className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${isSyncing ? 'bg-zinc-50 border-zinc-200 text-zinc-400' : 'bg-green-50 border-green-100 text-green-600'}`}>
@@ -188,13 +192,18 @@ const App: React.FC = () => {
            </div>
         </div>
 
-        {/* MOBİL HEADER - Daha şık */}
+        {/* MOBİL HEADER */}
         <div className="lg:hidden flex items-center justify-between p-4 bg-white/90 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-[1000] shadow-sm">
-           <button onClick={() => setIsSidebarOpen(true)} className="bg-zinc-950 text-white p-2.5 rounded-xl active:scale-90 transition-transform"><Menu size={18} /></button>
-           <h1 className="text-xs font-black italic uppercase tracking-tighter text-zinc-900">BGB <span className="text-[#E30613]">AKADEMİ</span></h1>
+           <div className="flex items-center gap-2">
+             <div className="w-8 h-8 bg-zinc-950 text-white rounded-lg flex items-center justify-center font-black italic">BGB</div>
+             <h1 className="text-xs font-black italic uppercase tracking-tighter text-zinc-900 leading-none">AKADEMİ <br/><span className="text-[#E30613]">MOBİL</span></h1>
+           </div>
            <div className="flex items-center gap-2">
              {!isConfigured ? (
-               <div className="text-orange-500 bg-orange-50 p-2 rounded-xl"><AlertTriangle size={16} /></div>
+               <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
+                  <Smartphone size={14} />
+                  <span className="text-[8px] font-black uppercase tracking-wide">YEREL</span>
+               </div>
              ) : (
                <div className={`flex items-center justify-center w-9 h-9 rounded-xl ${isSyncing ? 'bg-zinc-50 text-zinc-400' : 'bg-green-50 text-green-600'}`}>
                  {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
@@ -203,7 +212,16 @@ const App: React.FC = () => {
            </div>
         </div>
 
-        <div className="p-4 sm:p-8 max-w-[1600px] mx-auto w-full flex-1">{renderView()}</div>
+        {/* İçerik Alanı */}
+        <div className="p-4 sm:p-8 max-w-[1600px] mx-auto w-full flex-1 pb-24 lg:pb-8">{renderView()}</div>
+        
+        {/* MOBİL NAVİGASYON ÇUBUĞU */}
+        <MobileNav 
+          activeView={activeView} 
+          onViewChange={handleNavigate} 
+          onToggleSidebar={() => setIsSidebarOpen(true)}
+          appMode={appMode}
+        />
       </main>
 
       {/* TOAST BİLDİRİM */}

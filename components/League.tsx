@@ -8,18 +8,19 @@ interface Props {
   students: Student[];
   mode?: AppMode;
   onPostLineup?: (post: Partial<MediaPost>) => void;
+  fixtures: MatchResult[];
+  setFixtures: (fixtures: MatchResult[]) => void;
 }
 
 const initialStandings: Record<string, LeagueTeam[]> = {
   'U11': [], 'U12': [], 'U14': [], 'U16': [], 'U19': []
 };
 
-const League: React.FC<Props> = ({ students, mode, onPostLineup }) => {
+const League: React.FC<Props> = ({ students, mode, onPostLineup, fixtures, setFixtures }) => {
   const [activeTab, setActiveTab] = useState<'standings' | 'fixtures' | 'lineup'>('standings');
   const [activeCategory, setActiveCategory] = useState('U14');
   const [showLineupBuilder, setShowLineupBuilder] = useState(false);
   const [showFixtureModal, setShowFixtureModal] = useState(false);
-  const [fixtures, setFixtures] = useState<MatchResult[]>([]);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   const [newFixture, setNewFixture] = useState<Partial<MatchResult>>({
@@ -41,7 +42,7 @@ const League: React.FC<Props> = ({ students, mode, onPostLineup }) => {
   };
 
   const deleteFixture = (id: string) => {
-    if (confirm('Maç fikstürden kaldırılacak?')) setFixtures(prev => prev.filter(f => f.id !== id));
+    if (confirm('Maç fikstürden kaldırılacak?')) setFixtures(fixtures.filter(f => f.id !== id));
   };
 
   return (

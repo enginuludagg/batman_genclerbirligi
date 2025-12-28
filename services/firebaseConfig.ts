@@ -1,28 +1,26 @@
-
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-// --- FIREBASE KURULUM ADIMLARI ---
-// 1. https://console.firebase.google.com adresine gidin.
-// 2. Yeni bir proje oluşturun.
-// 3. Sol menüden "Project Settings" (Ayarlar) > "General" kısmına gelin.
-// 4. Aşağıdaki "Your apps" bölümünden </> (Web) ikonuna tıklayın.
-// 5. Size verilen "firebaseConfig" nesnesindeki değerleri aşağıya yapıştırın.
-
 const firebaseConfig = {
-  apiKey: "BURAYA_API_KEY_YAPISTIRIN",
-  authDomain: "BURAYA_AUTH_DOMAIN_YAPISTIRIN",
-  projectId: "BURAYA_PROJECT_ID_YAPISTIRIN",
-  storageBucket: "BURAYA_STORAGE_BUCKET_YAPISTIRIN",
-  messagingSenderId: "BURAYA_SENDER_ID_YAPISTIRIN",
-  appId: "BURAYA_APP_ID_YAPISTIRIN"
+  apiKey: "AIzaSyDqocnbfd-InC4hID01jXp2D5Y5dUHA6Wo",
+  authDomain: "goldenlig-batman.firebaseapp.com",
+  projectId: "goldenlig-batman",
+  storageBucket: "goldenlig-batman.firebasestorage.app",
+  messagingSenderId: "325419372570",
+  appId: "1:325419372570:web:b6ebec427b52daf62681a3",
+  measurementId: "G-VJ4J106C1S"
 };
-
-// Veritabanı bağlantısı kontrolü
-export const isConfigured = firebaseConfig.apiKey !== "BURAYA_API_KEY_YAPISTIRIN" && firebaseConfig.apiKey !== "";
 
 // Uygulamayı başlat
 const app = initializeApp(firebaseConfig);
+
+// Servisleri dışa aktar
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+
+// Analytics sadece tarayıcı ortamında çalışır
+export const analytics = null;
+
+// Konfigürasyon tamamlandı (Artık her zaman true)
+export const isConfigured = true;

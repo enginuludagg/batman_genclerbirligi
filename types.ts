@@ -170,4 +170,5 @@ export interface AppContextData {
   attendance: any[];
   notifications: Notification[];
   trainerNotes: TrainerNote[];
+  fixtures: MatchResult[];
 }

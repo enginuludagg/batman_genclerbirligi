@@ -17,7 +17,8 @@ export const KEYS = {
   SESSIONS: 'sessions',
   FINANCE: 'finance',
   MEDIA: 'media',
-  DRILLS: 'drills'
+  DRILLS: 'drills',
+  FIXTURES: 'fixtures'
 };
 
 export const storageService = {
