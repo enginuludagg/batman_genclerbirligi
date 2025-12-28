@@ -24,7 +24,8 @@ import { isConfigured } from './services/firebaseConfig';
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeView, setActiveView] = useState<ViewType>('dashboard');
-  const [mediaTab, setMediaTab] = useState<'all' | 'bulletin' | 'gallery' | 'poll' | 'pending'>('all');
+  // HATA ÇÖZÜMÜ: 'lineup' seçeneği buraya eklendi
+  const [mediaTab, setMediaTab] = useState<'all' | 'bulletin' | 'gallery' | 'poll' | 'lineup' | 'pending'>('all');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [appMode, setAppMode] = useState<AppMode>('admin');
   const [toast, setToast] = useState<Notification | null>(null);
