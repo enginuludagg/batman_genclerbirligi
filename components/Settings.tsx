@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { Settings as SettingsIcon, Upload, AlertTriangle, Image as ImageIcon, Smartphone, ShieldCheck, Trash2, Terminal, Copy, Command } from 'lucide-react';
+import { Settings as SettingsIcon, Upload, AlertTriangle, Image as ImageIcon, Smartphone, ShieldCheck, Trash2, Terminal, Copy, Command, HelpCircle, Monitor, Download } from 'lucide-react';
 import Logo from './Logo';
 
-const APP_VERSION = "V.1.4"; // Versiyon güncellendi
+const APP_VERSION = "V.1.4.1"; // Versiyon güncellendi
 
 const Settings: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(localStorage.getItem('bgb_custom_logo'));
@@ -69,41 +69,50 @@ const Settings: React.FC = () => {
             {/* YAYINA ALMA REHBERİ KARTI */}
             <div className="bg-zinc-900 text-white p-8 rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform"><Terminal size={80} /></div>
+                
                 <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4 relative z-10">
                     <Terminal className="text-green-500" size={20} />
-                    <h3 className="font-black uppercase text-xs tracking-widest italic">SİTEYİ YAYINA ALMA (WINDOWS UYUMLU)</h3>
+                    <h3 className="font-black uppercase text-xs tracking-widest italic">SİTEYİ YAYINA ALMA REHBERİ</h3>
                 </div>
-                <div className="space-y-4 text-[10px] font-bold text-zinc-400 relative z-10">
-                    <p>Siteni yayınlamak için aşağıdaki komutları <u>Terminal</u> ekranına sırasıyla yazıp Enter'a bas:</p>
-                    
-                    <div className="bg-black/50 p-5 rounded-2xl border border-white/5 font-mono text-green-400 space-y-3 select-text shadow-inner">
-                        <div className="flex gap-3 items-center">
-                            <span className="text-zinc-600 w-4">1.</span>
-                            <span className="bg-white/5 px-2 py-1 rounded w-full">npx firebase login</span>
-                        </div>
-                        <div className="flex gap-3 items-center">
-                            <span className="text-zinc-600 w-4">2.</span>
-                            <span className="bg-white/5 px-2 py-1 rounded w-full">npm run build</span>
-                        </div>
-                        <div className="flex gap-3 items-center">
-                            <span className="text-zinc-600 w-4">3.</span>
-                            <span className="bg-white/5 px-2 py-1 rounded w-full">npx firebase deploy</span>
+
+                <div className="relative z-10 space-y-6">
+                    <div className="bg-blue-600/20 border border-blue-500/30 p-4 rounded-xl flex items-start gap-3">
+                        <Monitor className="text-blue-400 shrink-0" size={20} />
+                        <div>
+                           <h4 className="text-[10px] font-black uppercase text-blue-300 mb-1">ÖNEMLİ!</h4>
+                           <p className="text-[9px] text-zinc-300 leading-relaxed">
+                              'Vite not recognized' hatası alıyorsan, <b>1. ADIM</b> çok önemlidir. Önce kurulumu yapmalısın.
+                           </p>
                         </div>
                     </div>
 
-                    <div className="mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded-xl">
-                        <p className="text-red-400 font-bold mb-1 flex items-center gap-2">
-                            <AlertTriangle size={12} /> HALA HATA ALIYORSAN:
-                        </p>
-                        <p className="text-[9px] text-zinc-400 mb-2">Windows güvenlik ayarı scriptleri engelliyor olabilir. Aşağıdaki komutu yapıştırıp 'Y' tuşuna basarak onay ver, sonra tekrar dene:</p>
-                        <code className="text-[8px] text-red-200 font-mono block bg-black/30 p-2 rounded select-all cursor-pointer hover:bg-black/50 transition-colors">
-                            Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-                        </code>
+                    <div className="space-y-4 text-[10px] font-bold text-zinc-400">
+                        <p>Terminal kutusuna aşağıdaki komutları <u>sırasıyla</u> yazıp Enter'a bas:</p>
+                        
+                        <div className="bg-black/50 p-5 rounded-2xl border border-white/5 font-mono text-green-400 space-y-4 select-text shadow-inner">
+                            <div className="space-y-1">
+                                <p className="text-[8px] text-zinc-500 uppercase font-black flex items-center gap-2"><Download size={10} /> 1. ADIM: KURULUM (EN ÖNEMLİSİ)</p>
+                                <div className="flex gap-3 items-center">
+                                    <span className="bg-white/5 px-2 py-1.5 rounded w-full border border-green-500/20 text-green-300">npm install</span>
+                                </div>
+                                <p className="text-[8px] text-zinc-600 italic">Bunu yazıp Enter'a bas, yükleme bitene kadar bekle.</p>
+                            </div>
+
+                            <div className="space-y-1">
+                                <p className="text-[8px] text-zinc-500 uppercase font-black">2. ADIM: OLUŞTUR</p>
+                                <div className="flex gap-3 items-center">
+                                    <span className="bg-white/5 px-2 py-1.5 rounded w-full">npm run build</span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1">
+                                <p className="text-[8px] text-zinc-500 uppercase font-black">3. ADIM: YAYINLA</p>
+                                <div className="flex gap-3 items-center">
+                                    <span className="bg-white/5 px-2 py-1.5 rounded w-full">npx firebase-tools deploy</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <p className="italic opacity-60 flex items-center gap-2 mt-2">
-                        <ShieldCheck size={12} /> Hosting URL terminalde görünecektir.
-                    </p>
                 </div>
             </div>
         </div>
