@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Search, UserPlus, ChevronLeft, Save, Plus, ChevronRight, Trash2, CheckCircle2, AlertCircle, X, Upload, Hash, Check
+  Search, UserPlus, ChevronLeft, Save, Plus, ChevronRight, Trash2, CheckCircle2, AlertCircle, X, Upload, Hash, Check, Calendar
 } from 'lucide-react';
 import { Student, AppMode } from '../types';
 import StudentDetail from './StudentDetail';
@@ -32,7 +32,8 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
   const [newStudent, setNewStudent] = useState<Partial<Student>>({
     name: '', sport: 'Futbol', activeSports: ['Futbol'], branchId: 'U12', gender: 'Erkek', level: 'Başlangıç', status: 'active', attendance: 100, photoUrl: '',
     stats: { strength: 50, speed: 50, stamina: 50, technique: 50 },
-    jerseyNumber: undefined
+    jerseyNumber: undefined,
+    registrationDate: new Date().toISOString().split('T')[0] // Varsayılan bugün
   });
 
   useEffect(() => {
@@ -42,10 +43,8 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
     }
   }, [viewState, onModalStateChange]);
 
-  // Agresif Resim Optimizasyon Fonksiyonu
   const optimizeImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-      // 20MB limit
       if (file.size > 20 * 1024 * 1024) {
         alert("Dosya çok büyük. Lütfen daha küçük bir fotoğraf seçin.");
         reject("File too large");
@@ -59,7 +58,6 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          // Maksimum genişlik 600px (Firestore limiti ve mobil hız için)
           const MAX_WIDTH = 600; 
           let width = img.width;
           let height = img.height;
@@ -75,9 +73,7 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
           
           if(ctx) {
              ctx.drawImage(img, 0, 0, width, height);
-             // Kalite %50 (Çok hızlı yükleme için)
              const dataUrl = canvas.toDataURL('image/jpeg', 0.50);
-             
              resolve(dataUrl);
           } else {
              reject("Canvas error");
@@ -93,7 +89,8 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
     setNewStudent(prev => ({ 
       ...prev, 
       sport: defaultSport as any,
-      activeSports: [defaultSport as any] 
+      activeSports: [defaultSport as any],
+      registrationDate: new Date().toISOString().split('T')[0]
     }));
     setViewState('add');
   };
@@ -120,7 +117,8 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
       feeStatus: 'Pending',
       password: '123456',
       badges: [],
-      scoutingNotes: []
+      scoutingNotes: [],
+      registrationDate: newStudent.registrationDate || new Date().toISOString().split('T')[0]
     };
     setStudents(prev => [...prev, student]);
     setViewState('list');
@@ -145,11 +143,8 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
   const filtered = students.filter(s => {
     const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCat = activeCategory === 'TÜM GRUPLAR' || s.branchId === activeCategory;
-    
-    // Çoklu branş kontrolü
     const studentSports = s.activeSports || [s.sport];
     const matchesSport = activeSport === 'Hepsi' || studentSports.includes(activeSport as any);
-    
     const matchesStatus = showPassive ? s.status === 'passive' : s.status === 'active';
     return matchesSearch && matchesCat && matchesSport && matchesStatus;
   });
@@ -227,6 +222,10 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
                        ))}
                     </div>
                     <span className="text-[8px] font-black text-red-600 uppercase">{s.branchId}</span>
+                  </div>
+                  {/* Kayıt Tarihi Gösterimi */}
+                  <div className="flex items-center gap-1 mt-1 text-[8px] text-gray-400 font-bold uppercase">
+                     <Calendar size={8} /> {s.registrationDate ? new Date(s.registrationDate).toLocaleDateString('tr-TR') : 'Eski Kayıt'}
                   </div>
                 </div>
               </div>
@@ -306,6 +305,17 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
                       {ACADEMY_GROUPS.filter(g => g !== 'TÜM GRUPLAR').map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
                   </div>
+                </div>
+
+                {/* Kayıt Tarihi Input */}
+                <div>
+                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">KAYIT TARİHİ</label>
+                   <input 
+                     type="date" 
+                     className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600"
+                     value={newStudent.registrationDate}
+                     onChange={e => setNewStudent({...newStudent, registrationDate: e.target.value})}
+                   />
                 </div>
               </div>
 

@@ -85,15 +85,13 @@ export const generateNewDrillFromAI = async (sport: string = 'Futbol'): Promise<
 export const getAICoachResponse = async (userInput: string, context: AppContextData, mode: AppMode, currentStudent?: Student | null) => {
   if (!process.env.API_KEY) {
      const lower = userInput.toLowerCase();
-     if (lower.includes('merhaba')) return { text: "Merhaba! BGB Akademi asistanınız hizmetinizde." };
-     if (lower.includes('iletişim') || lower.includes('adres')) return { text: "Kulübümüze 0505 340 11 01 numarasından ulaşabilirsiniz." };
+     if (lower.includes('merhaba')) return { text: "Merhaba! BGB Akademi asistanınız hizmetinizde. API Anahtarı eksik olduğu için kısıtlı moddayım." };
      return { text: FALLBACK_RESPONSES[Math.floor(Math.random() * FALLBACK_RESPONSES.length)] };
   }
 
   const ai = getAIClient();
   
   // --- DİNAMİK CONTEXT HAZIRLAMA ---
-  let userRoleDescription = "";
   const today = new Date().toLocaleDateString('tr-TR');
 
   // Ortak veriler
@@ -106,31 +104,27 @@ export const getAICoachResponse = async (userInput: string, context: AppContextD
   let specializedData = "";
 
   if (mode === 'admin') {
-    userRoleDescription = "Kullanıcı: KULÜP YÖNETİCİSİ (Hoca/Admin). Her türlü veriyi görme yetkisi var.";
     const studentCount = context.students.length;
     const balance = context.finance.reduce((acc, curr) => curr.type === 'income' ? acc + curr.amount : acc - curr.amount, 0);
+    const activeStudents = context.students.filter(s => s.status === 'active').length;
     
     specializedData = `
-      YÖNETİCİ ÖZEL VERİLERİ:
-      - Toplam Sporcu: ${studentCount}
-      - Kasa Bakiyesi: ${balance} TL
-      - Antrenör Notları: ${context.trainerNotes.length} adet rapor var.
+      YÖNETİCİ ÖZEL ANALİZ VERİLERİ (Bunu kullanıcıya sunarken doğal bir dille anlat):
+      - Toplam Kayıtlı Sporcu: ${studentCount} (Aktif: ${activeStudents})
+      - Güncel Kasa Bakiyesi: ${balance} TL
+      - Son Eklenen Notlar: ${context.trainerNotes.slice(0, 3).map(n => n.content).join(' | ')}
     `;
 
   } else if (mode === 'parent' && currentStudent) {
-    userRoleDescription = `Kullanıcı: SPORCU VELİSİ.
-    Velisi olduğu öğrenci: ${currentStudent.name}.
-    DİKKAT: Sadece bu öğrencinin verilerini paylaşabilirsin. Başka öğrenci, finans veya antrenör notlarını ASLA paylaşma.`;
-
     const s = currentStudent;
     specializedData = `
-      ÖĞRENCİ DETAYLARI (${s.name}):
+      VELİ ÖZEL VERİLERİ (Sadece bu öğrenci hakkında konuş):
+      - Öğrenci: ${s.name}
       - Grup: ${s.branchId} | Branş: ${s.sport}
-      - Durum: ${s.status === 'active' ? 'Aktif' : 'Pasif'}
       - Devamlılık: %${s.attendance}
-      - Son Antrenman: ${s.lastTraining}
       - Aidat Durumu: ${s.feeStatus === 'Paid' ? 'Ödendi' : 'Ödeme Bekliyor'}
-      - Fiziksel: Hız ${s.stats.speed}, Güç ${s.stats.strength}
+      - Kayıt Tarihi: ${s.registrationDate || 'Bilinmiyor'}
+      - Fiziksel Gelişim: Hız ${s.stats.speed}, Güç ${s.stats.strength}
     `;
   }
 
@@ -139,40 +133,41 @@ export const getAICoachResponse = async (userInput: string, context: AppContextD
       model: 'gemini-3-flash-preview',
       contents: [{ role: 'user', parts: [{ text: userInput }] }],
       config: {
-        temperature: 0.2, // Yaratıcılığı düşürdük, daha gerçekçi olsun
+        temperature: 0.7, // Yaratıcılığı artırdık, daha az robotik olması için
         systemInstruction: `
-        Sen Batman Gençlerbirliği (BGB) Spor Kulübü'nün yapay zeka asistanısın.
+        Sen Batman Gençlerbirliği (BGB) Spor Kulübü'nün yapay zeka baş antrenör yardımcısısın. Adın BGB Asistan.
+        Engin Uludağ Hoca'nın sağ kolusun.
         
-        KİMLİĞİN VE KESİN SINIRLARIN (BUNLARA UYMAK ZORUNDASIN):
-        1. Sen SADECE bir sohbet botusun. Veritabanına YAZMA, GÜNCELLEME, SİLME yetkin YOK.
-        2. ASLA "Programı güncelledim", "Yeni drill ekledim", "Listeyi düzenledim" gibi yalan beyanlarda bulunma.
-        3. Kullanıcı senden bir işlem yapmanı isterse (örneğin: "Ahmet'i kaydet", "Maç ekle"), nazikçe "Ben sadece bilgi verebilirim, bu işlemi yapmak için lütfen ilgili menüyü kullanın" de.
-        4. "TFF kaynaklarından veri çektim", "Uluslararası veritabanından güncelledim" gibi uydurma cümleler kurma. Sadece sana aşağıda verilen verileri kullan.
-
-        MEVCUT KULÜP BİLGİLERİ:
+        GÖREVİN:
+        Sana verilen aşağıdaki verileri kullanarak kullanıcıyla sohbet et, sorularını yanıtla ve analiz yap.
+        Robot gibi değil, tecrübeli bir spor adamı gibi konuş.
+        
+        VERİLER:
         ${CLUB_INFO}
         
-        GÜNCEL HAFTALIK PROGRAM:
+        HAFTALIK PROGRAM:
         ${scheduleText || 'Program bilgisi henüz girilmemiş.'}
 
-        FİKSTÜR / MAÇLAR:
-        ${upcomingMatches || 'Planlanmış maç yok.'}
+        MAÇLAR:
+        ${upcomingMatches || 'Yakın zamanda planlanmış maç yok.'}
 
+        ÖZEL VERİLER (Kullanıcının yetkisine göre):
         ${specializedData}
 
         TARİH: ${today}
 
-        CEVAP TARZI:
-        - Kısa, net ve profesyonel ol.
-        - Kullanıcı işlem istediğinde "Bunu yapmak için sol menüden [İlgili Menü] sekmesini kullanabilirsiniz" de.
-        - Bilmediğin bir veri sorulursa "Sistemde bu bilgi kayıtlı değil" de.
+        KURALLAR:
+        1. Asla veritabanını güncellediğini söyleme (okuma yetkin var, yazma yetkin yok).
+        2. Eğer kullanıcı bir işlem yapmak isterse (örn: "Öğrenci ekle"), ona menüden nasıl yapacağını tarif et.
+        3. Sorulan soruya elindeki verilerle cevap veremiyorsan dürüstçe "Sistemde bu bilgi henüz yok" de.
+        4. Cevapların kısa, net ve motive edici olsun.
         `
       }
     });
-    return { text: res.text || "Anlaşıldı." };
+    return { text: res.text || "Anlaşıldı hocam." };
   } catch (e) {
     console.error("AI Error:", e);
-    return { text: "Bağlantıda bir sorun var. Lütfen tekrar deneyin." };
+    return { text: "Bağlantıda küçük bir kopukluk oldu. Tekrar dener misiniz?" };
   }
 };
 

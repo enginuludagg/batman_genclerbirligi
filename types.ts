@@ -49,6 +49,7 @@ export interface Student {
     thighLength: number;
     run1500m: string;
   };
+  registrationDate: string; // YYYY-MM-DD formatında kayıt tarihi
   feeStatus: 'Paid' | 'Pending' | 'Overdue';
   badges: Badge[];
   scoutingNotes: ScoutingNote[];

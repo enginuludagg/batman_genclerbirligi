@@ -156,7 +156,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
       feeStatus: 'Pending',
       stats: { strength: 50, speed: 50, stamina: 50, technique: 50 },
       badges: [],
-      scoutingNotes: []
+      scoutingNotes: [],
+      registrationDate: new Date().toISOString().split('T')[0] // Kayıt Tarihi Eklendi
     };
 
     try {

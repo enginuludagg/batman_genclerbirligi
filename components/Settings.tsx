@@ -1,9 +1,9 @@
 
 import React, { useState, useRef } from 'react';
-import { Settings as SettingsIcon, Upload, AlertTriangle, Image as ImageIcon, Smartphone, ShieldCheck, Trash2, Terminal, CheckCircle2, Rocket } from 'lucide-react';
+import { Settings as SettingsIcon, Upload, AlertTriangle, Image as ImageIcon, Smartphone, ShieldCheck, Trash2, Terminal, CheckCircle2, Rocket, RefreshCw } from 'lucide-react';
 import Logo from './Logo';
 
-const APP_VERSION = "V.1.5.0 (STABLE)";
+const APP_VERSION = "V.1.6.0 (MOBİL FİX)";
 
 const Settings: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(localStorage.getItem('bgb_custom_logo'));
@@ -19,7 +19,7 @@ const Settings: React.FC = () => {
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 400; // Logo için biraz daha artırıldı
+          const MAX_WIDTH = 400; 
           const scaleSize = MAX_WIDTH / img.width;
           canvas.width = MAX_WIDTH;
           canvas.height = img.height * scaleSize;
@@ -27,7 +27,7 @@ const Settings: React.FC = () => {
           ctx && (ctx.imageSmoothingEnabled = true);
           ctx && (ctx.imageSmoothingQuality = 'high');
           ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL('image/png', 0.9)); // %90 Kalite
+          resolve(canvas.toDataURL('image/png', 0.9)); 
         };
       };
     });
@@ -49,6 +49,12 @@ const Settings: React.FC = () => {
         setIsSaving(false);
       }
     }, 800);
+  };
+
+  const handleClearCache = () => {
+    if(window.confirm("Uygulamayı yenileyip önbelleği temizlemek istiyor musunuz? Verileriniz silinmez.")) {
+      window.location.reload();
+    }
   };
 
   const handleFactoryReset = () => {
@@ -96,53 +102,6 @@ const Settings: React.FC = () => {
                 {isSaving ? 'GÜNCELLENİYOR...' : 'LOGOYU KAYDET'}
             </button>
             </div>
-            
-            {/* YAYINA ALMA REHBERİ KARTI */}
-            <div className="bg-zinc-900 text-white p-8 rounded-[2.5rem] shadow-2xl border border-white/10 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform"><Terminal size={80} /></div>
-                
-                <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4 relative z-10">
-                    <Terminal className="text-green-500" size={20} />
-                    <h3 className="font-black uppercase text-xs tracking-widest italic">SİTEYİ YAYINA ALMA REHBERİ</h3>
-                </div>
-
-                <div className="relative z-10 space-y-6">
-                    <div className="space-y-4 text-[10px] font-bold text-zinc-400">
-                        <p>Sorun çözüldü! .firebaserc dosyası eklendi. Artık terminale sadece şunu yazman yeterli:</p>
-                        
-                        <div className="bg-black/50 p-5 rounded-2xl border border-white/5 font-mono text-green-400 space-y-5 select-text shadow-inner">
-                            <div className="space-y-1 opacity-50">
-                                <p className="text-[8px] text-zinc-500 uppercase font-black flex items-center gap-2"><CheckCircle2 size={10} /> 1. ADIM: KURULUM</p>
-                                <div className="flex gap-3 items-center">
-                                    <span className="bg-white/5 px-2 py-1.5 rounded w-full border border-green-500/20 text-green-300 line-through decoration-white/30">npm install</span>
-                                </div>
-                            </div>
-
-                            <div className="space-y-1 opacity-50">
-                                <p className="text-[8px] text-zinc-500 uppercase font-black flex items-center gap-2"><CheckCircle2 size={10} /> 2. ADIM: OLUŞTUR</p>
-                                <div className="flex gap-3 items-center">
-                                    <span className="bg-white/5 px-2 py-1.5 rounded w-full line-through decoration-white/30">npm run build</span>
-                                </div>
-                            </div>
-
-                            <div className="space-y-1 opacity-50">
-                                <p className="text-[8px] text-zinc-500 uppercase font-black flex items-center gap-2"><CheckCircle2 size={10} /> 3. ADIM: GİRİŞ</p>
-                                <div className="flex gap-3 items-center">
-                                    <span className="bg-white/5 px-2 py-1.5 rounded w-full text-green-300 line-through decoration-white/30">npx firebase-tools login</span>
-                                </div>
-                            </div>
-
-                            <div className="space-y-1 p-2 bg-green-900/20 rounded-lg border border-green-700/30 animate-pulse">
-                                <p className="text-[8px] text-green-400 uppercase font-black flex items-center gap-2"><Rocket size={10} /> 4. SON ADIM: YAYINLA!</p>
-                                <p className="text-[8px] text-zinc-400 italic mb-1.5">Artık proje seçmene gerek yok, otomatik tanıyacak:</p>
-                                <div className="flex gap-3 items-center">
-                                    <span className="bg-black/40 px-2 py-1.5 rounded w-full text-green-300 font-bold border border-green-500/30">npx firebase-tools deploy</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div className="space-y-6">
@@ -151,6 +110,10 @@ const Settings: React.FC = () => {
              <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl"><span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">YAZILIM SÜRÜMÜ</span><span className="text-[10px] font-black bg-white/10 px-3 py-1 rounded-full text-green-400">{APP_VERSION}</span></div>
                 <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl"><span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">HOSTİNG</span><span className="text-[10px] font-black text-blue-400 flex items-center gap-1.5"><ShieldCheck size={14} /> FIREBASE AKTİF</span></div>
+                
+                <button onClick={handleClearCache} className="w-full py-3 bg-blue-600/20 text-blue-400 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all">
+                   <RefreshCw size={14} /> ÖNBELLEĞİ TEMİZLE & YENİLE
+                </button>
              </div>
           </div>
 
