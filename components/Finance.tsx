@@ -1,6 +1,6 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Wallet, TrendingUp, TrendingDown, Plus, CreditCard, Search, X, Trash2, Save, BellRing, CheckCircle2, Loader2, User, Calendar, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Wallet, TrendingUp, TrendingDown, Plus, Search, X, Trash2, Save, BellRing, CheckCircle2, Loader2, User } from 'lucide-react';
 import { FinanceEntry, AppMode, Student } from '../types';
 
 interface Props {

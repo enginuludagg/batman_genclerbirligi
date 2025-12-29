@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && npx -p firebase-tools firebase deploy"
+    "deploy": "npm run build && npx -p firebase-tools firebase deploy --project batmangenclerbirligi"
   },
   "dependencies": {
     "react": "19.2.3",
