@@ -121,6 +121,7 @@ export interface FinanceEntry {
   paymentMethod: string;
   studentId?: string; // Sporcu eşleştirme
   studentName?: string; // Hızlı görünüm için
+  receiptUrl?: string; // Makbuz/Dekont görseli (Opsiyonel)
 }
 
 export interface Notification {
