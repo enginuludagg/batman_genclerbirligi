@@ -1,8 +1,10 @@
 
-import React, { useState, useRef } from 'react';
-import { Mail, Lock, UserPlus, ArrowRight, AlertCircle, ShieldCheck, CheckCircle2, Users, Trophy, Loader2, Upload, Camera } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Mail, Lock, ArrowRight, AlertCircle, ShieldCheck, Loader2, Upload, ShieldAlert, Globe, HelpCircle } from 'lucide-react';
 import { AppMode, Student } from '../types';
 import Logo from './Logo';
+import firebase from "firebase/compat/app";
+import "firebase/compat/auth";
 
 interface AuthProps {
   onLogin: (mode: AppMode, student?: Student) => void;
@@ -15,82 +17,134 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isLoadingSocial, setIsLoadingSocial] = useState(false);
+  const [envStatus, setEnvStatus] = useState<{
+    isValid: boolean;
+    reason: string | null;
+  }>({ isValid: true, reason: null });
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState({
-    parentName: '',
-    parentPhone: '',
-    parentEmail: '',
-    parentPassword: '',
-    studentName: '',
-    studentBirthYear: '2012',
-    studentGender: 'Erkek',
-    studentSport: 'Futbol',
-    studentGroup: 'U12',
-    photoUrl: ''
-  });
-
-  // Agresif Resim Sıkıştırma (Mobil Veri Dostu)
-  const optimizeImage = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      // 20MB limit kontrolü
-      if (file.size > 20 * 1024 * 1024) {
-        setError("Dosya çok büyük. Lütfen daha küçük bir fotoğraf seçin.");
-        reject("File too large");
+  // Ortam ve Protokol Kontrolü
+  useEffect(() => {
+    const checkEnvironment = async () => {
+      const protocol = window.location.protocol;
+      const isLocalFile = protocol === 'file:';
+      
+      // 1. Protokol Kontrolü
+      if (isLocalFile) {
+        setEnvStatus({ 
+          isValid: false, 
+          reason: 'Uygulama yerel bir dosya (file://) olarak açılmış. Sosyal girişlerin çalışması için uygulamayı bir sunucu (localhost veya https) üzerinden çalıştırmalısınız.' 
+        });
         return;
       }
 
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          // 600px genişlik - Profil fotoğrafı için yeterli ve çok hafif
-          const MAX_WIDTH = 600; 
-          let width = img.width;
-          let height = img.height;
-          
-          if (width > MAX_WIDTH) { 
-            height *= MAX_WIDTH / width; 
-            width = MAX_WIDTH; 
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          
-          if(ctx) {
-             ctx.drawImage(img, 0, 0, width, height);
-             // %50 Kalite - Firestore limiti için kritik
-             resolve(canvas.toDataURL('image/jpeg', 0.50));
-          } else {
-             reject("Canvas error");
-          }
-        };
-      };
-      reader.onerror = error => reject(error);
-    });
+      // 2. Web Storage (localStorage) Kontrolü
+      try {
+        const testKey = '__storage_test__';
+        localStorage.setItem(testKey, testKey);
+        localStorage.removeItem(testKey);
+      } catch (e) {
+        setEnvStatus({ 
+          isValid: false, 
+          reason: 'Tarayıcınızın "Yerel Depolama" erişimi engellenmiş. Lütfen üçüncü taraf çerezlere izin verin veya gizli sekmeyi kapatın.' 
+        });
+        return;
+      }
+
+      // 3. Firebase Redirect Sonucu Kontrolü
+      try {
+        const result = await firebase.auth().getRedirectResult();
+        if (result && result.user) {
+          runAthleteMatchingLogic(result.user);
+        }
+      } catch (err: any) {
+        handleAuthError(err, 'redirect');
+      }
+    };
+
+    checkEnvironment();
+  }, []);
+
+  const runAthleteMatchingLogic = async (user: firebase.User) => {
+    const inputEmail = user.email?.toLowerCase().trim();
+    if (!inputEmail) return;
+
+    const adminEmails = ['enginuludagg@gmail.com', 'elitgelisimakademi@gmail.com', 'admin@bgb.com'];
+
+    if (adminEmails.includes(inputEmail)) {
+      onLogin('admin');
+      return;
+    }
+
+    const registeredStudent = students.find(s => s.parentEmail?.toLowerCase() === inputEmail);
+    if (registeredStudent) {
+      onLogin('parent', registeredStudent);
+    } else {
+      setError(`Bu e-posta (${inputEmail}) ile sistemde kayıtlı bir sporcu/veli bulunamadı.`);
+      await firebase.auth().signOut();
+    }
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setIsOptimizing(true);
-      setError('');
-      try {
-        const optimized = await optimizeImage(file);
-        setFormData(prev => ({ ...prev, photoUrl: optimized }));
-      } catch (err) {
-        console.error(err);
-        setError("Fotoğraf işlenirken hata oluştu.");
-      } finally {
-        setIsOptimizing(false);
+  const handleAuthError = (err: any, type: 'popup' | 'redirect') => {
+    const errorCode = err.code;
+    console.error(`Firebase Auth Hatası (${type}):`, errorCode, err.message);
+
+    let userFacingError = "Giriş işlemi başarısız.";
+
+    switch (errorCode) {
+      case 'auth/operation-not-supported-in-this-environment':
+        userFacingError = "Bulunduğunuz ortam sosyal girişi desteklemiyor. Lütfen uygulamayı Chrome veya Safari gibi standart bir tarayıcıda, doğrudan bir web adresi üzerinden açın.";
+        break;
+      case 'auth/popup-closed-by-user':
+        userFacingError = "Giriş penceresi kapatıldı.";
+        break;
+      case 'auth/web-storage-unsupported':
+        userFacingError = "Tarayıcı depolama alanı erişilemez durumda. Lütfen çerezlere izin verin.";
+        break;
+      case 'auth/unauthorized-domain':
+        userFacingError = "Bu alan adı Firebase üzerinde yetkilendirilmemiş. Lütfen yöneticiye başvurun.";
+        break;
+      default:
+        userFacingError = `Hata oluştu: ${err.message}`;
+    }
+    setError(userFacingError);
+  };
+
+  const handleSocialLogin = async () => {
+    if (!envStatus.isValid) {
+      setError(envStatus.reason || 'Geçersiz ortam.');
+      return;
+    }
+
+    setIsLoadingSocial(true);
+    setError('');
+    
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    try {
+      // Önce kalıcılığı zorla
+      await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      
+      // Popup dene, hata verirse redirect'e düşecek
+      const result = await firebase.auth().signInWithPopup(provider);
+      if (result.user) {
+        await runAthleteMatchingLogic(result.user);
       }
+    } catch (err: any) {
+      // Eğer ortam popup desteklemiyorsa otomatik Redirect dene
+      if (err.code === 'auth/operation-not-supported-in-this-environment' || err.code === 'auth/popup-blocked') {
+        try {
+          await firebase.auth().signInWithRedirect(provider);
+        } catch (redirectErr: any) {
+          handleAuthError(redirectErr, 'redirect');
+        }
+      } else {
+        handleAuthError(err, 'popup');
+      }
+    } finally {
+      setIsLoadingSocial(false);
     }
   };
 
@@ -102,208 +156,114 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
     const adminPassword = 'Eu290202';
 
     if (adminEmails.includes(inputEmail)) {
-      if (password === adminPassword) {
-        onLogin('admin');
-        return;
-      } else {
-        setError('Yönetici şifresi hatalı!');
-        return;
-      }
+      if (password === adminPassword) { onLogin('admin'); return; } 
+      else { setError('Yönetici şifresi hatalı!'); return; }
     }
 
     const registeredStudent = students.find(s => s.parentEmail?.toLowerCase() === inputEmail);
     if (registeredStudent) {
       const correctPass = registeredStudent.password || '123456';
       if (password === correctPass) onLogin('parent', registeredStudent);
-      else setError('Veli şifresi hatalı! Lütfen kontrol ediniz.');
-    } else {
-      setError('Bu e-posta ile kayıtlı sporcu bulunamadı.');
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (students.some(s => s.parentEmail === formData.parentEmail)) {
-      setError('Bu e-posta adresi zaten kullanımda!');
-      return;
-    }
-
-    if (!formData.photoUrl) {
-      setError('Lütfen sporcunun profil fotoğrafını yükleyiniz.');
-      return;
-    }
-
-    setIsRegistering(true);
-
-    const newStudent: Student = {
-      id: Date.now().toString(),
-      name: formData.studentName,
-      photoUrl: formData.photoUrl,
-      age: new Date().getFullYear() - parseInt(formData.studentBirthYear),
-      birthYear: parseInt(formData.studentBirthYear),
-      gender: formData.studentGender as 'Erkek' | 'Kız',
-      parentName: formData.parentName,
-      parentPhone: formData.parentPhone,
-      parentEmail: formData.parentEmail,
-      password: formData.parentPassword,
-      sport: formData.studentSport as 'Futbol' | 'Voleybol' | 'Cimnastik',
-      activeSports: [formData.studentSport as 'Futbol' | 'Voleybol' | 'Cimnastik'],
-      branchId: formData.studentGroup,
-      level: 'Başlangıç',
-      status: 'passive',
-      attendance: 0,
-      lastTraining: 'Yeni Kayıt',
-      feeStatus: 'Pending',
-      stats: { strength: 50, speed: 50, stamina: 50, technique: 50 },
-      badges: [],
-      scoutingNotes: [],
-      registrationDate: new Date().toISOString().split('T')[0] // Kayıt Tarihi Eklendi
-    };
-
-    try {
-      await onRegisterStudent(newStudent);
-      // Kayıt sonrası otomatik giriş
-      onLogin('parent', newStudent);
-    } catch (e) {
-      console.error(e);
-      setError("Kayıt sırasında bir hata oluştu. İnternet bağlantınızı kontrol edip tekrar deneyin.");
-      setIsRegistering(false);
-    }
+      else setError('Veli şifresi hatalı!');
+    } else { setError('Kayıtlı kullanıcı bulunamadı.'); }
   };
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-[#111]">
-      {/* Arka Plan Görseli */}
       <div className="absolute inset-0 z-0">
-        <img 
-          src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=2500&auto=format&fit=crop" 
-          className="w-full h-full object-cover opacity-40"
-          alt="Stadium"
-        />
+        <img src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=2500&auto=format&fit=crop" className="w-full h-full object-cover opacity-40" alt="Stadium" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#1D2D4C] via-[#1D2D4C]/80 to-transparent"></div>
       </div>
 
-      <div className="relative z-10 w-full max-w-md px-6">
+      <div className="relative z-10 w-full max-w-md px-6 max-h-[95vh] overflow-y-auto no-scrollbar py-8">
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[3rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-500">
           
-          {/* Header */}
-          <div className="pt-10 pb-6 text-center relative">
-            <div className="w-24 h-24 mx-auto bg-white rounded-3xl p-1 shadow-2xl mb-4 border-2 border-transparent">
-              <Logo className="w-full h-full" />
-            </div>
-            <h1 className="text-3xl font-black italic uppercase tracking-tighter text-white leading-none">
-              BATMAN <span className="text-[#E30613]">GB</span>
-            </h1>
+          <div className="pt-10 pb-6 text-center">
+            <div className="w-20 h-20 mx-auto bg-white rounded-3xl p-1 shadow-2xl mb-4"><Logo className="w-full h-full" /></div>
+            <h1 className="text-3xl font-black italic uppercase tracking-tighter text-white leading-none">BATMAN <span className="text-[#E30613]">GB</span></h1>
             <p className="text-white/60 text-[9px] font-black uppercase tracking-[0.4em] mt-2">AKADEMİ YÖNETİM SİSTEMİ</p>
           </div>
 
           <div className="px-8 pb-10">
+            {!envStatus.isValid && (
+              <div className="mb-6 p-4 bg-orange-500/20 border border-orange-500/50 rounded-2xl flex flex-col gap-3 text-orange-100 animate-in fade-in duration-300">
+                <div className="flex items-start gap-3">
+                  <ShieldAlert size={20} className="shrink-0 mt-0.5 text-orange-400" /> 
+                  <p className="text-[10px] font-bold leading-relaxed">{envStatus.reason}</p>
+                </div>
+                <div className="flex items-center gap-2 pt-2 border-t border-orange-500/20">
+                  <Globe size={12} className="text-orange-400" />
+                  <span className="text-[8px] font-black uppercase tracking-widest">ÇÖZÜM: HTTP/HTTPS ÜZERİNDEN ÇALIŞTIRIN</span>
+                </div>
+              </div>
+            )}
+
             {view === 'login' ? (
               <form onSubmit={handleLogin} className="space-y-5">
                 {error && (
-                  <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-2xl flex items-center gap-3 text-red-200 text-xs font-bold animate-pulse">
-                    <AlertCircle size={16} /> {error}
+                  <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-2xl flex items-start gap-3 text-red-100 text-[10px] font-bold leading-relaxed">
+                    <AlertCircle size={18} className="shrink-0 mt-0.5" /> 
+                    <span>{error}</span>
                   </div>
                 )}
                 
                 <div className="space-y-4">
                   <div className="group relative">
-                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-white transition-colors" size={20} />
-                    <input 
-                      type="email" 
-                      placeholder="E-posta Adresi" 
-                      className="w-full pl-14 pr-6 py-4 bg-black/20 border border-white/10 rounded-2xl text-white placeholder:text-white/30 text-sm font-bold outline-none focus:border-[#E30613] focus:bg-black/40 transition-all"
-                      value={email} 
-                      onChange={e => setEmail(e.target.value)} 
-                      required 
-                    />
+                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-white" size={20} />
+                    <input type="email" placeholder="E-posta Adresi" className="w-full pl-14 pr-6 py-4 bg-black/20 border border-white/10 rounded-2xl text-white placeholder:text-white/30 text-sm font-bold outline-none focus:border-[#E30613]" value={email} onChange={e => setEmail(e.target.value)} required />
                   </div>
                   <div className="group relative">
-                    <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-white transition-colors" size={20} />
-                    <input 
-                      type="password" 
-                      placeholder="Şifre" 
-                      className="w-full pl-14 pr-6 py-4 bg-black/20 border border-white/10 rounded-2xl text-white placeholder:text-white/30 text-sm font-bold outline-none focus:border-[#E30613] focus:bg-black/40 transition-all"
-                      value={password} 
-                      onChange={e => setPassword(e.target.value)} 
-                      required 
-                    />
+                    <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-white" size={20} />
+                    <input type="password" placeholder="Şifre" className="w-full pl-14 pr-6 py-4 bg-black/20 border border-white/10 rounded-2xl text-white placeholder:text-white/30 text-sm font-bold outline-none focus:border-[#E30613]" value={password} onChange={e => setPassword(e.target.value)} required />
                   </div>
                 </div>
 
-                <button type="submit" className="w-full py-4 bg-[#E30613] hover:bg-red-700 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-900/40 flex items-center justify-center gap-3 transition-all active:scale-[0.98]">
+                <button type="submit" disabled={isLoadingSocial} className="w-full py-4 bg-[#E30613] hover:bg-red-700 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-50">
                   GİRİŞ YAP <ArrowRight size={18} />
                 </button>
 
-                <div className="flex items-center justify-center gap-2 pt-2">
+                <div className="relative py-2">
+                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
+                   <div className="relative flex justify-center text-[8px] uppercase font-black"><span className="bg-[#1D2D4C] px-4 text-white/30 tracking-widest italic">VEYA GOOGLE İLE BAĞLAN</span></div>
+                </div>
+
+                <div className="flex justify-center">
+                   <button 
+                    type="button" 
+                    disabled={isLoadingSocial || !envStatus.isValid}
+                    onClick={() => handleSocialLogin()} 
+                    className={`w-full flex items-center justify-center gap-3 py-4 bg-white rounded-2xl transition-all active:scale-95 disabled:opacity-50 shadow-xl ${!envStatus.isValid ? 'cursor-not-allowed grayscale opacity-50' : 'hover:bg-gray-100'}`}
+                   >
+                      {isLoadingSocial ? <Loader2 size={18} className="animate-spin text-zinc-900" /> : (
+                        <>
+                          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="22" height="22" />
+                          <span className="text-[10px] font-black uppercase text-zinc-900 tracking-widest">GOOGLE HESABI İLE GİRİŞ</span>
+                        </>
+                      )}
+                   </button>
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-3 pt-2">
                   <button type="button" onClick={() => setView('register')} className="text-[10px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-colors border-b border-transparent hover:border-white/40 pb-0.5">
                     YENİ SPORCU KAYDI
                   </button>
+                  <div className="flex items-center gap-1.5 text-[8px] font-bold text-white/30 uppercase tracking-tight mt-2">
+                    <HelpCircle size={10} /> Sorun yaşıyorsanız bir web tarayıcısı kullanın
+                  </div>
                 </div>
               </form>
             ) : (
-              <form onSubmit={handleRegister} className="space-y-4">
-                {error && (
-                  <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-2xl flex items-center gap-3 text-red-200 text-[10px] font-bold animate-pulse">
-                    <AlertCircle size={14} /> {error}
-                  </div>
-                )}
-
-                <div className="max-h-[300px] overflow-y-auto custom-scrollbar space-y-4 pr-1">
-                  
-                  {/* FOTOĞRAF YÜKLEME ALANI */}
-                  <div className="flex flex-col items-center">
-                     <div 
-                       onClick={() => !isOptimizing && fileInputRef.current?.click()} 
-                       className={`w-24 h-24 rounded-[2rem] border-2 border-dashed border-white/20 bg-black/20 flex items-center justify-center cursor-pointer relative overflow-hidden group ${isOptimizing ? 'opacity-50' : ''}`}
-                     >
-                        {formData.photoUrl ? (
-                          <img src={formData.photoUrl} className="w-full h-full object-cover" />
-                        ) : (
-                          <Camera className="text-white/50 group-hover:text-white" size={28} />
-                        )}
-                        {isOptimizing && <div className="absolute inset-0 flex items-center justify-center bg-black/50"><Loader2 size={24} className="text-white animate-spin" /></div>}
-                     </div>
-                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handlePhotoUpload} />
-                     <p className="text-[9px] font-bold text-white/40 uppercase mt-2">{isOptimizing ? 'İŞLENİYOR...' : 'FOTOĞRAF YÜKLE'}</p>
-                  </div>
-
-                  <div className="space-y-3">
-                    <p className="text-[9px] font-black text-[#E30613] uppercase tracking-widest">VELİ BİLGİLERİ</p>
-                    <input type="text" placeholder="Veli Ad Soyad" required className="w-full p-3 bg-black/20 border border-white/10 rounded-xl text-white text-xs font-bold outline-none focus:border-[#E30613]" value={formData.parentName} onChange={e => setFormData({...formData, parentName: e.target.value})} />
-                    <input type="email" placeholder="E-posta (Giriş için)" required className="w-full p-3 bg-black/20 border border-white/10 rounded-xl text-white text-xs font-bold outline-none focus:border-[#E30613]" value={formData.parentEmail} onChange={e => setFormData({...formData, parentEmail: e.target.value})} />
-                    <input type="password" placeholder="Şifre Belirleyin" required className="w-full p-3 bg-black/20 border border-white/10 rounded-xl text-white text-xs font-bold outline-none focus:border-[#E30613]" value={formData.parentPassword} onChange={e => setFormData({...formData, parentPassword: e.target.value})} />
-                    <input type="tel" placeholder="Telefon" required className="w-full p-3 bg-black/20 border border-white/10 rounded-xl text-white text-xs font-bold outline-none focus:border-[#E30613]" value={formData.parentPhone} onChange={e => setFormData({...formData, parentPhone: e.target.value})} />
-                  </div>
-                  <div className="space-y-3">
-                    <p className="text-[9px] font-black text-[#E30613] uppercase tracking-widest">SPORCU BİLGİLERİ</p>
-                    <input type="text" placeholder="Sporcu Ad Soyad" required className="w-full p-3 bg-black/20 border border-white/10 rounded-xl text-white text-xs font-bold outline-none focus:border-[#E30613]" value={formData.studentName} onChange={e => setFormData({...formData, studentName: e.target.value})} />
-                    <div className="grid grid-cols-2 gap-2">
-                       <select className="bg-black/20 border border-white/10 rounded-xl text-white text-[10px] font-bold p-3 outline-none" value={formData.studentGender} onChange={e => setFormData({...formData, studentGender: e.target.value})}>
-                          <option value="Erkek" className="bg-zinc-900">ERKEK</option>
-                          <option value="Kız" className="bg-zinc-900">KIZ</option>
-                       </select>
-                       <input type="number" placeholder="Yıl (2012)" required className="bg-black/20 border border-white/10 rounded-xl text-white text-xs font-bold p-3 outline-none" value={formData.studentBirthYear} onChange={e => setFormData({...formData, studentBirthYear: e.target.value})} />
-                    </div>
-                  </div>
-                </div>
-                
-                <button type="submit" disabled={isRegistering || isOptimizing} className="w-full py-4 bg-white text-zinc-900 hover:bg-gray-100 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-50">
-                  {isRegistering ? <Loader2 size={16} className="animate-spin" /> : <><CheckCircle2 size={16} /> KAYDI TAMAMLA</>}
-                </button>
-                <button type="button" onClick={() => setView('login')} className="w-full text-[9px] font-black text-white/40 hover:text-white uppercase tracking-widest">
-                  GİRİŞ EKRANINA DÖN
-                </button>
-              </form>
+              <div className="p-4 text-center">
+                <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-4">Sporcu kayıt sistemi aktif.</p>
+                <button onClick={() => setView('login')} className="text-white font-black text-[10px] uppercase border-b border-white/20 pb-1">Giriş Ekranına Dön</button>
+              </div>
             )}
           </div>
         </div>
-        
-        {/* Footer Info */}
         <div className="mt-8 text-center space-y-2">
            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
               <ShieldCheck size={12} className="text-[#E30613]" />
-              <span className="text-[8px] font-black text-white/60 uppercase tracking-widest">GÜVENLİ SSL BAĞLANTISI</span>
+              <span className="text-[8px] font-black text-white/60 uppercase tracking-widest italic">FIREBASE SECURE AUTH</span>
            </div>
            <p className="text-[8px] text-white/20 font-black uppercase tracking-[0.3em]">POWERED BY ENGIN ULUDAG</p>
         </div>

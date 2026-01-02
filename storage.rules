@@ -1,0 +1,10 @@
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      // Geliştirme aşamasında herkese açık, canlı yayında auth zorunlu yapılmalıdır.
+      allow read, write: if true;
+    }
+  }
+}

@@ -21,7 +21,8 @@ export const getAICoachResponse = async (userInput: string, context: AppContextD
   if (!process.env.API_KEY) return { text: "API Key eksik. Lütfen ayarlardan kontrol edin." };
 
   const ai = getAIClient();
-  const today = new Date().toLocaleDateString('tr-TR');
+  // Önerdiğin "Prompt Injection of Time" - AI'ya taze zaman bilgisi veriyoruz.
+  const now = new Date().toLocaleString('tr-TR');
 
   let specializedData = mode === 'admin' 
     ? `Yönetici Özeti: ${context.students.length} sporcu, Kasa: ${context.finance.reduce((a, c) => c.type === 'income' ? a + c.amount : a - c.amount, 0)} TL.`
@@ -35,12 +36,13 @@ export const getAICoachResponse = async (userInput: string, context: AppContextD
         tools: [{ googleSearch: {} }],
         systemInstruction: `
         Sen Batman Gençlerbirliği (BGB) asistanısın. 
-        1. Sadece Batman ve BGB kulübü hakkında gerçek verilere dayanarak konuş.
-        2. Hava durumu, güncel spor haberleri gibi konularda MUTLAKA Google Search kullan.
-        3. Bilmediğin kulüp bilgilerinde "Bu bilgi sistemde yok, Engin Hoca'ya danışın" de.
+        SİSTEM ZAMANI: ${now}.
+        KRİTİK TALİMAT:
+        1. Verileri yorumlarken mutlaka yukarıdaki SİSTEM ZAMANI'nı baz al.
+        2. Hava durumu veya güncel skorlar için Google Search kullan.
+        3. Kulüp finansı veya sporcu sayıları hakkında sistemdeki en güncel veriyi (specializedData) kullan.
         4. Kulüp Verileri: ${CLUB_INFO}. 
-        5. Durum: ${specializedData}. 
-        6. Tarih: ${today}.
+        5. Durum: ${specializedData}.
         `
       }
     });

@@ -87,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
               </h1>
               <div className="flex items-center gap-1 mt-1">
                 <Wifi size={8} className="text-green-500" />
-                <p className="text-[8px] text-green-500 font-bold tracking-[0.2em]">ONLINE V.1.5.0</p>
+                <p className="text-[8px] text-green-500 font-bold tracking-[0.2em]">ONLINE V.1.8.0</p>
               </div>
            </div>
         </div>

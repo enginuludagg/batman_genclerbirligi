@@ -33,7 +33,7 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
     name: '', sport: 'Futbol', activeSports: ['Futbol'], branchId: 'U12', gender: 'Erkek', level: 'Başlangıç', status: 'active', attendance: 100, photoUrl: '',
     stats: { strength: 50, speed: 50, stamina: 50, technique: 50 },
     jerseyNumber: undefined,
-    registrationDate: new Date().toISOString().split('T')[0] // Varsayılan bugün
+    registrationDate: new Date().toISOString().split('T')[0]
   });
 
   useEffect(() => {
@@ -45,12 +45,6 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
 
   const optimizeImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-      if (file.size > 20 * 1024 * 1024) {
-        alert("Dosya çok büyük. Lütfen daha küçük bir fotoğraf seçin.");
-        reject("File too large");
-        return;
-      }
-
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = (event) => {
@@ -61,23 +55,14 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
           const MAX_WIDTH = 600; 
           let width = img.width;
           let height = img.height;
-          
-          if (width > MAX_WIDTH) { 
-            height *= MAX_WIDTH / width; 
-            width = MAX_WIDTH; 
-          }
-          
+          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
-          
           if(ctx) {
              ctx.drawImage(img, 0, 0, width, height);
-             const dataUrl = canvas.toDataURL('image/jpeg', 0.50);
-             resolve(dataUrl);
-          } else {
-             reject("Canvas error");
-          }
+             resolve(canvas.toDataURL('image/jpeg', 0.50));
+          } else { reject("Canvas error"); }
         };
       };
       reader.onerror = error => reject(error);
@@ -93,18 +78,6 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
       registrationDate: new Date().toISOString().split('T')[0]
     }));
     setViewState('add');
-  };
-
-  const toggleStudentStatus = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    setStudents(prev => prev.map(s => s.id === id ? { ...s, status: s.status === 'active' ? 'passive' : 'active' } : s));
-  };
-
-  const deleteStudent = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    if (window.confirm('Bu sporcu kaydını kalıcı olarak silmek istediğinize emin misiniz?')) {
-      setStudents(prev => prev.filter(s => s.id !== id));
-    }
   };
 
   const handleAddStudent = () => {
@@ -132,11 +105,7 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
       try {
         const optimized = await optimizeImage(file);
         setNewStudent(prev => ({ ...prev, photoUrl: optimized }));
-      } catch (err) {
-        alert("Resim yüklenirken hata oluştu.");
-      } finally {
-        setIsOptimizing(false);
-      }
+      } catch (err) { alert("Resim yüklenirken hata oluştu."); } finally { setIsOptimizing(false); }
     }
   };
 
@@ -188,16 +157,6 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <input type="text" placeholder="İsim ara..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-11 pr-4 py-4 bg-white border border-gray-100 rounded-2xl outline-none w-full text-xs font-bold shadow-sm" />
           </div>
-          <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 overflow-x-auto no-scrollbar gap-1 mobile-snap">
-            {['Hepsi', 'Futbol', 'Voleybol', 'Cimnastik'].map(sport => (
-              <button key={sport} onClick={() => setActiveSport(sport as any)} className={`px-5 py-2.5 rounded-xl text-[9px] font-black transition-all whitespace-nowrap mobile-snap-item ${activeSport === sport ? 'bg-red-600 text-white shadow-md' : 'text-gray-400'}`}>{sport.toUpperCase()}</button>
-            ))}
-          </div>
-        </div>
-        <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 overflow-x-auto no-scrollbar gap-1 w-full mobile-snap">
-          {ACADEMY_GROUPS.map(cat => (
-            <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-5 py-2.5 rounded-xl text-[9px] font-black transition-all whitespace-nowrap mobile-snap-item ${activeCategory === cat ? 'bg-zinc-900 text-white shadow-md' : 'text-gray-400'}`}>{cat}</button>
-          ))}
         </div>
       </div>
 
@@ -210,50 +169,25 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
               <div className="flex items-center gap-3 overflow-hidden pl-2">
                 <div className={`w-12 h-12 ${getSportColor(sports[0])} rounded-2xl flex items-center justify-center text-white text-[10px] font-black italic relative overflow-hidden shadow-sm`}>
                   {s.photoUrl ? <img src={s.photoUrl} className="w-full h-full object-cover" /> : s.name[0]}
-                  {s.jerseyNumber && <div className="absolute bottom-0 right-0 bg-zinc-950 text-white text-[7px] px-1 rounded-tl-md font-bold">#{s.jerseyNumber}</div>}
                 </div>
                 <div className="text-left overflow-hidden">
                   <h4 className="font-black text-gray-900 text-xs uppercase truncate">{s.name}</h4>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className={`text-[8px] font-black uppercase ${s.gender === 'Kız' ? 'text-pink-600' : 'text-blue-600'}`}>{s.gender}</span>
-                    <div className="flex gap-1">
-                       {sports.map(sp => (
-                         <span key={sp} className={`text-[7px] font-black text-white px-1.5 py-0.5 rounded uppercase ${getSportColor(sp)}`}>{sp[0]}</span>
-                       ))}
-                    </div>
-                    <span className="text-[8px] font-black text-red-600 uppercase">{s.branchId}</span>
-                  </div>
-                  {/* Kayıt Tarihi Gösterimi */}
-                  <div className="flex items-center gap-1 mt-1 text-[8px] text-gray-400 font-bold uppercase">
-                     <Calendar size={8} /> {s.registrationDate ? new Date(s.registrationDate).toLocaleDateString('tr-TR') : 'Eski Kayıt'}
-                  </div>
+                  <span className="text-[8px] font-black text-red-600 uppercase">{s.branchId}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 relative z-10">
-                 {mode === 'admin' && (
-                   <>
-                     <button onClick={(e) => toggleStudentStatus(e, s.id)} className={`p-2 transition-colors ${s.status === 'active' ? 'text-gray-300 hover:text-orange-600' : 'text-orange-600 hover:text-green-600'}`} title={s.status === 'active' ? 'Pasife Al' : 'Aktif Et'}>
-                       {s.status === 'active' ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
-                     </button>
-                     <button onClick={(e) => deleteStudent(e, s.id)} className="p-2 text-gray-300 hover:text-red-600" title="Sil">
-                       <Trash2 size={18} />
-                     </button>
-                   </>
-                 )}
-                 <ChevronRight size={18} className="text-gray-300" />
-              </div>
+              <ChevronRight size={18} className="text-gray-300" />
             </div>
           );
         })}
       </div>
 
       {viewState === 'add' && (
-        <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md overflow-y-auto">
-          <div className="bg-white w-full max-w-lg rounded-[3rem] p-8 sm:p-12 shadow-2xl relative animate-in zoom-in-95 my-auto">
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md overflow-y-auto">
+          <div className="bg-white w-full max-w-lg rounded-[3rem] p-8 sm:p-12 shadow-2xl relative animate-in zoom-in-95 my-auto max-h-[90vh] overflow-y-auto no-scrollbar">
             <button onClick={() => setViewState('list')} className="absolute top-6 right-6 text-gray-400 hover:text-black"><X size={28} /></button>
             <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-8">YENİ <span className="text-red-600">SPORCU EKLE</span></h3>
             
-            <div className="space-y-6">
+            <div className="space-y-6 pb-8">
               <div className="flex flex-col items-center">
                  <div onClick={() => !isOptimizing && document.getElementById('new-photo-up')?.click()} className={`w-28 h-28 bg-gray-50 rounded-[2.5rem] border-4 border-dashed border-gray-100 flex items-center justify-center cursor-pointer overflow-hidden relative group hover:border-red-600 transition-all ${isOptimizing ? 'opacity-50' : ''}`}>
                     {newStudent.photoUrl ? <img src={newStudent.photoUrl} className="w-full h-full object-cover" /> : <Upload size={32} className={`text-gray-300 ${isOptimizing ? 'animate-bounce' : ''}`} />}
@@ -266,65 +200,30 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
                 <div className="grid grid-cols-4 gap-4">
                   <div className="col-span-3">
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">SPORCU AD SOYAD</label>
-                    <input 
-                      ref={firstInputRef}
-                      type="text" 
-                      placeholder="Ad Soyad giriniz..." 
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600 focus:bg-white transition-all shadow-sm" 
-                      value={newStudent.name} 
-                      onChange={e => setNewStudent({...newStudent, name: e.target.value})} 
-                    />
+                    <input ref={firstInputRef} type="text" placeholder="Ad Soyad" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600" value={newStudent.name} onChange={e => setNewStudent({...newStudent, name: e.target.value})} />
                   </div>
                   <div>
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">NO</label>
-                    <input 
-                      type="number" 
-                      placeholder="99" 
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600 focus:bg-white transition-all shadow-sm" 
-                      value={newStudent.jerseyNumber || ''} 
-                      onChange={e => setNewStudent({...newStudent, jerseyNumber: parseInt(e.target.value) || undefined})} 
-                    />
+                    <input type="number" placeholder="99" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600" value={newStudent.jerseyNumber || ''} onChange={e => setNewStudent({...newStudent, jerseyNumber: parseInt(e.target.value) || undefined})} />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">ANA BRANŞ</label>
-                    <select className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-red-600" value={newStudent.sport} onChange={e => {
-                      const sp = e.target.value as any;
-                      setNewStudent({...newStudent, sport: sp, activeSports: [sp]});
-                    }}>
-                      <option value="Futbol">FUTBOL</option>
-                      <option value="Voleybol">VOLEYBOL</option>
-                      <option value="Cimnastik">CİMNASTİK</option>
-                    </select>
-                  </div>
                   <div>
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">GRUP</label>
                     <select className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-black uppercase outline-none focus:border-red-600" value={newStudent.branchId} onChange={e => setNewStudent({...newStudent, branchId: e.target.value})}>
                       {ACADEMY_GROUPS.filter(g => g !== 'TÜM GRUPLAR').map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
                   </div>
-                </div>
-
-                {/* Kayıt Tarihi Input */}
-                <div>
+                   <div>
                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">KAYIT TARİHİ</label>
-                   <input 
-                     type="date" 
-                     className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600"
-                     value={newStudent.registrationDate}
-                     onChange={e => setNewStudent({...newStudent, registrationDate: e.target.value})}
-                   />
+                   <input type="date" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black outline-none focus:border-red-600" value={newStudent.registrationDate} onChange={e => setNewStudent({...newStudent, registrationDate: e.target.value})} />
+                </div>
                 </div>
               </div>
 
-              <button 
-                onClick={handleAddStudent} 
-                disabled={isOptimizing}
-                className="w-full py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-red-600 active:scale-95 transition-all mt-4 flex items-center justify-center gap-3 disabled:opacity-50"
-              >
-                <Save size={18} /> KAYDI TAMAMLA
+              <button onClick={handleAddStudent} disabled={isOptimizing} className="w-full py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-red-600 active:scale-95 transition-all mt-4 mb-4">
+                KAYDI TAMAMLA
               </button>
             </div>
           </div>

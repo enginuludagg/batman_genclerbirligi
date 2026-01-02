@@ -38,11 +38,11 @@ export const storageService = {
   },
 
   /**
-   * Bulut Veri Çekme - forceServer aktifse yerel cache'i atlar.
+   * Bulut Veri Çekme - forceServer aktifse yerel cache'i (IndexedDB) tamamen baypas eder.
    */
   loadFromCloud: async (colName: string, forceServer: boolean = false) => {
     try {
-      // source: 'server' kullanarak Firestore'un yerel cache'i atlaması sağlanır.
+      // source: 'server' Firestore SDK'nın yerel cache'e bakmadan doğrudan sunucuya gitmesini sağlar.
       const options = forceServer ? { source: 'server' as const } : {};
       const querySnapshot = await db.collection(colName).get(options);
       return querySnapshot.docs.map(doc => ({ 
@@ -51,7 +51,6 @@ export const storageService = {
       }));
     } catch (e) {
       console.warn(`[BGB-Cloud] Okuma Hatası (${colName}): Yerel veriler kullanılıyor.`);
-      // Eğer server'dan çekme hatası alınırsa (offline durumu vb.), default olarak cache'e döner.
       const querySnapshot = await db.collection(colName).get();
       return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }

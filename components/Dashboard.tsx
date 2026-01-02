@@ -14,31 +14,42 @@ const Dashboard: React.FC<DashboardProps> = ({ context, appMode, onNavigate }) =
   const [showIdCard, setShowIdCard] = useState(false);
   const [weather, setWeather] = useState<{ temp: number; icon: any; desc: string } | null>(null);
   
-  const publishedMedia = context.media.filter(m => m.status === 'published');
+  const publishedMedia = context?.media?.filter(m => m.status === 'published') || [];
   const recentBulletins = publishedMedia.filter(m => m.type === 'bulletin').slice(0, 3);
-  const currentStudent = context.students[0];
-
-  const activeStudentCount = context.students.filter(s => s.status === 'active').length;
-  const totalBalance = context.finance.reduce((acc, curr) => curr.type === 'income' ? acc + curr.amount : acc - curr.amount, 0);
-  const nextMatch = context.fixtures.filter(f => f.status === 'scheduled')[0];
+  
+  const activeStudentCount = context?.students?.filter(s => s.status === 'active').length || 0;
+  const totalBalance = context?.finance?.reduce((acc, curr) => curr.type === 'income' ? acc + curr.amount : acc - curr.amount, 0) || 0;
+  const nextMatch = context?.fixtures?.filter(f => f.status === 'scheduled')[0];
 
   useEffect(() => {
+    let isMounted = true;
     const fetchWeather = async () => {
       try {
-        // Batman Koordinatları
-        const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=37.8874&longitude=41.1322&current_weather=true");
+        // Batman Koordinatları - Cache busting için timestamp eklendi, CORS tetikleyen headerlar kaldırıldı
+        const t = Date.now();
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=37.8874&longitude=41.1322&current_weather=true&_=${t}`);
+        
+        if (!res.ok) throw new Error("Weather service not available");
+        
         const data = await res.json();
+        if (!isMounted) return;
+
         const code = data.current_weather.weathercode;
         let icon = <Sun size={14} className="text-yellow-500" />;
         let desc = "Güneşli";
         if (code > 50) { icon = <CloudRain size={14} className="text-blue-500" />; desc = "Yağmurlu"; }
         else if (code > 0) { icon = <Cloud size={14} className="text-gray-400" />; desc = "Parçalı Bulutlu"; }
+        
         setWeather({ temp: Math.round(data.current_weather.temperature), icon, desc });
-      } catch {
-        setWeather({ temp: 24, icon: <Sun size={14} />, desc: "Batman" });
+      } catch (error) {
+        console.warn("Hava durumu verisi çekilemedi, varsayılan değerler kullanılıyor.");
+        if (isMounted) {
+          setWeather({ temp: 24, icon: <Sun size={14} className="text-yellow-500" />, desc: "Batman" });
+        }
       }
     };
     fetchWeather();
+    return () => { isMounted = false; };
   }, []);
 
   const quickActions = [
@@ -80,14 +91,14 @@ const Dashboard: React.FC<DashboardProps> = ({ context, appMode, onNavigate }) =
                <h3 className="text-2xl font-black text-slate-900 italic">{activeStudentCount}</h3>
             </div>
          </div>
-         <div onClick={() => onNavigate('finance')} className="bg-white p-6 rounded-[2rem] border border-green-50 shadow-sm flex items-center gap-4 cursor-pointer hover:border-green-200">
+         <div onClick={() => onNavigate('finance')} className="bg-white p-6 rounded-[2rem] border border-green-50 shadow-sm flex items-center gap-4 cursor-pointer hover:border-green-200 transition-all">
             <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600"><Wallet size={24} /></div>
             <div>
-               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">KASA DURUMU</p>
+               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">KASA DURUMU</p>
                <h3 className={`text-2xl font-black italic ${totalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>₺{totalBalance.toLocaleString()}</h3>
             </div>
          </div>
-         <div onClick={() => onNavigate('league')} className="bg-zinc-900 p-6 rounded-[2rem] shadow-xl flex items-center gap-4 cursor-pointer">
+         <div onClick={() => onNavigate('league')} className="bg-zinc-900 p-6 rounded-[2rem] shadow-xl flex items-center gap-4 cursor-pointer hover:bg-zinc-800 transition-all">
             <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-orange-500"><Trophy size={24} /></div>
             <div className="flex-1">
                <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">SIRADAKİ MAÇ</p>
@@ -99,8 +110,8 @@ const Dashboard: React.FC<DashboardProps> = ({ context, appMode, onNavigate }) =
       {appMode === 'admin' && (
         <div className="grid grid-cols-4 gap-3">
           {quickActions.map(action => (
-            <button key={action.id} onClick={() => onNavigate(action.view as ViewType)} className="bg-white p-3 py-4 rounded-[1.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-2 hover:border-[#E30613] transition-all">
-              <div className={`${action.color} text-white p-2.5 rounded-xl shadow-lg`}><action.icon size={16} /></div>
+            <button key={action.id} onClick={() => onNavigate(action.view as ViewType)} className="bg-white p-3 py-4 rounded-[1.5rem] shadow-sm border border-slate-100 flex flex-col items-center gap-2 hover:border-[#E30613] transition-all active:scale-95 group">
+              <div className={`${action.color} text-white p-2.5 rounded-xl shadow-lg group-hover:rotate-6 transition-transform`}><action.icon size={16} /></div>
               <span className="text-[7px] font-black uppercase text-slate-600 text-center leading-tight">{action.label}</span>
             </button>
           ))}

@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -17,7 +17,7 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;0,900;1,900&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS (Standart CDN) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
     <script>
       tailwind.config = {
@@ -32,6 +32,16 @@
             },
             spacing: {
               'safe-bottom': 'env(safe-area-inset-bottom)',
+            },
+            animation: {
+              'highlight': 'highlight 1s cubic-bezier(0, 0, 0.2, 1)',
+              'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+            },
+            keyframes: {
+              highlight: {
+                '0%': { backgroundColor: '#10b98133' },
+                '100%': { backgroundColor: 'transparent' }
+              }
             }
           }
         }
@@ -39,22 +49,37 @@
     </script>
 
     <style>
-        body { 
+        html, body { 
+            height: 100%;
+            height: 100dvh; 
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            overscroll-behavior: none;
             font-family: 'Roboto', sans-serif; 
             background-color: #f8fafc;
-            margin: 0;
-            overscroll-behavior-y: contain;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
         }
+
+        #root {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
         
         #splash-loader {
             position: fixed; inset: 0; background: #111;
             display: flex; align-items: center; justify-content: center;
-            z-index: 9999; transition: opacity 0.5s;
+            z-index: 10000; transition: opacity 0.5s;
+        }
+
+        input, select, textarea {
+            font-size: 16px !important;
+            -webkit-user-select: text;
         }
     </style>
 <script type="importmap">
@@ -73,20 +98,17 @@
 }
 </script>
 </head>
-<body>
+<body class="antialiased">
     <div id="root">
         <div id="splash-loader">
             <div style="text-align:center;">
                <img src="https://lh3.googleusercontent.com/d/1T6HGO_QAqUAVghAwgWTh-mtyG3d67Gup" width="80" height="80" alt="BGB" style="animation: pulse 2s infinite;">
-               <p style="color:#666; font-size:10px; font-weight:900; letter-spacing:4px; margin-top:20px; font-family:sans-serif;">YÜKLENİYOR</p>
+               <p style="color:#666; font-size:10px; font-weight:900; letter-spacing:4px; margin-top:20px; font-family:sans-serif; text-transform: uppercase;">BGB Akademi</p>
             </div>
         </div>
     </div>
     
     <script>
-      // Process polyfill
-      window.process = { env: { API_KEY: "" } };
-      
       window.onload = () => {
         setTimeout(() => {
            const l = document.getElementById('splash-loader');
@@ -94,11 +116,6 @@
         }, 1200);
       };
     </script>
-    
     <script type="module" src="/index.tsx"></script>
-    <style>
-      @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
-    </style>
 </body>
 </html>
-    
