@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Mail, Lock, ArrowRight, AlertCircle, ShieldCheck, Loader2, Upload, ShieldAlert, Globe, HelpCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, AlertCircle, ShieldCheck, Loader2, ShieldAlert, Globe, HelpCircle, Terminal, RefreshCw } from 'lucide-react';
 import { AppMode, Student } from '../types';
 import Logo from './Logo';
 import firebase from "firebase/compat/app";
@@ -23,24 +23,20 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
     reason: string | null;
   }>({ isValid: true, reason: null });
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const isLocalFile = window.location.protocol === 'file:';
 
-  // Ortam ve Protokol Kontrolü
   useEffect(() => {
     const checkEnvironment = async () => {
-      const protocol = window.location.protocol;
-      const isLocalFile = protocol === 'file:';
-      
-      // 1. Protokol Kontrolü
+      // 1. Protokol Kontrolü (Hata fırlatmadan önce yakala)
       if (isLocalFile) {
         setEnvStatus({ 
           isValid: false, 
-          reason: 'Uygulama yerel bir dosya (file://) olarak açılmış. Sosyal girişlerin çalışması için uygulamayı bir sunucu (localhost veya https) üzerinden çalıştırmalısınız.' 
+          reason: 'Uygulama bir web sunucusu üzerinden çalışmıyor.' 
         });
         return;
       }
 
-      // 2. Web Storage (localStorage) Kontrolü
+      // 2. Web Storage Kontrolü
       try {
         const testKey = '__storage_test__';
         localStorage.setItem(testKey, testKey);
@@ -48,24 +44,27 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
       } catch (e) {
         setEnvStatus({ 
           isValid: false, 
-          reason: 'Tarayıcınızın "Yerel Depolama" erişimi engellenmiş. Lütfen üçüncü taraf çerezlere izin verin veya gizli sekmeyi kapatın.' 
+          reason: 'Tarayıcı depolama alanı (LocalStorage) erişilemez durumda.' 
         });
         return;
       }
 
-      // 3. Firebase Redirect Sonucu Kontrolü
+      // 3. Redirect Sonucu Kontrolü (Sadece geçerli protokoldeysek)
       try {
         const result = await firebase.auth().getRedirectResult();
         if (result && result.user) {
           runAthleteMatchingLogic(result.user);
         }
       } catch (err: any) {
-        handleAuthError(err, 'redirect');
+        // Çevresel hataları sessizce logla, UI'da göster
+        if (err.code !== 'auth/operation-not-supported-in-this-environment') {
+           handleAuthError(err, 'redirect');
+        }
       }
     };
 
     checkEnvironment();
-  }, []);
+  }, [isLocalFile]);
 
   const runAthleteMatchingLogic = async (user: firebase.User) => {
     const inputEmail = user.email?.toLowerCase().trim();
@@ -82,58 +81,33 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
     if (registeredStudent) {
       onLogin('parent', registeredStudent);
     } else {
-      setError(`Bu e-posta (${inputEmail}) ile sistemde kayıtlı bir sporcu/veli bulunamadı.`);
+      setError(`Bu e-posta (${inputEmail}) ile kayıtlı sporcu bulunamadı.`);
       await firebase.auth().signOut();
     }
   };
 
   const handleAuthError = (err: any, type: 'popup' | 'redirect') => {
-    const errorCode = err.code;
-    console.error(`Firebase Auth Hatası (${type}):`, errorCode, err.message);
-
-    let userFacingError = "Giriş işlemi başarısız.";
-
-    switch (errorCode) {
-      case 'auth/operation-not-supported-in-this-environment':
-        userFacingError = "Bulunduğunuz ortam sosyal girişi desteklemiyor. Lütfen uygulamayı Chrome veya Safari gibi standart bir tarayıcıda, doğrudan bir web adresi üzerinden açın.";
-        break;
-      case 'auth/popup-closed-by-user':
-        userFacingError = "Giriş penceresi kapatıldı.";
-        break;
-      case 'auth/web-storage-unsupported':
-        userFacingError = "Tarayıcı depolama alanı erişilemez durumda. Lütfen çerezlere izin verin.";
-        break;
-      case 'auth/unauthorized-domain':
-        userFacingError = "Bu alan adı Firebase üzerinde yetkilendirilmemiş. Lütfen yöneticiye başvurun.";
-        break;
-      default:
-        userFacingError = `Hata oluştu: ${err.message}`;
+    console.error(`Firebase Auth Hatası (${type}):`, err.code);
+    let msg = "Giriş işlemi başarısız.";
+    if (err.code === 'auth/operation-not-supported-in-this-environment') {
+      msg = "Bu ortam sosyal girişi desteklemiyor. Lütfen uygulamayı bir sunucu üzerinden açın.";
+    } else if (err.code === 'auth/popup-blocked') {
+      msg = "Açılır pencere engellendi. Lütfen izin verin.";
     }
-    setError(userFacingError);
+    setError(msg);
   };
 
   const handleSocialLogin = async () => {
-    if (!envStatus.isValid) {
-      setError(envStatus.reason || 'Geçersiz ortam.');
-      return;
-    }
-
+    if (isLocalFile) return;
     setIsLoadingSocial(true);
     setError('');
     
     const provider = new firebase.auth.GoogleAuthProvider();
-
     try {
-      // Önce kalıcılığı zorla
       await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-      
-      // Popup dene, hata verirse redirect'e düşecek
       const result = await firebase.auth().signInWithPopup(provider);
-      if (result.user) {
-        await runAthleteMatchingLogic(result.user);
-      }
+      if (result.user) await runAthleteMatchingLogic(result.user);
     } catch (err: any) {
-      // Eğer ortam popup desteklemiyorsa otomatik Redirect dene
       if (err.code === 'auth/operation-not-supported-in-this-environment' || err.code === 'auth/popup-blocked') {
         try {
           await firebase.auth().signInWithRedirect(provider);
@@ -168,6 +142,47 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
     } else { setError('Kayıtlı kullanıcı bulunamadı.'); }
   };
 
+  // KRİTİK: file:// Protokolü için Engelleyici Ekran
+  if (isLocalFile) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-[#111] flex items-center justify-center p-6 overflow-hidden">
+        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+        <div className="relative w-full max-w-lg bg-zinc-900 border border-red-900/30 rounded-[3rem] p-10 sm:p-14 shadow-2xl text-center space-y-8 animate-in zoom-in duration-500">
+          <div className="w-24 h-24 bg-red-600/10 rounded-[2rem] flex items-center justify-center mx-auto border border-red-600/20 text-red-600 shadow-lg">
+            <ShieldAlert size={48} className="animate-pulse" />
+          </div>
+          
+          <div className="space-y-4">
+            <h1 className="text-3xl font-black italic uppercase tracking-tighter text-white">GEÇERSİZ <span className="text-red-600">ORTAM</span></h1>
+            <p className="text-zinc-400 text-sm font-bold leading-relaxed uppercase">
+              Uygulama şu anda bir "Dosya" olarak açılmış. Firebase güvenlik politikaları gereği sosyal girişler sadece bir web sunucusu üzerinde çalışır.
+            </p>
+          </div>
+
+          <div className="bg-black/40 rounded-3xl p-6 text-left border border-white/5 space-y-4">
+            <p className="text-[10px] font-black text-red-600 uppercase tracking-widest flex items-center gap-2 italic">
+               <Terminal size={14} /> ÇÖZÜM ADIMLARI
+            </p>
+            <ul className="space-y-3 text-xs font-bold text-zinc-500 uppercase italic">
+              <li className="flex items-center gap-3"><div className="w-5 h-5 bg-white/5 rounded flex items-center justify-center text-[10px] text-white">1</div> Uygulamayı Vite (npm run dev) ile başlatın.</li>
+              <li className="flex items-center gap-3"><div className="w-5 h-5 bg-white/5 rounded flex items-center justify-center text-[10px] text-white">2</div> Tarayıcıda http://localhost:3000 adresini açın.</li>
+              <li className="flex items-center gap-3"><div className="w-5 h-5 bg-white/5 rounded flex items-center justify-center text-[10px] text-white">3</div> Veya Vercel/Firebase Hosting'e yükleyin.</li>
+            </ul>
+          </div>
+
+          <button 
+            onClick={() => window.location.reload()}
+            className="w-full py-5 bg-zinc-800 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-red-600 transition-all shadow-xl active:scale-95"
+          >
+            <RefreshCw size={18} /> SAYFAYI YENİLE
+          </button>
+          
+          <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.3em]">BGB AKADEMİ GÜVENLİK PROTOKOLÜ</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-[#111]">
       <div className="absolute inset-0 z-0">
@@ -185,19 +200,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
           </div>
 
           <div className="px-8 pb-10">
-            {!envStatus.isValid && (
-              <div className="mb-6 p-4 bg-orange-500/20 border border-orange-500/50 rounded-2xl flex flex-col gap-3 text-orange-100 animate-in fade-in duration-300">
-                <div className="flex items-start gap-3">
-                  <ShieldAlert size={20} className="shrink-0 mt-0.5 text-orange-400" /> 
-                  <p className="text-[10px] font-bold leading-relaxed">{envStatus.reason}</p>
-                </div>
-                <div className="flex items-center gap-2 pt-2 border-t border-orange-500/20">
-                  <Globe size={12} className="text-orange-400" />
-                  <span className="text-[8px] font-black uppercase tracking-widest">ÇÖZÜM: HTTP/HTTPS ÜZERİNDEN ÇALIŞTIRIN</span>
-                </div>
-              </div>
-            )}
-
             {view === 'login' ? (
               <form onSubmit={handleLogin} className="space-y-5">
                 {error && (
@@ -230,9 +232,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
                 <div className="flex justify-center">
                    <button 
                     type="button" 
-                    disabled={isLoadingSocial || !envStatus.isValid}
+                    disabled={isLoadingSocial}
                     onClick={() => handleSocialLogin()} 
-                    className={`w-full flex items-center justify-center gap-3 py-4 bg-white rounded-2xl transition-all active:scale-95 disabled:opacity-50 shadow-xl ${!envStatus.isValid ? 'cursor-not-allowed grayscale opacity-50' : 'hover:bg-gray-100'}`}
+                    className="w-full flex items-center justify-center gap-3 py-4 bg-white rounded-2xl transition-all active:scale-95 disabled:opacity-50 shadow-xl hover:bg-gray-100"
                    >
                       {isLoadingSocial ? <Loader2 size={18} className="animate-spin text-zinc-900" /> : (
                         <>
@@ -247,9 +249,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onRegisterStudent, students }) => 
                   <button type="button" onClick={() => setView('register')} className="text-[10px] font-black text-white/60 hover:text-white uppercase tracking-widest transition-colors border-b border-transparent hover:border-white/40 pb-0.5">
                     YENİ SPORCU KAYDI
                   </button>
-                  <div className="flex items-center gap-1.5 text-[8px] font-bold text-white/30 uppercase tracking-tight mt-2">
-                    <HelpCircle size={10} /> Sorun yaşıyorsanız bir web tarayıcısı kullanın
-                  </div>
                 </div>
               </form>
             ) : (

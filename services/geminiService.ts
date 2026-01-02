@@ -2,70 +2,72 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AppContextData, Student, Drill, AppMode } from "../types";
 
-const getAIClient = () => {
-  const apiKey = process.env.API_KEY || "";
-  return new GoogleGenAI({ apiKey });
-};
-
 const CLUB_INFO = `
   KULÜP KİMLİĞİ:
   - İsim: Batman Gençlerbirliği (BGB) Spor Kulübü ve Akademisi
   - Kurucu ve Teknik Direktör: Engin Uludağ (TFF C, TVF 2. Kademe, TCF 2. Kademe Antrenör)
-  - İletişim: 0505 340 11 01
-  - Konum: Batman Merkez, BGB Tesisleri (Gültepe Mah.)
   - Branşlar: Futbol, Voleybol, Cimnastik
   - Renkler: Kırmızı - Siyah
+  - Konum: Batman Merkez
 `;
 
-export const getAICoachResponse = async (userInput: string, context: AppContextData, mode: AppMode, currentStudent?: Student | null) => {
-  if (!process.env.API_KEY) return { text: "API Key eksik. Lütfen ayarlardan kontrol edin." };
-
-  const ai = getAIClient();
-  // Önerdiğin "Prompt Injection of Time" - AI'ya taze zaman bilgisi veriyoruz.
+/**
+ * getAICoachResponse: Google Search destekli AI asistan yanıtı üretir.
+ */
+export const getAICoachResponse = async (
+  userInput: string, 
+  context: AppContextData, 
+  mode: AppMode, 
+  currentStudent?: Student | null
+): Promise<{ text: string; sources: string[] }> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const now = new Date().toLocaleString('tr-TR');
 
   let specializedData = mode === 'admin' 
-    ? `Yönetici Özeti: ${context.students.length} sporcu, Kasa: ${context.finance.reduce((a, c) => c.type === 'income' ? a + c.amount : a - c.amount, 0)} TL.`
-    : `Veli Modu: Sporcu ${currentStudent?.name || 'Seçilmedi'}.`;
+    ? `Yönetici Özeti: ${context.students.length} sporcu aktif. Finans: ${context.finance.length} işlem kaydı mevcut.`
+    : `Veli Modu: Sporcu ${currentStudent?.name || 'Seçilmedi'}. Sadece bu sporcu özelinde bilgi ver.`;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: [{ role: 'user', parts: [{ text: userInput }] }],
       config: {
         tools: [{ googleSearch: {} }],
         systemInstruction: `
-        Sen Batman Gençlerbirliği (BGB) asistanısın. 
-        SİSTEM ZAMANI: ${now}.
-        KRİTİK TALİMAT:
-        1. Verileri yorumlarken mutlaka yukarıdaki SİSTEM ZAMANI'nı baz al.
-        2. Hava durumu veya güncel skorlar için Google Search kullan.
-        3. Kulüp finansı veya sporcu sayıları hakkında sistemdeki en güncel veriyi (specializedData) kullan.
-        4. Kulüp Verileri: ${CLUB_INFO}. 
-        5. Durum: ${specializedData}.
+        Sen Batman Gençlerbirliği (BGB) resmi AI asistanısın. 
+        GÜNCEL ZAMAN: ${now}.
+        KULÜP BİLGİLERİ: ${CLUB_INFO}.
+        VERİ BAĞLAMI: ${specializedData}.
+        TALİMATLAR: Samimi ama profesyonel bir dil kullan. Google Search kaynaklarını mutlaka belirt.
         `
       }
     });
 
-    const text = response.text;
-    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+    const text = response.text || "Şu an yanıt veremiyorum.";
+    const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+    const sources: string[] = groundingChunks
+      .map((chunk: any) => chunk.web?.uri)
+      .filter((uri: any): uri is string => typeof uri === 'string');
     
     return { 
-      text: text || "Anlaşıldı.",
-      sources: sources.map((s: any) => s.web?.uri).filter(Boolean)
+      text,
+      sources: Array.from(new Set(sources))
     };
   } catch (e) {
-    console.error("AI Error:", e);
-    return { text: "Bağlantı hatası oluştu." };
+    console.error("Gemini Error:", e);
+    return { text: "Bağlantı hatası oluştu, lütfen tekrar deneyin.", sources: [] };
   }
 };
 
+/**
+ * generateNewDrillFromAI: Yeni antrenman drilli üretir.
+ */
 export const generateNewDrillFromAI = async (sport: string = 'Futbol'): Promise<Drill> => {
-  const ai = getAIClient();
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: `${sport} için teknik antrenman drilli oluştur.` }] }],
+      model: 'gemini-3-pro-preview',
+      contents: [{ role: 'user', parts: [{ text: `${sport} branşı için çocuklara uygun, yaratıcı bir teknik antrenman drilli üret.` }] }],
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -79,35 +81,56 @@ export const generateNewDrillFromAI = async (sport: string = 'Futbol'): Promise<
             equipment: { type: Type.ARRAY, items: { type: Type.STRING } },
             description: { type: Type.STRING }
           },
-          required: ["title", "category", "description"]
+          required: ["title", "category", "description", "difficulty", "duration"]
         }
       }
     });
-    return { ...JSON.parse(response.text || '{}'), id: `ai-${Date.now()}` };
+    
+    const jsonStr = response.text || '{}';
+    return { ...JSON.parse(jsonStr), id: `ai-${Date.now()}` };
   } catch (e) {
-    return { id: 'err', title: 'Hata', category: 'Teknik', difficulty: 1, duration: '10dk', equipment: [], description: 'AI hatası.' };
+    console.error("Gemini Drill Error:", e);
+    return { 
+      id: 'err', 
+      title: 'Hızlı Pas Çalışması', 
+      category: 'Teknik', 
+      difficulty: 2, 
+      duration: '15dk', 
+      equipment: ['Top', 'Huniler'], 
+      description: 'AI şu an çevrimdışı, manuel ekleme yapabilirsiniz.' 
+    };
   }
 };
 
-export const getCoachSuggestions = async (student: Student) => {
-  if (!process.env.API_KEY) return "Gelişimi devam ediyor.";
-  const ai = getAIClient();
-  try {
-    const res = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: `${student.name} (${student.stats.technique} teknik) için kısa motive edici rapor.` }] }]
-    });
-    return res.text || "Başarılar dileriz.";
-  } catch { return "Gelişimi olumlu."; }
-};
-
-export const getDrillAITips = async (drill: Drill) => {
-  const ai = getAIClient();
+/**
+ * getDrillAITips: Drill için kısa ipucu üretir.
+ */
+export const getDrillAITips = async (drill: Drill): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
       const res = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: [{ role: 'user', parts: [{ text: `${drill.title} için kısa antrenör ipucu.` }] }]
+        contents: [{ role: 'user', parts: [{ text: `"${drill.title}" antrenmanı için 1 cümlelik profesyonel ipucu ver.` }] }]
       });
-      return res.text || "Tempoyu koruyun.";
-  } catch { return "Dikkatli uygulayın."; }
+      return res.text || "Sporcuların formuna dikkat edin.";
+  } catch { return "Tempoyu sabit tutun."; }
+};
+
+/**
+ * getCoachSuggestions: Sporcu karnesi için teknik öneri üretir.
+ */
+export const getCoachSuggestions = async (student: Student): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: [{ role: 'user', parts: [{ text: `Sporcu ${student.name} için kısa teknik analiz yaz.` }] }],
+      config: {
+        systemInstruction: "Sen BGB Baş Antrenörüsün. Teknik ve motive edici kısa notlar yazarsın.",
+      }
+    });
+    return response.text || "Gelişim süreci yakından takip ediliyor.";
+  } catch (e) {
+    return "Antrenmanlara düzenli katılım gelişimi destekleyecektir.";
+  }
 };
