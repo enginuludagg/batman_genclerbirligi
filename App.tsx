@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import StudentList from './components/StudentList';
@@ -17,20 +17,33 @@ import AboutUs from './components/AboutUs';
 import Auth from './components/Auth';
 import Settings from './components/Settings';
 import MobileNav from './components/MobileNav';
-import { ViewType, Student, Trainer, FinanceEntry, MediaPost, TrainingSession, AppMode, Notification, Drill, TrainerNote, AppContextData, MatchResult } from './types';
-import { Bell, X, LogOut, LayoutGrid, CheckCircle2, Database, RefreshCw, AlertTriangle, Menu, Smartphone, ShieldAlert, CloudOff, Loader2 } from 'lucide-react';
+import { ViewType, Student, Trainer, FinanceEntry, MediaPost, TrainingSession, AppMode, Drill, TrainerNote, AppContextData, MatchResult } from './types';
+import { RefreshCw, CloudOff, Loader2, Menu } from 'lucide-react';
 import { storageService, KEYS } from './services/storageService';
 import { isConfigured, auth } from './services/firebaseConfig';
-import firebase from "firebase/compat/app";
+
+const APP_VERSION = "1.8.2";
 
 const App: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('bgb_session'));
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    const saved = localStorage.getItem('bgb_session');
+    // Eğer eski bir sürümden kalma session varsa temizle
+    const version = localStorage.getItem('bgb_app_version');
+    if (version !== APP_VERSION) {
+      localStorage.removeItem('bgb_session');
+      localStorage.setItem('bgb_app_version', APP_VERSION);
+      return false;
+    }
+    return !!saved;
+  });
+
   const [appMode, setAppMode] = useState<AppMode>(() => {
     try {
       const saved = localStorage.getItem('bgb_session');
       return saved ? JSON.parse(saved).mode : 'admin';
     } catch { return 'admin'; }
   });
+
   const [currentUser, setCurrentUser] = useState<Student | null>(() => {
     try {
       const saved = localStorage.getItem('bgb_session');
@@ -38,12 +51,7 @@ const App: React.FC = () => {
     } catch { return null; }
   });
 
-  const [activeView, setActiveView] = useState<ViewType>(() => {
-    const hash = window.location.hash.replace('#', '');
-    return (hash && ['dashboard', 'students', 'trainers', 'schedule', 'attendance', 'finance', 'media', 'league', 'ai-coach', 'analytics', 'drills', 'settings', 'notes', 'about'].includes(hash)) 
-      ? hash as ViewType : 'dashboard';
-  });
-
+  const [activeView, setActiveView] = useState<ViewType>('dashboard');
   const [students, setStudents] = useState<Student[]>(() => storageService.load(KEYS.STUDENTS, []));
   const [trainers, setTrainers] = useState<Trainer[]>(() => storageService.load(KEYS.TRAINERS, []));
   const [trainerNotes, setNotes] = useState<TrainerNote[]>(() => storageService.load(KEYS.NOTES, []));
@@ -66,7 +74,6 @@ const App: React.FC = () => {
 
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        console.log("Firebase oturumu aktif (compat):", user.email);
         const inputEmail = user.email?.toLowerCase().trim();
         const adminEmails = ['enginuludagg@gmail.com', 'elitgelisimakademi@gmail.com', 'admin@bgb.com'];
 
@@ -75,6 +82,10 @@ const App: React.FC = () => {
         } else {
            const student = students.find(s => s.parentEmail?.toLowerCase() === inputEmail);
            if (student) handleLogin('parent', student);
+           else {
+             // Eğer kullanıcı bulundu ama sporcuyla eşleşmediyse oturumu kapat
+             console.warn("Eşleşmeyen kullanıcı:", inputEmail);
+           }
         }
       }
       setIsAuthChecking(false);
@@ -87,59 +98,23 @@ const App: React.FC = () => {
     setAppMode(mode);
     setCurrentUser(student || null);
     setIsLoggedIn(true);
+    localStorage.setItem('bgb_app_version', APP_VERSION);
     localStorage.setItem('bgb_session', JSON.stringify({ mode, user: student || null }));
   };
 
   const handleNavigate = (view: ViewType) => {
     setActiveView(view);
-    window.history.pushState(null, '', `#${view}`);
     setIsSidebarOpen(false);
   };
 
-  useEffect(() => {
-    if (!isConfigured) return;
-    const fetchAllData = async () => {
-      setIsSyncing(true);
-      try {
-        const results = await Promise.allSettled([
-          storageService.loadFromCloud(KEYS.STUDENTS),
-          storageService.loadFromCloud(KEYS.TRAINERS),
-          storageService.loadFromCloud(KEYS.NOTES),
-          storageService.loadFromCloud(KEYS.SESSIONS),
-          storageService.loadFromCloud(KEYS.FINANCE),
-          storageService.loadFromCloud(KEYS.MEDIA),
-          storageService.loadFromCloud(KEYS.DRILLS),
-          storageService.loadFromCloud(KEYS.FIXTURES)
-        ]);
-        
-        if (results[0].status === 'fulfilled') setStudents(results[0].value as Student[]);
-        if (results[1].status === 'fulfilled') setTrainers(results[1].value as Trainer[]);
-        if (results[2].status === 'fulfilled') setNotes(results[2].value as TrainerNote[]);
-        if (results[3].status === 'fulfilled') setSessions(results[3].value as TrainingSession[]);
-        if (results[4].status === 'fulfilled') setFinance(results[4].value as FinanceEntry[]);
-        if (results[5].status === 'fulfilled') setMedia(results[5].value as MediaPost[]);
-        if (results[6].status === 'fulfilled') setDrills(results[6].value as Drill[]);
-        if (results[7].status === 'fulfilled') setFixtures(results[7].value as MatchResult[]);
-        
-        setConnectionError(false);
-      } catch (err) {
-        setConnectionError(true);
-      } finally {
-        setIsSyncing(false);
-      }
-    };
-    fetchAllData();
-  }, []);
-
   const handleLogout = async () => {
-    if (confirm("Çıkış yapmak istediğinize emin misiniz?")) {
-      try {
-        await auth.signOut();
-        localStorage.removeItem('bgb_session');
-        window.location.reload();
-      } catch (err) {
-        console.error("Çıkış hatası:", err);
-      }
+    try {
+      await auth.signOut();
+      localStorage.removeItem('bgb_session');
+      setIsLoggedIn(false);
+      window.location.reload();
+    } catch (err) {
+      console.error("Çıkış hatası:", err);
     }
   };
 
@@ -147,7 +122,7 @@ const App: React.FC = () => {
     return (
       <div className="fixed inset-0 bg-[#111] flex flex-col items-center justify-center gap-4">
         <Loader2 className="animate-spin text-red-600" size={48} />
-        <p className="text-white/40 font-black text-[10px] uppercase tracking-widest">Oturum Kontrol Ediliyor...</p>
+        <p className="text-white/40 font-black text-[10px] uppercase tracking-widest italic">Güvenli Oturum Kontrolü...</p>
       </div>
     );
   }
@@ -203,7 +178,7 @@ const App: React.FC = () => {
         <div className="lg:hidden flex items-center justify-between p-4 bg-white/80 backdrop-blur-md sticky top-0 z-[1000] border-b shadow-sm">
            <div className="flex items-center gap-2">
              <div className="w-8 h-8 bg-zinc-950 text-white rounded-lg flex items-center justify-center font-black">BGB</div>
-             <h1 className="text-xs font-black uppercase text-zinc-900 leading-none tracking-tighter">AKADEMİ <span className="text-red-600">MOBİL</span></h1>
+             <h1 className="text-xs font-black uppercase text-zinc-900 leading-none tracking-tighter">AKADEMİ <span className="text-red-600">PANEL</span></h1>
            </div>
            <div className="flex items-center gap-3">
              {connectionError ? <CloudOff size={18} className="text-red-500" /> : <RefreshCw size={18} className={`text-green-500 ${isSyncing ? 'animate-spin' : ''}`} />}
