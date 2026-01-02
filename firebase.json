@@ -17,20 +17,11 @@
     ],
     "headers": [
       {
-        "source": "/**",
+        "source": "**/*.@(js|css|html|png|jpg|jpeg|svg|json)",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
-          }
-        ]
-      },
-      {
-        "source": "**/*.@(js|css|png|jpg|jpeg|gif|svg|ico|woff2)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=0, must-revalidate"
+            "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
           }
         ]
       }

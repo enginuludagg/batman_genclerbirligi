@@ -22,16 +22,17 @@ import { RefreshCw, CloudOff, Loader2, Menu } from 'lucide-react';
 import { storageService, KEYS } from './services/storageService';
 import { isConfigured, auth } from './services/firebaseConfig';
 
-const APP_VERSION = "1.8.2";
+const APP_VERSION = "1.9.0";
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     const saved = localStorage.getItem('bgb_session');
-    // Eğer eski bir sürümden kalma session varsa temizle
     const version = localStorage.getItem('bgb_app_version');
+    
     if (version !== APP_VERSION) {
       localStorage.removeItem('bgb_session');
       localStorage.setItem('bgb_app_version', APP_VERSION);
+      if (version) window.location.reload();
       return false;
     }
     return !!saved;
@@ -82,10 +83,6 @@ const App: React.FC = () => {
         } else {
            const student = students.find(s => s.parentEmail?.toLowerCase() === inputEmail);
            if (student) handleLogin('parent', student);
-           else {
-             // Eğer kullanıcı bulundu ama sporcuyla eşleşmediyse oturumu kapat
-             console.warn("Eşleşmeyen kullanıcı:", inputEmail);
-           }
         }
       }
       setIsAuthChecking(false);
