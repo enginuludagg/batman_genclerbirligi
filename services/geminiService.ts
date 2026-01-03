@@ -1,16 +1,25 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AppContextData, Student, Drill, AppMode } from "../types";
 
+// TypeScript'in process nesnesini tanıması için deklarasyon
+declare var process: any;
+
 /**
- * VITE ortamı için doğru API KEY okuma
+ * API KEY Okuma
  */
 const getAIClient = () => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!apiKey) {
-    console.warn("VITE_GEMINI_API_KEY tanımlı değil");
+  try {
+    const apiKey = process.env.API_KEY;
+    
+    if (!apiKey) {
+      console.warn("API Key bulunamadı. Lütfen .env dosyasında VITE_GEMINI_API_KEY tanımlı olduğundan emin olun.");
+      return null;
+    }
+    return new GoogleGenAI({ apiKey });
+  } catch (e) {
+    console.error("AI Client başlatılamadı:", e);
     return null;
   }
-  return new GoogleGenAI({ apiKey });
 };
 
 /**
@@ -22,6 +31,38 @@ const BGB_KNOWLEDGE_BASE = {
     "Teknik gelişim için tekrar sayısı artırılabilir.",
     "Oyunla eğitim prensibi uygulanmalıdır."
   ]
+};
+
+/**
+ * GÜVENLİ VERİ HAZIRLAYICI
+ * Finansal verileri ve hassas bilgileri temizler, sadece genel bilgileri AI'a verir.
+ */
+const prepareSafeContext = (context: AppContextData) => {
+  return {
+    kulupAdi: "Batman Gençlerbirliği Spor Okulu (BGB)",
+    antrenmanProgrami: context.sessions.map(s => ({
+      gun: s.day,
+      saat: s.time,
+      grup: s.group,
+      yer: s.location
+    })),
+    antrenorler: context.trainers.map(t => ({
+      isim: t.name,
+      uzmanlik: t.specialty,
+      sorumluOlduguGruplar: t.groups
+    })),
+    siradakiMaclar: context.fixtures.filter(f => f.status === 'scheduled').map(f => ({
+      rakip: f.awayTeam,
+      tarih: f.date,
+      saat: f.time,
+      kategori: f.category
+    })),
+    sonDuyurular: context.media.filter(m => m.status === 'published').slice(0, 5).map(m => ({
+      baslik: m.title,
+      icerik: m.content
+    })),
+    // NOT: context.finance (Finansal Veriler) BURAYA EKLENMEDİ. AI BUNLARI GÖREMEZ.
+  };
 };
 
 /**
@@ -43,24 +84,57 @@ export const getAICoachResponse = async (
     };
   }
 
+  // 1. Güvenli veriyi hazırla
+  const clubData = prepareSafeContext(context);
+  const studentContext = currentStudent ? `Kullanıcı Bilgisi: Öğrenci Adı: ${currentStudent.name}, Grubu: ${currentStudent.branchId}` : "Kullanıcı: Misafir/Yönetici";
+
+  // 2. Sistem Talimatı (System Prompt)
+  // Burada AI'a sadece kulüp verisini kullanmasını ve ticari sırları saklamasını emrediyoruz.
+  const systemPrompt = `
+    ROL: Sen Batman Gençlerbirliği Spor Okulu'nun (BGB Akademi) yapay zeka asistanısın.
+    
+    GÖREV: Aşağıdaki "KULÜP VERİLERİ"ni referans alarak kullanıcının sorusunu cevapla.
+    
+    KESİN KURALLAR:
+    1. SADECE VERİLEN VERİYİ KULLAN: Google araması yapma, genel internet bilgisi verme (Örn: "Messi kimdir?" sorusuna "Sadece kulüp hakkında bilgi verebilirim" de).
+    2. GİZLİLİK: Maaşlar, aidat gelirleri, kulüp kasası gibi TİCARİ/FİNANSAL sorular sorulursa kesinlikle "Bu bilgi ticari sır kapsamındadır, cevaplayamam." de.
+    3. HATA YAPMA: Eğer cevap verilerde yoksa (Örn: "Yarın hava nasıl?"), "Bu bilgi sistemimde mevcut değil" de, uydurma.
+    4. ÜSLUP: Bir spor antrenörü gibi motive edici, saygılı ve kısa cevaplar ver.
+
+    KULÜP VERİLERİ (JSON):
+    ${JSON.stringify(clubData)}
+
+    BAĞLAM:
+    ${studentContext}
+  `;
+
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-3-flash-preview",
       contents: [
         {
           role: "user",
-          parts: [{ text: userInput }]
+          parts: [
+            { text: systemPrompt }, // Sistem talimatını başa ekliyoruz
+            { text: `SORU: ${userInput}` }
+          ]
         }
       ]
     });
 
     return {
       text: response.text || "Anlaşıldı hocam.",
-      sources: []
+      sources: [] // Google Search kapalı olduğu için kaynak yok
     };
-  } catch (e) {
+  } catch (e: any) {
     console.error("Gemini hata:", e);
-    return { text: "AI bağlantı hatası oluştu.", sources: [] };
+    let errorMsg = "AI servisine şu an ulaşılamıyor.";
+    
+    if (e.message && e.message.includes('API key')) {
+      errorMsg = "API Anahtarı hatası.";
+    }
+    
+    return { text: errorMsg, sources: [] };
   }
 };
 
@@ -72,7 +146,6 @@ export const generateNewDrillFromAI = async (
 ): Promise<Drill> => {
   const ai = getAIClient();
 
-  // AI yoksa sabit drill
   if (!ai) {
     return {
       id: `auto-${Date.now()}`,
@@ -88,7 +161,7 @@ export const generateNewDrillFromAI = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-3-flash-preview",
       contents: [
         {
           role: "user",
@@ -144,7 +217,7 @@ export const getDrillAITips = async (drill: Drill): Promise<string> => {
 
   try {
       const res = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-3-flash-preview',
         contents: [
           {
             role: "user",
@@ -165,7 +238,7 @@ export const getCoachSuggestions = async (student: Student): Promise<string> => 
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: [
         {
           role: "user",

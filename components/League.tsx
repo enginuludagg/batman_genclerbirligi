@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Trophy, X, MapPin, Plus, Trash2, LayoutTemplate, Calendar, Clock as ClockIcon, Save } from 'lucide-react';
+import { Trophy, X, MapPin, Plus, Trash2, LayoutTemplate, Calendar, Clock as ClockIcon, Save, Lock } from 'lucide-react';
 import { LeagueTeam, MatchResult, Student, AppMode, MediaPost } from '../types';
 import LineupBuilder from './LineupBuilder';
 
@@ -109,7 +108,15 @@ const League: React.FC<Props> = ({ students, mode, onPostLineup, fixtures, setFi
               <div className="w-24 h-24 bg-red-600 text-white rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl"><LayoutTemplate size={48} /></div>
               <h3 className="text-3xl font-black italic uppercase tracking-tighter">MAÇ <span className="text-red-600">DİZİLİMİ</span></h3>
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest max-w-xs mx-auto italic">Kadronu kur, taktiğini belirle ve sahaya çıkış stratejini oluştur.</p>
-              <button onClick={() => setShowLineupBuilder(true)} className="px-10 py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-2xl active:scale-95 hover:bg-red-600 transition-all">KADRO OLUŞTURUCUYU AÇ</button>
+              
+              {mode === 'admin' ? (
+                <button onClick={() => setShowLineupBuilder(true)} className="px-10 py-5 bg-zinc-950 text-white rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-2xl active:scale-95 hover:bg-red-600 transition-all">KADRO OLUŞTURUCUYU AÇ</button>
+              ) : (
+                <div className="inline-flex items-center gap-3 bg-red-50 text-red-600 px-8 py-4 rounded-2xl border border-red-100">
+                    <Lock size={16} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">BU ALAN YALNIZCA TEKNİK EKİBE AÇIKTIR</span>
+                </div>
+              )}
            </div>
         </div>
       )}

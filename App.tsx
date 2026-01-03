@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -18,7 +17,7 @@ import Auth from './components/Auth';
 import Settings from './components/Settings';
 import MobileNav from './components/MobileNav';
 import { ViewType, Student, Trainer, FinanceEntry, MediaPost, TrainingSession, AppMode, Drill, TrainerNote, AppContextData, MatchResult } from './types';
-import { RefreshCw, CloudOff, Loader2, Menu } from 'lucide-react';
+import { RefreshCw, CloudOff, Loader2, Menu, LogOut } from 'lucide-react';
 import { storageService, KEYS } from './services/storageService';
 import { isConfigured, auth } from './services/firebaseConfig';
 
@@ -104,14 +103,24 @@ const App: React.FC = () => {
     setIsSidebarOpen(false);
   };
 
-  const handleLogout = async () => {
+  // GÜVENLİ VE HIZLI ÇIKIŞ FONKSİYONU
+  const handleLogout = () => {
+    // 1. Kullanıcı onayı (Browser native confirm)
+    if (!window.confirm("Hesabınızdan çıkış yapmak istediğinize emin misiniz?")) return;
+
     try {
-      await auth.signOut();
+      // 2. Önce local state'i ve storage'ı temizle (UI hemen tepki versin)
       localStorage.removeItem('bgb_session');
       setIsLoggedIn(false);
-      window.location.reload();
+
+      // 3. Arka planda Firebase oturumunu kapat (Hata verse bile önemli değil, token silindi)
+      auth.signOut().catch(err => console.error("Firebase logout error:", err));
+
+      // 4. Sayfayı zorla yenile (Temiz başlangıç)
+      window.location.href = "/";
     } catch (err) {
       console.error("Çıkış hatası:", err);
+      window.location.reload();
     }
   };
 
@@ -172,14 +181,23 @@ const App: React.FC = () => {
       />
       
       <main className={`flex-1 flex flex-col h-full overflow-hidden transition-all duration-500 lg:ml-[280px] ${isSidebarOpen ? 'opacity-50 pointer-events-none lg:opacity-100' : ''}`}>
-        <div className="lg:hidden flex items-center justify-between p-4 bg-white/80 backdrop-blur-md sticky top-0 z-[1000] border-b shadow-sm">
+        
+        {/* MOBİL HEADER - Z-Index 20000 yapıldı */}
+        <div className="lg:hidden flex items-center justify-between p-4 bg-white/80 backdrop-blur-md sticky top-0 z-[20000] border-b shadow-sm">
            <div className="flex items-center gap-2">
              <div className="w-8 h-8 bg-zinc-950 text-white rounded-lg flex items-center justify-center font-black">BGB</div>
              <h1 className="text-xs font-black uppercase text-zinc-900 leading-none tracking-tighter">AKADEMİ <span className="text-red-600">PANEL</span></h1>
            </div>
            <div className="flex items-center gap-3">
-             {connectionError ? <CloudOff size={18} className="text-red-500" /> : <RefreshCw size={18} className={`text-green-500 ${isSyncing ? 'animate-spin' : ''}`} />}
-             <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-slate-100 rounded-lg"><Menu size={18}/></button>
+             {/* Acil Çıkış Butonu (Mobil) - Doğrudan handleLogout çağırır */}
+             <button 
+                onClick={handleLogout}
+                className="p-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors active:scale-95 shadow-sm"
+             >
+                <LogOut size={20} />
+             </button>
+
+             <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-100 rounded-lg active:scale-95"><Menu size={20}/></button>
            </div>
         </div>
 

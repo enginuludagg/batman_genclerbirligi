@@ -1,7 +1,7 @@
-
 import React, { useState, useRef } from 'react';
-import { Settings as SettingsIcon, Upload, AlertTriangle, Image as ImageIcon, Smartphone, ShieldCheck, Trash2, Terminal, CheckCircle2, Rocket, RefreshCw } from 'lucide-react';
+import { Settings as SettingsIcon, Upload, AlertTriangle, Image as ImageIcon, Smartphone, ShieldCheck, Trash2, Terminal, CheckCircle2, Rocket, RefreshCw, LogOut } from 'lucide-react';
 import Logo from './Logo';
+import { auth } from '../services/firebaseConfig';
 
 const APP_VERSION = "V.1.8.0 (STABLE)";
 
@@ -54,6 +54,14 @@ const Settings: React.FC = () => {
   const handleClearCache = () => {
     if(window.confirm("Uygulamayı yenileyip önbelleği temizlemek istiyor musunuz? Verileriniz silinmez.")) {
       window.location.reload();
+    }
+  };
+
+  const handleLogout = async () => {
+    if(window.confirm("Çıkış yapmak istediğinize emin misiniz?")) {
+        await auth.signOut();
+        localStorage.removeItem('bgb_session');
+        window.location.reload();
     }
   };
 
@@ -113,6 +121,10 @@ const Settings: React.FC = () => {
                 
                 <button onClick={handleClearCache} className="w-full py-3 bg-blue-600/20 text-blue-400 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all">
                    <RefreshCw size={14} /> ÖNBELLEĞİ TEMİZLE & YENİLE
+                </button>
+
+                <button onClick={handleLogout} className="w-full py-3 bg-red-600/20 text-red-500 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-600 hover:text-white transition-all">
+                   <LogOut size={14} /> GÜVENLİ ÇIKIŞ YAP
                 </button>
              </div>
           </div>

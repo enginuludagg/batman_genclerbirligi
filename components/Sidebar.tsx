@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   LayoutDashboard, Users, Calendar, Trophy, 
@@ -55,16 +54,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
     if (window.innerWidth < 1024) setIsOpen(false);
   };
 
-  const handleLogoutClick = () => {
-    if (confirm("Çıkış yapmak istediğinize emin misiniz?")) {
-      if (onLogout) onLogout();
-      else window.location.reload();
-    }
-  };
-
   return (
     <>
-      {/* Mobil Hamburger Buton */}
+      {/* Mobil Hamburger Buton - Sidebar kapalıyken görünür */}
       <button 
         onClick={() => setIsOpen(!isOpen)} 
         className="lg:hidden fixed top-4 right-4 z-[2500] bg-zinc-950 text-white p-3.5 rounded-2xl shadow-xl active:scale-90 transition-all border border-white/10"
@@ -72,11 +64,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      {/* Sidebar Container */}
-      <aside className={`fixed left-0 top-0 h-full w-[280px] bg-zinc-950 text-white flex flex-col z-[2100] transition-transform duration-500 ease-out lg:translate-x-0 border-r border-white/5 shadow-2xl ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      {/* 
+         Sidebar Container 
+         Z-Index 10005: MobileNav (9999) ve MobileHeader (1000) üstünde durması için.
+      */}
+      <aside className={`fixed left-0 top-0 h-[100dvh] w-[280px] bg-zinc-950 text-white flex flex-col z-[10005] transition-transform duration-500 ease-out lg:translate-x-0 border-r border-white/5 shadow-2xl ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         
         {/* Logo Area */}
-        <div className="p-8 flex items-center gap-4 border-b border-white/5 relative overflow-hidden">
+        <div className="p-8 flex items-center gap-4 border-b border-white/5 relative overflow-hidden flex-shrink-0">
            <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/20 blur-[60px] rounded-full translate-x-1/2 -translate-y-1/2"></div>
            <div className="relative z-10 w-12 h-12 bg-white rounded-2xl p-1 flex items-center justify-center shadow-lg">
              <Logo className="w-full h-full" />
@@ -93,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
         </div>
 
         {/* User Card */}
-        <div className="px-6 py-6">
+        <div className="px-6 py-6 flex-shrink-0">
           <div className="w-full bg-white/5 border border-white/5 p-4 rounded-2xl flex items-center gap-4 backdrop-blur-sm">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg ${appMode === 'admin' ? 'bg-red-600' : 'bg-blue-600'}`}>
               {appMode === 'admin' ? <ShieldAlert size={20} /> : <UserCircle size={20} />}
@@ -108,7 +103,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 pb-6 space-y-1 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 px-4 pb-32 space-y-1 overflow-y-auto custom-scrollbar overscroll-contain">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
@@ -135,11 +130,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
           })}
         </nav>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-white/5 bg-black/20">
+        {/* Footer - Çıkış Butonu */}
+        <div className="p-4 border-t border-white/5 bg-black/40 flex-shrink-0 mb-[env(safe-area-inset-bottom)]">
            <button 
-             onClick={handleLogoutClick}
-             className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-zinc-900 hover:bg-red-600 text-zinc-500 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest group border border-white/5"
+             onClick={onLogout}
+             className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-zinc-900 hover:bg-red-600 text-zinc-500 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest group border border-white/5 active:scale-95 cursor-pointer z-50 relative"
            >
               <LogOut size={16} className="group-hover:-translate-x-1 transition-transform" /> 
               <span>ÇIKIŞ YAP</span>
@@ -151,7 +146,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, set
       {isOpen && (
         <div 
           onClick={() => setIsOpen(false)}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[2050] lg:hidden animate-in fade-in duration-500"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10000] lg:hidden animate-in fade-in duration-500"
         />
       )}
     </>

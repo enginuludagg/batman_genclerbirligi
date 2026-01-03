@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, UserPlus, ChevronLeft, Save, Plus, ChevronRight, Trash2, CheckCircle2, AlertCircle, X, Upload, Hash, Check, Calendar
@@ -33,7 +32,8 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
     name: '', sport: 'Futbol', activeSports: ['Futbol'], branchId: 'U12', gender: 'Erkek', level: 'Başlangıç', status: 'active', attendance: 100, photoUrl: '',
     stats: { strength: 50, speed: 50, stamina: 50, technique: 50 },
     jerseyNumber: undefined,
-    registrationDate: new Date().toISOString().split('T')[0]
+    registrationDate: new Date().toISOString().split('T')[0],
+    age: 10 // Varsayılan yaş
   });
 
   useEffect(() => {
@@ -91,11 +91,12 @@ const StudentList: React.FC<Props> = ({ students, setStudents, mode, onModalStat
       password: '123456',
       badges: [],
       scoutingNotes: [],
+      age: newStudent.age || 10,
       registrationDate: newStudent.registrationDate || new Date().toISOString().split('T')[0]
     };
     setStudents(prev => [...prev, student]);
     setViewState('list');
-    setNewStudent({ name: '', sport: 'Futbol', activeSports: ['Futbol'], branchId: 'U12', gender: 'Erkek', level: 'Başlangıç', status: 'active', attendance: 100, photoUrl: '', stats: { strength: 50, speed: 50, stamina: 50, technique: 50 }, jerseyNumber: undefined });
+    setNewStudent({ name: '', sport: 'Futbol', activeSports: ['Futbol'], branchId: 'U12', gender: 'Erkek', level: 'Başlangıç', status: 'active', attendance: 100, photoUrl: '', stats: { strength: 50, speed: 50, stamina: 50, technique: 50 }, jerseyNumber: undefined, age: 10 });
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
