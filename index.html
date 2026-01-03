@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="tr" class="h-full">
 <head>
@@ -85,23 +84,25 @@
     </div>
 
     <script>
-        // 1. Önceki kalıntıları temizle
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(regs => {
-                for(let r of regs) r.unregister();
-            });
-        }
-
-        // 2. Bağlantı Kontrolü (Heartbeat)
-        const checkConnection = () => {
-            fetch('https://www.google.com/favicon.ico', { mode: 'no-cors' })
-                .catch(() => {
-                    document.getElementById('diag-screen').style.display = 'flex';
-                });
-        };
-
-        // Splash kaldır
+        // 1. Önceki kalıntıları temizle (Güvenli Mod)
         window.addEventListener('load', () => {
+            if ('serviceWorker' in navigator) {
+                try {
+                    // Güvenli temizleme
+                    navigator.serviceWorker.getRegistrations()
+                        .then(regs => {
+                            for(let r of regs) r.unregister();
+                        })
+                        .catch(err => { 
+                            // Hata oluşursa sessizce geç, uygulamayı durdurma
+                            // console.debug('SW clear skipped:', err); 
+                        });
+                } catch (e) {
+                    console.debug('SW Access denied or invalid state');
+                }
+            }
+
+            // Splash kaldır
             setTimeout(() => {
                 const splash = document.getElementById('splash-loader');
                 if (splash) {
@@ -112,9 +113,17 @@
             checkConnection();
         });
 
+        // 2. Bağlantı Kontrolü (Heartbeat)
+        const checkConnection = () => {
+            fetch('https://www.google.com/favicon.ico', { mode: 'no-cors' })
+                .catch(() => {
+                    document.getElementById('diag-screen').style.display = 'flex';
+                });
+        };
+
         // 3. Sertifika/SSL Hatası Yakalama
         window.addEventListener('error', (e) => {
-            if (e.message.includes('SSL') || e.message.includes('Sertifika') || e.message.includes('Failed to fetch')) {
+            if (e && e.message && (e.message.includes('SSL') || e.message.includes('Sertifika') || e.message.includes('Failed to fetch'))) {
                 document.getElementById('diag-screen').style.display = 'flex';
             }
         }, true);

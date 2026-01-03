@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import { Shield, Star, Award, Trophy, Activity, Phone, GraduationCap, Camera, CheckCircle2, Loader2 } from 'lucide-react';
 import { Trainer, AppMode } from '../types';
@@ -14,7 +13,7 @@ const AboutUs: React.FC<Props> = ({ trainers, mode, onUpdateFounderPhoto }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
   
-  const founder = trainers.find(t => t.name.toLowerCase().includes('engin')) || {
+  const founder = trainers.find(t => t.name && t.name.toLowerCase().includes('engin')) || {
     id: 'founder-default',
     name: 'Engin Uludağ',
     specialty: 'Teknik Direktör ve Antrenör',

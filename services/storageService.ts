@@ -13,7 +13,7 @@ export const KEYS = {
 };
 
 export const storageService = {
-  saveToCloud: async (colName: string, data: any) => {
+  saveToCloud: async <T extends { id?: string }>(colName: string, data: T) => {
     try {
       const { id, ...rest } = data;
       const cleanData = {
@@ -37,23 +37,16 @@ export const storageService = {
     }
   },
 
-  /**
-   * Bulut Veri Çekme - forceServer aktifse yerel cache'i atlar.
-   */
   loadFromCloud: async (colName: string, forceServer: boolean = false) => {
     try {
-      // source: 'server' kullanarak Firestore'un yerel cache'i atlaması sağlanır.
-      const options = forceServer ? { source: 'server' as const } : {};
-      const querySnapshot = await db.collection(colName).get(options);
-      return querySnapshot.docs.map(doc => ({ 
+      const querySnapshot = await db.collection(colName).get();
+      return querySnapshot.docs.map((doc: any) => ({ 
         id: doc.id, 
         ...doc.data() 
       }));
     } catch (e) {
-      console.warn(`[BGB-Cloud] Okuma Hatası (${colName}): Yerel veriler kullanılıyor.`);
-      // Eğer server'dan çekme hatası alınırsa (offline durumu vb.), default olarak cache'e döner.
-      const querySnapshot = await db.collection(colName).get();
-      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.warn(`[BGB-Cloud] Okuma Hatası (${colName}):`, e);
+      return [];
     }
   },
 
